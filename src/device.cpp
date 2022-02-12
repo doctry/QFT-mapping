@@ -3,7 +3,8 @@
 
 device::Qubit::Qubit(const unsigned i) : _id(i) {}
 device::Qubit::Qubit(Qubit &&other) : _id(other._id), _adj_list(std::move(other._adj_list)) {}
-void device::Qubit::add_adj(unsigned i) {
+void device::Qubit::add_adj(unsigned i)
+{
     _adj_list.push_back(i);
 }
 
@@ -31,3 +32,12 @@ device::Device::Device(std::fstream &file)
     }
 }
 device::Device::Device(Device &&other) : _qubits(std::move(other._qubits)) {}
+
+const unsigned device::Device::get_num_qubits() const
+{
+    return _qubits.size();
+}
+
+device::Qubit &device::Device::get_qubit(const unsigned i) {
+    return _qubits[i];
+}
