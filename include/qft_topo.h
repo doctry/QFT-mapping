@@ -1,4 +1,5 @@
 #include <vector>
+#include <tuple>
 
 #pragma once
 
@@ -11,6 +12,8 @@ namespace topo
         Qubit(const Qubit &other) = delete;
         Qubit(Qubit &&other);
 
+        void set_location(const unsigned i);
+        const unsigned get_location() const;
     private:
         unsigned _id;
         unsigned _location;
@@ -19,13 +22,13 @@ namespace topo
     class Gate
     {
     public:
-        Gate(const unsigned q0, const unsigned q1);
+        Gate(std::tuple<unsigned, unsigned> qs);
         Gate(const Gate &other) = delete;
         Gate(Gate &&other);
 
+        const std::tuple<unsigned, unsigned> get_qubits() const;
     private:
-        unsigned _q0;
-        unsigned _q1;
+        std::tuple<unsigned, unsigned> _qubits;
     };
 
     class QFTTopology
@@ -36,6 +39,7 @@ namespace topo
         QFTTopology(QFTTopology &&other);
 
         const unsigned get_num_qubits() const;
+        const unsigned get_num_gates() const;
         Gate &pop_next_gate();
         Gate &get_next_gate();
         Qubit &get_qubit(const unsigned i);

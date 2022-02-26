@@ -1,8 +1,25 @@
 #include <vector>
 #include <fstream>
+#include <tuple>
 
 #pragma once
 
+enum Operator {
+    Swap,
+    R
+};
+
+class Operation
+{
+public:
+    Operation(Operator oper, std::tuple<unsigned, unsigned> qs);
+    Operation(const Operation &other) = delete;
+    Operation(Operation &&other);
+
+private:
+    Operator _oper;
+    std::tuple<unsigned, unsigned> _qubits;
+};
 namespace device
 {
     class Qubit
@@ -13,7 +30,11 @@ namespace device
         Qubit(Qubit &&other);
 
         void add_adj(unsigned i);
-        unsigned get_avail_time() const;
+        const unsigned get_avail_time() const;
+        const bool is_adj(Qubit& other) const;
+
+        void set_topo_qubit(const unsigned i);
+        void set_occupied_time(const unsigned t);
 
     private:
         unsigned _id;
@@ -31,6 +52,8 @@ namespace device
 
         const unsigned get_num_qubits() const;
         Qubit &get_qubit(const unsigned i);
+        std::vector<Operation> routing(std::tuple<unsigned, unsigned> qs);
+
     protected:
         std::vector<Qubit> _qubits;
     };
