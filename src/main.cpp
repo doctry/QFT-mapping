@@ -24,6 +24,8 @@ int main (int argc, char *argv[]) {
     QFTMapper mapper(qft_topo, device);
     mapper.init_place();
     mapper.assign_gates();
+    
+    device.print_operations(std::cout);
 
     return 0;
 }

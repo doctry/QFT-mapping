@@ -1,8 +1,8 @@
+#pragma once
+
 #include "qft_topo.h"
 #include "device.h"
 #include <tuple>
-
-#pragma once
 
 class QFTMapper
 {

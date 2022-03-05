@@ -1,10 +1,11 @@
 #include "qft_topo.h"
 
-topo::Qubit::Qubit(const unsigned i) : _id(i) {}
+topo::Qubit::Qubit(const unsigned i) : _id(i), _location(UINT_MAX) {}
 topo::Qubit::Qubit(Qubit &&other) : _id(other._id), _location(other._location) {}
 
 void topo::Qubit::set_location(const unsigned i)
 {
+    assert(i < UINT_MAX);
     _location = i;
 }
 const unsigned topo::Qubit::get_location() const { return _location; }

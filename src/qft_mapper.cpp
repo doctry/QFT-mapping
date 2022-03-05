@@ -42,8 +42,8 @@ std::tuple<unsigned, unsigned> QFTMapper::get_device_qubits_idx(topo::Gate &gate
     unsigned device_idx_q0 = topo_q0.get_location(); //get device qubit index of the gate
 
     unsigned topo_idx_q1 = std::get<1>(gate.get_qubits()); // get operation qubit index of gate in topology
-    topo::Qubit& topo_q1 = _qft_topo.get_qubit(topo_idx_q0); // get operation qubit of gate in topology
-    unsigned device_idx_q1 = topo_q0.get_location(); //get device qubit index of the gate
+    topo::Qubit& topo_q1 = _qft_topo.get_qubit(topo_idx_q1); // get operation qubit of gate in topology
+    unsigned device_idx_q1 = topo_q1.get_location(); //get device qubit index of the gate
 
     return std::make_tuple(device_idx_q0, device_idx_q1);
 }

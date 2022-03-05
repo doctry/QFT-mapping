@@ -1,7 +1,9 @@
+#pragma once
+
 #include <vector>
 #include <tuple>
-
-#pragma once
+#include <limits.h>
+#include <assert.h>
 
 namespace topo
 {
