@@ -21,7 +21,7 @@ int main (int argc, char *argv[]) {
 
     device::Device device(file);
 
-    if(num_qubit < device.get_num_qubits()) {
+    if(num_qubit > device.get_num_qubits()) {
         std::cerr << "You cannot assign more QFT qubits than the device." << std::endl;
         return 1;
     }
