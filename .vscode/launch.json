@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "/home/doctry/桌面/QFT-mapping/bin/qft_mapping_dbg",
-            "args": ["5", "/home/doctry/桌面/QFT-mapping/device/quito_5.txt"],
+            "args": ["7", "/home/doctry/桌面/QFT-mapping/device/perth_7.txt"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

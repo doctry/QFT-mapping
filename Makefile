@@ -5,7 +5,7 @@ CC = g++
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
 DBGFLAGS  = -g -Wall -DDEBUG
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -O3 -DNDEBUG
 
 # the build target executable:
 DEPS = include/device.h include/qft_mapper.h include/qft_topo.h

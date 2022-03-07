@@ -188,8 +188,10 @@ std::vector<unsigned> device::Device::routing(std::tuple<unsigned, unsigned> qs)
     t1.take_route(t1.get_cost(), 0);
     std::tuple<bool, unsigned> touch0 = touch_adj(t0, pq, false);
     bool is_adj = std::get<0>(touch0);
+#ifdef DEBUG
     std::tuple<bool, unsigned> touch1 = touch_adj(t1, pq, true);
     assert(is_adj == std::get<0>(touch1));
+#endif
 
     while (!is_adj) // set not adjacent
     {
