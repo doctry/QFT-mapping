@@ -14,11 +14,16 @@ int main (int argc, char *argv[]) {
 
     std::fstream file;
     file.open(argv[2], std::fstream::in);
+    if (!file.is_open()) {
+        std::cerr << "There is no file" << argv[2] << std::endl;
+        return 1;
+    }
 
     device::Device device(file);
 
     if(num_qubit < device.get_num_qubits()) {
-        std::cerr << "You cannot assign more QFT qubits than the device.";
+        std::cerr << "You cannot assign more QFT qubits than the device." << std::endl;
+        return 1;
     }
 
     QFTMapper mapper(qft_topo, device);
@@ -26,6 +31,7 @@ int main (int argc, char *argv[]) {
     mapper.assign_gates();
     
     device.print_operations(std::cout);
+    std::cout << "final cost: " << device.get_final_cost() << "\n";
 
     return 0;
 }

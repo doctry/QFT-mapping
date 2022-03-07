@@ -7,6 +7,7 @@
 #include <iostream>
 #include <assert.h>
 #include <iomanip>
+#include <limits.h>
 
 #define SWAP_CYCLE 6
 #define R_CYCLE 1
@@ -22,8 +23,27 @@ class Operation
 public:
     friend bool op_order(const Operation &, const Operation &);
     friend std::ostream &operator<<(std::ostream &, Operation &);
-    Operation(Operator oper, std::tuple<unsigned, unsigned> qs, std::tuple<unsigned, unsigned> du) : _oper(oper), _qubits(qs), _duration(du) {}
+    Operation(Operator oper, std::tuple<unsigned, unsigned> qs, std::tuple<unsigned, unsigned> du) : _oper(oper), _qubits(qs), _duration(du)
+    {
+        //sort qs
+        unsigned a = std::get<0>(qs);
+        unsigned b = std::get<1>(qs);
+        assert(a != b);
+        if (a > b) {
+            _qubits = std::make_tuple(b,a);
+        }
+    }
     Operation(const Operation &other) : _oper(other._oper), _qubits(other._qubits), _duration(other._duration) {}
+
+    Operation& operator=(const Operation& other)
+    {
+        _oper = other._oper;
+        _qubits = other._qubits;
+        _duration = other._duration;
+        return *this;
+    }
+
+    unsigned get_cost() const { return std::get<1>(_duration); }
 
 private:
     Operator _oper;
@@ -42,7 +62,7 @@ namespace device
 
         const bool get_swtch() const { return _swtch; }
         const unsigned get_id() const { return _id; }
-        const unsigned get_estimated_cost() const { return _estimated_cost; }
+        const unsigned get_cost() const { return _estimated_cost; }
 
     private:
         unsigned _estimated_cost;
@@ -52,10 +72,10 @@ namespace device
 
     class AStarComp
     {
-        public:
+    public:
         bool operator()(const AStarNode &a, const AStarNode &b)
         {
-            return a._estimated_cost < b._estimated_cost;
+            return a._estimated_cost > b._estimated_cost;
         }
     };
 
@@ -79,11 +99,13 @@ namespace device
         // A*
         const unsigned get_cost() const;
         const bool is_marked() const;
+        const bool is_taken() const;
+        const bool get_swtch() const;
         const unsigned get_pred() const;
         const unsigned get_swap_time() const;
-        void mark();
+        void mark(bool swtch, unsigned pred);
         void reset();
-        void take_route(unsigned cost, unsigned route, unsigned swap_time);
+        void take_route(unsigned cost, unsigned swap_time);
 
     private:
         unsigned _id;
@@ -96,6 +118,8 @@ namespace device
         unsigned _pred;
         unsigned _cost;
         unsigned _swap_time;
+        bool _swtch;
+        bool _taken;
     };
 
     class Device
@@ -110,10 +134,12 @@ namespace device
         std::vector<unsigned> routing(std::tuple<unsigned, unsigned> qs);
 
         void print_operations(std::ostream &out);
+        unsigned get_final_cost();
+        void print_device_state(std::ostream &out);
 
     private:
         // A*
-        void push_queue(device::Qubit &qubit, device::Qubit &target, std::priority_queue<device::AStarNode, std::vector<device::AStarNode>, device::AStarComp> &pq, bool swtch); // false q0 propagate, true q1 propagate
+        std::tuple<bool, unsigned> touch_adj(device::Qubit &qubit, std::priority_queue<device::AStarNode, std::vector<device::AStarNode>, device::AStarComp> &pq, bool swtch); // return <if touch target, target id>, swtch: false q0 propagate, true q1 propagate
         std::vector<Operation> traceback(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1);
         void apply_gate(Operator gate, device::Qubit &q0, device::Qubit &q1, unsigned t, std::vector<Operation> &ops);
 

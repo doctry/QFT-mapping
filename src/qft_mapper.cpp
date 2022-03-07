@@ -26,14 +26,18 @@ void QFTMapper::assign_gates()
 
 void QFTMapper::assign_gate(topo::Gate &gate)
 {
-     std::tuple<unsigned, unsigned> device_qubits_idx = get_device_qubits_idx(gate);
-     std::vector<unsigned> change_list = std::move(_device.routing(device_qubits_idx));
-     for (unsigned i = 0; i < change_list.size(); ++i) // i is the idx of device qubit
-     {
-         unsigned topo_qubit_id = change_list[i];
-         topo::Qubit& topo_qubit = _qft_topo.get_qubit(topo_qubit_id);
-         topo_qubit.set_location(i);
-     }
+    std::tuple<unsigned, unsigned> device_qubits_idx = get_device_qubits_idx(gate);
+    std::vector<unsigned> change_list = std::move(_device.routing(device_qubits_idx));
+    for (unsigned i = 0; i < change_list.size(); ++i) // i is the idx of device qubit
+    {
+        unsigned topo_qubit_id = change_list[i];
+        topo::Qubit& topo_qubit = _qft_topo.get_qubit(topo_qubit_id);
+        topo_qubit.set_location(i);
+    }
+    #ifdef DEBUG
+    _device.print_operations(std::cout);
+    _device.print_device_state(std::cout);
+    #endif
 }
 
 std::tuple<unsigned, unsigned> QFTMapper::get_device_qubits_idx(topo::Gate &gate) {

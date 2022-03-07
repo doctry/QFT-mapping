@@ -3,6 +3,7 @@
 #include "qft_topo.h"
 #include "device.h"
 #include <tuple>
+#include <iostream>
 
 class QFTMapper
 {

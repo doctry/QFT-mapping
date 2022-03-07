@@ -17,7 +17,7 @@ const std::tuple<unsigned, unsigned> topo::Gate::get_qubits() const { return _qu
 
 topo::QFTTopology::QFTTopology(unsigned num) : _next_gate_idx(0)
 {
-    for (unsigned i = 1; i < num; ++i)
+    for (unsigned i = 0; i < num; ++i)
     {
         Qubit qubit(i);
         _qubits.push_back(std::move(qubit));
