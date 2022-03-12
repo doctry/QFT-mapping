@@ -8,9 +8,9 @@
 #include <assert.h>
 #include <iomanip>
 #include <limits.h>
+#include "args.h"
 
-#define SWAP_CYCLE 6
-#define R_CYCLE 1
+extern Args args;
 
 enum Operator
 {
@@ -29,13 +29,14 @@ public:
         unsigned a = std::get<0>(qs);
         unsigned b = std::get<1>(qs);
         assert(a != b);
-        if (a > b) {
-            _qubits = std::make_tuple(b,a);
+        if (a > b)
+        {
+            _qubits = std::make_tuple(b, a);
         }
     }
     Operation(const Operation &other) : _oper(other._oper), _qubits(other._qubits), _duration(other._duration) {}
 
-    Operation& operator=(const Operation& other)
+    Operation &operator=(const Operation &other)
     {
         _oper = other._oper;
         _qubits = other._qubits;
@@ -44,6 +45,9 @@ public:
     }
 
     unsigned get_cost() const { return std::get<1>(_duration); }
+    unsigned get_op_time() const { return std::get<0>(_duration); }
+    Operator get_operator() const { return _oper; }
+    std::tuple<unsigned, unsigned> get_qubits() const { return _qubits; }
 
 private:
     Operator _oper;
@@ -141,7 +145,7 @@ namespace device
         // A*
         std::tuple<bool, unsigned> touch_adj(device::Qubit &qubit, std::priority_queue<device::AStarNode, std::vector<device::AStarNode>, device::AStarComp> &pq, bool swtch); // return <if touch target, target id>, swtch: false q0 propagate, true q1 propagate
         std::vector<Operation> traceback(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1);
-        void apply_gate(Operator gate, device::Qubit &q0, device::Qubit &q1, unsigned t, std::vector<Operation> &ops);
+        void apply_gate(const Operation &op);
 
         std::vector<Qubit> _qubits;
         // std::vector<std::vector<unsigned>> _apsp;

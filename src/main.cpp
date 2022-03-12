@@ -2,14 +2,19 @@
 #include "device.h"
 #include "qft_topo.h"
 #include "qft_mapper.h"
+#include "args.h"
+
+Args args;
 
 int main (int argc, char *argv[]) {
-    if(argc != 3) {
-        std::cerr << "Usage: ./qft_mapping <num_qubit> <device_file>\n"; 
+    if(argc != 5) {
+        std::cerr << "Usage: ./qft_mapping <num_qubit> <device_file> <R_cycle> <swap_cycle>\n"; 
         return 0;
     }
 
     unsigned num_qubit = std::stoi(argv[1]);
+    args.R_CYCLE = std::stoi(argv[3]);
+    args.SWAP_CYCLE = std::stoi(argv[4]);
     topo::QFTTopology qft_topo(num_qubit);
 
     std::fstream file;
