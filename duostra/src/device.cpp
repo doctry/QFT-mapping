@@ -53,7 +53,7 @@ void to_json(json &j, const Operation &op)
     }
     }
 
-    j["Operator"] = op._oper;
+    j["Operator"] = oper;
     j["Qubits"] = {std::get<0>(op._qubits), std::get<1>(op._qubits)};
     j["duration"] = {std::get<0>(op._duration), std::get<1>(op._duration)};
 }
@@ -400,7 +400,9 @@ void device::Device::print_operations(std::ostream &out)
         json buf = op;
         j.push_back(buf);
     }
-    out << j << "\n";
+    json o;
+    o["Operations"] = j;
+    out << o << "\n";
 }
 
 unsigned device::Device::get_final_cost()

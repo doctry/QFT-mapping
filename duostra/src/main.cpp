@@ -4,6 +4,7 @@
 #include "qft_mapper.h"
 #include "args.h"
 #include "string"
+#include "json.hpp"
 
 Args args;
 
@@ -45,7 +46,9 @@ int main(int argc, char *argv[])
         std::fstream out_file;
         out_file.open(argv[6], std::fstream::out);
         device.print_operations(out_file);
-        out_file << "final cost: " << device.get_final_cost() << "\n";
+        json final_cost;
+        final_cost["final_cost"] = device.get_final_cost();
+        out_file << final_cost << "\n";
     }
 
     if (strcmp(argv[5], "false") != 0)
