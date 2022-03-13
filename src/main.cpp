@@ -3,12 +3,15 @@
 #include "qft_topo.h"
 #include "qft_mapper.h"
 #include "args.h"
+#include "string"
 
 Args args;
 
-int main (int argc, char *argv[]) {
-    if(argc != 5) {
-        std::cerr << "Usage: ./qft_mapping <num_qubit> <device_file> <R_cycle> <swap_cycle>\n"; 
+int main(int argc, char *argv[])
+{
+    if (argc != 6 && argc != 7)
+    {
+        std::cerr << "Usage: ./qft_mapping <num_qubit> <device_file> <R_cycle> <swap_cycle> <stdio(true or false)> [output_file]\n";
         return 0;
     }
 
@@ -17,16 +20,18 @@ int main (int argc, char *argv[]) {
     args.SWAP_CYCLE = std::stoi(argv[4]);
     topo::QFTTopology qft_topo(num_qubit);
 
-    std::fstream file;
-    file.open(argv[2], std::fstream::in);
-    if (!file.is_open()) {
+    std::fstream device_file;
+    device_file.open(argv[2], std::fstream::in);
+    if (!device_file.is_open())
+    {
         std::cerr << "There is no file" << argv[2] << std::endl;
         return 1;
     }
 
-    device::Device device(file);
+    device::Device device(device_file);
 
-    if(num_qubit > device.get_num_qubits()) {
+    if (num_qubit > device.get_num_qubits())
+    {
         std::cerr << "You cannot assign more QFT qubits than the device." << std::endl;
         return 1;
     }
@@ -34,9 +39,19 @@ int main (int argc, char *argv[]) {
     QFTMapper mapper(qft_topo, device);
     mapper.init_place();
     mapper.assign_gates();
-    
-    device.print_operations(std::cout);
-    std::cout << "final cost: " << device.get_final_cost() << "\n";
 
+    if (argc == 7)
+    {
+        std::fstream out_file;
+        out_file.open(argv[6], std::fstream::out);
+        device.print_operations(out_file);
+        out_file << "final cost: " << device.get_final_cost() << "\n";
+    }
+
+    if (strcmp(argv[5], "false") != 0)
+    {
+        device.print_operations(std::cout);
+        std::cout << "final cost: " << device.get_final_cost() << "\n";
+    }
     return 0;
 }

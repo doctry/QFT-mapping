@@ -9,6 +9,9 @@
 #include <iomanip>
 #include <limits.h>
 #include "args.h"
+#include "json.hpp"
+#include <string>
+using nlohmann::json;
 
 extern Args args;
 
@@ -23,6 +26,7 @@ class Operation
 public:
     friend bool op_order(const Operation &, const Operation &);
     friend std::ostream &operator<<(std::ostream &, Operation &);
+    friend void to_json(json &j, const Operation &op);
     Operation(Operator oper, std::tuple<unsigned, unsigned> qs, std::tuple<unsigned, unsigned> du) : _oper(oper), _qubits(qs), _duration(du)
     {
         //sort qs
