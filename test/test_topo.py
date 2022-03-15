@@ -1,5 +1,6 @@
 import sys
 
+
 class Gate:
     def __init__(
         self,
@@ -28,7 +29,15 @@ class Gate:
             prev.append(n)
         prev_0 = None if len(prev) < 1 else prev[0]
         prev_1 = None if len(prev) < 2 else prev[1]
-        return "Gate{}: (Q{}, Q{}), next:({}, {}), prev:({}, {})".format(self.id, self.qubits[0], self.qubits[1], self.next[0], self.next[1], prev_0, prev_1)
+        return "Gate{}: (Q{}, Q{}), next:({}, {}), prev:({}, {})".format(
+            self.id,
+            self.qubits[0],
+            self.qubits[1],
+            self.next[0],
+            self.next[1],
+            prev_0,
+            prev_1,
+        )
 
     def is_avail(self, gate_id: int):
         assert gate_id > -1
@@ -59,7 +68,8 @@ class QFTTopo:
                 self.gates.append(gate)
                 count += 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     num = int(sys.argv[1])
     assert num >= 0, num
     qft_topo: QFTTopo = QFTTopo(num)
