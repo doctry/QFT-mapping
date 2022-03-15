@@ -1,5 +1,5 @@
-from scipy.sparse import csgraph
 from numpy import ndarray
+from scipy.sparse import csgraph
 
 
 def shortest_path(graph: ndarray) -> ndarray:
