@@ -1,18 +1,16 @@
 [tool.poetry]
-name = "bert_exp"
+name = "qft"
 version = "0.1.0"
-description = "Just my experiments on BERT related stuff."
-authors = ["RenChu Wang <patrick1031wang@gmail.com>"]
+description = "QFT mapping on device."
+authors = ["RenChu Wang <churenwang@outlook.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 numpy = "^1.22.0"
 python = ">=3.8,<3.11"
-pytorch-lightning = "^1.5.10"
 pynvml = "^11.4.1"
 rich = "^10.16.1"
 torch = "^1.10.1"
-transformers = "^4.17.0"
 networkx = "^2.7.1"
 scipy = "^1.8.0"
 
@@ -20,13 +18,14 @@ scipy = "^1.8.0"
 autoflake = "^1.4"
 black = "^21.12b0"
 isort = "^5.10.1"
+ipython = "^8.1.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
-include = ["bert_exp"]
+include = ["max_short_paths"]
 exclude = [
     "**/node_modules",
     "**/__pycache__",
