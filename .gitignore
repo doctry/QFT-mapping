@@ -320,3 +320,4 @@ cython_debug/
 bin/
 .vscode/
 output/
+*.pyc

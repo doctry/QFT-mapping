@@ -2,6 +2,7 @@ import sys
 from test_device import Device, Operation
 from test_topo import QFTTopo
 from rich import traceback
+import json
 
 traceback.install()
 
