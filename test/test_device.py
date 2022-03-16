@@ -1,7 +1,10 @@
 import sys
 
-class Operation():
-    def __init__(self, operator: str, qubits: tuple[int, int], duration: tuple[int, int]):
+
+class Operation:
+    def __init__(
+        self, operator: str, qubits: tuple[int, int], duration: tuple[int, int]
+    ):
         assert operator == "R" or operator == "Swap", operator
         self.operator = operator
 
@@ -11,7 +14,19 @@ class Operation():
         assert duration[0] > -1 and duration[1] > -1
         self.duration = duration
 
-class Qubit():
+    def __str__(self):
+        return (
+            self.operator
+            + " (Q"
+            + str(self.qubits[0])
+            + " ,Q"
+            + str(self.qubits[1])
+            + ") duration:"
+            + str(self.duration)
+        )
+
+
+class Qubit:
     def __init__(self, id: int, adj_list: list[int]):
         assert id > -1, id
         self.id = id
@@ -32,15 +47,16 @@ class Qubit():
     def no_conflict(self, time: int):
         return self.occupied_until < time
 
-class Device():
+
+class Device:
     def __init__(self, filename: str):
         nums = []
         self.qubits: list[Qubit] = []
 
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             for x in f:
                 x = x.split()
-                for y in x: 
+                for y in x:
                     nums.append(int(y))
 
         count = 0
@@ -63,7 +79,8 @@ class Device():
         for (i, qubit) in enumerate(self.qubits):
             for j in qubit.adj_list:
                 assert i in self.qubits[j].adj_list, (i, j, self.adj_list)
-        
-if __name__ == 'main':
+
+
+if __name__ == "main":
     filename = sys.argv[1]
     device = Device(filename)
