@@ -1,8 +1,8 @@
 import sys
+
 from rich import traceback
 
 traceback.install()
-
 
 
 class Gate:
