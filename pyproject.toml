@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "qft"
+version = "0.1.0"
+description = "QFT mapping on device."
+authors = ["RenChu Wang <churenwang@outlook.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+numpy = "^1.22.0"
+python = ">=3.8,<3.11"
+pynvml = "^11.4.1"
+rich = "^10.16.1"
+torch = "^1.10.1"
+networkx = "^2.7.1"
+scipy = "^1.8.0"
+
+[tool.poetry.dev-dependencies]
+autoflake = "^1.4"
+black = "^21.12b0"
+isort = "^5.10.1"
+ipython = "^8.1.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+include = ["max_short_paths"]
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "src/experimental",
+    "src/typestubs",
+]
+
+reportMissingImports = true
+reportMissingTypeStubs = false
+
+pythonVersion = "3.9"
+pythonPlatform = "Linux"

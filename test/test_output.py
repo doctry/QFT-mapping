@@ -1,4 +1,3 @@
-import json
 import sys
 from test_device import Device, Operation
 from test_topo import QFTTopo

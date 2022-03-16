@@ -4,6 +4,7 @@ from rich import traceback
 traceback.install()
 
 
+
 class Gate:
     def __init__(
         self,
