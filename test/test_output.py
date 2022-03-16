@@ -27,6 +27,11 @@ if __name__ == "__main__":
     output_file = open(output_filename, "r")
     output = json.load(output_file)
 
+    R_cycle = int(sys.argv[4])
+    Swap_cycle = int(sys.argv[5])
+
+    cycle = {"R": R_cycle, "Swap": Swap_cycle}
+
     operations = output["Operations"]
     final_cost = output["final_cost"]
 

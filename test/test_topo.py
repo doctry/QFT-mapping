@@ -31,14 +31,13 @@ class Gate:
 
     def is_avail(self, gate_id: int):
         assert gate_id > -1
-        assert self.prev[gate_id] is not None
+        assert gate_id in self.prev
+        assert self.prev_mark[self.prev.index(gate_id)] == False, self.prev.index(
+            gate_id
+        )
+        self.prev_mark[self.prev.index(gate_id)] = True
 
-        ret = True
-        self.prev[gate_id] = True
-        for done in self.prev:
-            ret = ret and self.prev[done]
-
-        return ret
+        return all(m == True for m in next.prev_mark)
 
 
 class QFTTopo:
@@ -71,13 +70,8 @@ class QFTTopo:
 
         for n in nexts:
             next = self.gates[n]
-            assert executed in next.prev
-            assert next.prev_mark[next.prev.index(executed)] == False, next.prev.index(
-                executed
-            )
-            next.prev_mark[next.prev.index(executed)] = True
-            if all(m == True for m in next.prev_mark):
-                self.avail_gates.append(next)
+            if next.is_avail(executed):
+                self.avail_gates.append(n)
 
 
 if __name__ == "__main__":
