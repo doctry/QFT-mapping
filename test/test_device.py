@@ -78,7 +78,7 @@ class Device:
 
         for (i, qubit) in enumerate(self.qubits):
             for j in qubit.adj_list:
-                assert i in self.qubits[j].adj_list, (i, j, self.adj_list)
+                assert i in self.qubits[j].adj_list, (i, j, self.qubits[j].adj_list)
 
 
 if __name__ == "main":
