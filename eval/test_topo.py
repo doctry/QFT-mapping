@@ -1,6 +1,7 @@
 import sys
 
 from rich import traceback
+from numpy import sort
 
 traceback.install()
 
@@ -18,6 +19,7 @@ class Gate:
 
         assert qubits[0] > -1 and qubits[1] > -1
         self.qubits = qubits
+        sort(self.qubits)
 
         self.next = [n for n in next if n is not None]
 
@@ -29,7 +31,7 @@ class Gate:
             self.id, self.qubits[0], self.qubits[1], self.next, self.prev
         )
 
-    def is_avail(self, gate_id: int):
+    def is_avail(self, gate_id: int) -> bool:
         assert gate_id > -1
         assert gate_id in self.prev
         assert self.prev_mark[self.prev.index(gate_id)] == False, self.prev.index(
@@ -59,7 +61,7 @@ class QFTTopo:
 
         self.avail_gates: list[int] = []
 
-    def update_avail_gates(self, executed: int):
+    def update_avail_gates(self, executed: int) -> None:
         assert executed in self.avail_gates
         g_exec = self.gates[executed]
         self.avail_gates.remove(executed)

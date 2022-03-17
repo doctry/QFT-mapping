@@ -1,5 +1,7 @@
 import sys
 
+from numpy import sort
+
 
 class Operation:
     def __init__(
@@ -10,6 +12,7 @@ class Operation:
 
         assert qubits[0] > -1 and qubits[1] > -1
         self.qubits = qubits
+        sort(self.qubits)
 
         assert duration[0] > -1 and duration[1] > -1
         self.duration = duration
@@ -32,22 +35,19 @@ class Qubit:
         self.id = id
         self.adj_list = adj_list
         self.occupied_until: int = 0
+        self.topo = id
 
         for i in self.adj_list:
             assert i > -1, self.adj_list
 
-    def is_adj(self, other: int):
+    def is_adj(self, other: int) -> bool:
         assert other > -1
         return other in self.adj_list
 
-    def assign_time(self, time: int):
-        assert time > self.occupied_until
-        self.occupied_until = time
-
-    def no_conflict(self, time: int):
+    def no_conflict(self, time: int) -> bool:
         return self.occupied_until < time
 
-    def to_json(self):
+    def to_json(self) -> dict:
         return {"id": self.id, "adj_list": self.adj_list}
 
 
@@ -83,7 +83,7 @@ class Device:
             for j in qubit.adj_list:
                 assert i in self.qubits[j].adj_list, (i, j, self.qubits[j].adj_list)
 
-    def to_json(self):
+    def to_json(self)->list[dict]:
         ret = []
         for q in self.qubits:
             ret.append(q.to_json())
