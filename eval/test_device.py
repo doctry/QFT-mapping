@@ -50,6 +50,7 @@ class Qubit:
     def to_json(self):
         return {"id": self.id, "adj_list": self.adj_list}
 
+
 class Device:
     def __init__(self, filename: str):
         nums = []
@@ -87,6 +88,7 @@ class Device:
         for q in self.qubits:
             ret.append(q.to_json())
         return ret
+
 
 if __name__ == "__main__":
     filename = sys.argv[1]
