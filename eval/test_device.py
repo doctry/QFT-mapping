@@ -84,3 +84,4 @@ class Device:
 if __name__ == "main":
     filename = sys.argv[1]
     device = Device(filename)
+    print("hello world")
