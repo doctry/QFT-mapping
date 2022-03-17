@@ -10,8 +10,8 @@ class Gate:
         self,
         id: int,
         qubits: tuple[int, int],
-        next: list[int or None, int or None],
-        prev: list[int or None, int or None],
+        next: list[int or None],
+        prev: list[int or None],
     ):
         assert id > -1
         self.id = id
