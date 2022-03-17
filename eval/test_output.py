@@ -1,10 +1,10 @@
 import json
 import sys
-from numpy import sort
 
+from numpy import sort
 from rich import traceback
-from test_device import Device, Operation, Qubit
-from test_topo import QFTTopo, Gate
+from test_device import Device, Operation
+from test_topo import Gate, QFTTopo
 
 traceback.install()
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     R_cycle = int(sys.argv[4])
     Swap_cycle = int(sys.argv[5])
 
-    cycle:dict[int] = {"R": R_cycle, "Swap": Swap_cycle}
+    cycle: dict[int] = {"R": R_cycle, "Swap": Swap_cycle}
 
     operations = output["Operations"]
     final_cost: int = output["final_cost"]

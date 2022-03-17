@@ -1,7 +1,7 @@
 import sys
 
-from rich import traceback
 from numpy import sort
+from rich import traceback
 
 traceback.install()
 
