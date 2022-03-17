@@ -47,6 +47,8 @@ class Qubit:
     def no_conflict(self, time: int):
         return self.occupied_until < time
 
+    def to_json(self):
+        return {"id": self.id, "adj_list": self.adj_list}
 
 class Device:
     def __init__(self, filename: str):
@@ -80,8 +82,12 @@ class Device:
             for j in qubit.adj_list:
                 assert i in self.qubits[j].adj_list, (i, j, self.qubits[j].adj_list)
 
+    def to_json(self):
+        ret = []
+        for q in self.qubits:
+            ret.append(q.to_json())
+        return ret
 
-if __name__ == "main":
+if __name__ == "__main__":
     filename = sys.argv[1]
     device = Device(filename)
-    print("hello world")
