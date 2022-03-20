@@ -12,7 +12,7 @@ class Operation:
 
         assert qubits[0] > -1 and qubits[1] > -1
         self.qubits = qubits
-        sort(self.qubits)
+        self.qubits = sorted(self.qubits)
 
         assert duration[0] > -1 and duration[1] > -1
         self.duration = duration
@@ -49,6 +49,9 @@ class Qubit:
 
     def to_json(self) -> dict:
         return {"id": self.id, "adj_list": self.adj_list}
+
+    def __str__(self) :
+        return "id: {}, topo_qubit: {}, occupied_until: {}".format(self.id, self.topo, self.occupied_until)
 
 
 class Device:
@@ -89,6 +92,11 @@ class Device:
             ret.append(q.to_json())
         return ret
 
+    def __str__(self):
+        ret = ""
+        for q in self.qubits:
+            ret += q.__str__()+"\n"
+        return ret
 
 if __name__ == "__main__":
     filename = sys.argv[1]

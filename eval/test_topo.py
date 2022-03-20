@@ -39,7 +39,7 @@ class Gate:
         )
         self.prev_mark[self.prev.index(gate_id)] = True
 
-        return all(m == True for m in next.prev_mark)
+        return all(m == True for m in self.prev_mark)
 
 
 class QFTTopo:
@@ -59,7 +59,7 @@ class QFTTopo:
                 self.gates.append(gate)
                 count += 1
 
-        self.avail_gates: list[int] = []
+        self.avail_gates: list[int] = [0]
 
     def update_avail_gates(self, executed: int) -> None:
         assert executed in self.avail_gates
