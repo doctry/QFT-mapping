@@ -1,7 +1,6 @@
 import json
 import sys
 
-from numpy import sort
 from rich import traceback
 from test_device import Device, Operation, Qubit
 from test_topo import Gate, QFTTopo
@@ -34,7 +33,7 @@ class Checker:
         d_q0.occupied_until = end
         d_q1.occupied_until = end
 
-    def apply_Swap(self, op: Operation) ->None:
+    def apply_Swap(self, op: Operation) -> None:
         assert op.operator == "Swap", op.operator
         (d_q0_idx, d_q1_idx) = op.qubits
         d_q0 = self.device.qubits[d_q0_idx]
