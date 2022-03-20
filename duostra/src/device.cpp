@@ -405,6 +405,19 @@ void device::Device::print_operations(std::ostream &out)
     out << o << "\n";
 }
 
+void device::Device::to_json(json& j) {
+    std::sort(_ops.begin(), _ops.end(), op_order);
+
+    json o;
+    for (unsigned i = 0; i < _ops.size(); ++i)
+    {
+        Operation &op = _ops[i];
+        json buf = op;
+        o.push_back(buf);
+    }
+    j["Operations"] = o;
+}
+
 unsigned device::Device::get_final_cost()
 {
     std::sort(_ops.begin(), _ops.end(), op_order);
