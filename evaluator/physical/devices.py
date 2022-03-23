@@ -1,5 +1,3 @@
-import os
-
 from .qubits import Qubit
 
 
@@ -7,7 +5,6 @@ class Device:
     def __init__(self, filename: str):
         nums = []
         self.qubits: list[Qubit] = []
-
 
         with open(filename, "r") as f:
             for x in f:
