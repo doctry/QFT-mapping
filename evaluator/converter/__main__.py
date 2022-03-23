@@ -1,10 +1,7 @@
-from argparse import ArgumentParser, Namespace
 import json
-import os
-import sys
+from argparse import ArgumentParser, Namespace
 
 from hydra import main
-from omegaconf import DictConfig
 
 from evaluator import Device
 

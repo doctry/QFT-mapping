@@ -1,9 +1,8 @@
 import sys
 
-from numpy import sort
 from rich import traceback
 
-from .topological import Gate, QFTTopo
+from .topological import QFTTopo
 
 traceback.install()
 
