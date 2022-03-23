@@ -2,8 +2,9 @@ import json
 import sys
 
 from rich import traceback
-from test_device import Device, Operation, Qubit
-from test_topo import Gate, QFTTopo
+
+from .physical import Device, Operation, Qubit
+from .topological import Gate, QFTTopo
 
 traceback.install()
 
