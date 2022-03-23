@@ -1,8 +1,10 @@
 import json
 from pathlib import Path
+
+import rich
 from hydra import main
 from omegaconf import DictConfig
-import rich
+
 from . import DeviceGraph
 
 
