@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+import networkx
 from networkx import Graph
 
 
@@ -15,3 +16,5 @@ class DeviceGraph(Graph):
 
             for adj in info["adj_list"]:
                 self.add_edge(idx, adj)
+
+        networkx.freeze(self)
