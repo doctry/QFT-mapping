@@ -4,7 +4,7 @@ import typing
 from typing import Any, Dict, FrozenSet, List, NamedTuple, Set, Tuple
 
 import loguru
-import networkx
+import networkx as nx
 from networkx import DiGraph
 
 from .interfaces import SerDeGraph
@@ -49,7 +49,7 @@ class DependencyGraph(DiGraph, SerDeGraph):
                 if (prev := OperationEdge(i, j - 1)) in self.nodes:
                     self.add_edge(prev, edge)
 
-        networkx.freeze(self)
+        nx.freeze(self)
 
     def to_json(self) -> Any:
         return {
@@ -90,7 +90,7 @@ class Consumer:
         self._waiting: Set[OperationEdge] = set()
         self._blocked: Set[OperationEdge] = set()
 
-        self._initialize()
+        self._init_sets()
 
         loguru.logger.debug(self.to_json())
 
@@ -105,7 +105,7 @@ class Consumer:
             "blocked": sorted([e.to_json() for e in self.blocked]),
         }
 
-    def _initialize(self) -> None:
+    def _init_sets(self) -> None:
         """
         Initialize the sets.
         """

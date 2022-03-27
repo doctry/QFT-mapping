@@ -6,7 +6,7 @@ import loguru
 from hydra import main
 from omegaconf import DictConfig
 
-from . import DependencyGraph, DeviceGraph
+from . import DependencyGraph, DeviceDriver, DeviceGraph
 
 
 @main(config_path="conf", config_name="qft")
@@ -17,13 +17,11 @@ def app(cfg: DictConfig):
     loguru.logger.remove()
     loguru.logger.add(sys.stderr, level=cfg["level"])
 
-    with open(proj_root / device_path) as f:
-        device = json.load(f)
-        loguru.logger.debug(device)
-        device = DeviceGraph(device)
-        loguru.logger.debug(device)
-        loguru.logger.debug(device.nodes)
-        loguru.logger.debug(device.edges)
+    device = DeviceGraph.from_file(proj_root / device_path)
+    loguru.logger.debug(f"Device: {device.to_json()}")
+
+    driver = DeviceDriver(device)
+    loguru.logger.debug(f"Driver: {driver}")
 
     dep_graph = DependencyGraph(len(device.nodes))
     loguru.logger.debug(dep_graph.to_json())
