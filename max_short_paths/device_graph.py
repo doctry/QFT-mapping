@@ -3,13 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Sequence, Tuple
-from unittest import result
 
 import networkx as nx
 from networkx import Graph
-from numpy import ndarray
 from scipy.sparse import csgraph
-import numpy as np
 from typing_extensions import Self
 
 from .interfaces import SerDeGraph
