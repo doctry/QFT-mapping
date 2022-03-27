@@ -15,6 +15,11 @@ class JsonSerDe(Protocol):
         return str(self.to_json())
 
 
-class SerDeGraph(Graph, JsonSerDe):
+class SerDeGraph(JsonSerDe):
     def to_json(self):
-        return {"directed": self.is_directed, "nodes": self.nodes, "edges": self.edges}
+        directed = getattr(self, "is_directed")
+        return {
+            "directed": directed() if callable(directed) else directed,
+            "nodes": getattr(self, "nodes"),
+            "edges": getattr(self, "edges"),
+        }
