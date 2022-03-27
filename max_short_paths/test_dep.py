@@ -1,4 +1,4 @@
-from . import DependencyGraph, JsonSerDe, OperationEdge
+from . import DependencyGraph, JsonSerDe
 
 
 def test_json():

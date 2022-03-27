@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from ctypes import Union
-from typing import Any, Dict, List, Protocol, TypeVar
+from typing import Any, Dict, List, Protocol
 
 from networkx import Graph
-from typing_extensions import Self
 
 
 class JsonSerDe(Protocol):

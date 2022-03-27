@@ -3,10 +3,10 @@ import sys
 from pathlib import Path
 
 import loguru
-import rich
 from hydra import main
 from omegaconf import DictConfig
-from . import DependencyGraph, DeviceGraph, OperationEdge, SerDeGraph
+
+from . import DependencyGraph, DeviceGraph
 
 
 @main(config_path="conf", config_name="qft")
@@ -30,7 +30,6 @@ def app(cfg: DictConfig):
 
     consumer = dep_graph.consumer
     loguru.logger.debug(consumer)
-
 
 
 if __name__ == "__main__":
