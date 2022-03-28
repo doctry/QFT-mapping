@@ -1,2 +1,2 @@
-from .dev import DeviceDriver,DeviceGraph
-from .dep import DependencyGraph,Consumer,QuBitOp
+from .dep import Consumer, DependencyGraph, QuBitOp
+from .dev import DeviceDriver, DeviceGraph
