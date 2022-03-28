@@ -1,5 +1,4 @@
 import evaluator
 
-from .graph import DependencyGraph, QuBitOp
-from .graph import DeviceDriver, DeviceGraph
+from .graph import DependencyGraph, DeviceDriver, DeviceGraph, QuBitOp
 from .interfaces import JsonSerDe, SerDeGraph
