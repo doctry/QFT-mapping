@@ -9,7 +9,7 @@ from networkx import Graph
 from scipy.sparse import csgraph
 from typing_extensions import Self
 
-from .interfaces import SerDeGraph
+from max_short_paths.interfaces import SerDeGraph
 
 
 class DeviceGraph(Graph, SerDeGraph):
