@@ -1,10 +1,14 @@
 from __future__ import annotations
+from cgitb import small
 
 import json
+from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, DefaultDict, Dict, List, Sequence, Tuple
 
+import loguru
 import networkx as nx
+import numpy as np
 from networkx import Graph
 from scipy.sparse import csgraph
 from typing_extensions import Self
@@ -36,15 +40,25 @@ class DeviceDriver:
     def __init__(self, device: DeviceGraph) -> None:
         self.device = device
         self.mapping = {i: i for i in range(len(device.nodes))}
-        self.paths = nx.shortest_path(self.device)
+        self.paths = self._init_paths()
         self.distance = csgraph.shortest_path(nx.to_scipy_sparse_array(self.device))
         self.midpoints = self._init_midpoints()
+        self.middist = self._get_midpoint_dist()
+
+        assert not self.device.is_directed()
+
+        loguru.logger.debug("Distance: \n {}", np.matrix(self.distance))
+        loguru.logger.debug("Device: \n {}", np.matrix(nx.to_numpy_array(self.device)))
+
+        loguru.logger.debug("Paths: {}", self.paths)
+        loguru.logger.debug("Mid points: {}", self.midpoints)
+        loguru.logger.debug("Mid distance: {}", self.middist)
 
     def __str__(self) -> str:
         return str(self.to_json())
 
     def path(self, source: int, target: int) -> Sequence[int]:
-        return self.paths[source][self.mapping[target]]
+        return self.paths[source, target]
 
     def to_json(self):
         return {
@@ -63,6 +77,18 @@ class DeviceDriver:
         shifted = rotation[1:]
         shifted.append(first)
         return shifted
+
+    def _init_paths(self) -> Dict[Tuple[int, int], List[int]]:
+        shortest_paths = nx.shortest_path(self.device)
+        loguru.logger.debug("Shortest paths: {}", shortest_paths)
+
+        dd = defaultdict(list)
+
+        for (source, target_path) in shortest_paths.items():
+            for (target, path) in target_path.items():
+                dd[source, target] = path
+
+        return dd
 
     def _get_midpoint(self, path: List[int]) -> Tuple[int, int]:
         if not path:
@@ -99,12 +125,25 @@ class DeviceDriver:
 
     def _init_midpoints(self) -> Dict[Tuple[int, int], Tuple[int, int]]:
         results = {}
-        for (source, target_path) in self.paths.items():
-            for (target, path) in target_path.items():
-                assert path[0] == source, [source, path]
-                assert path[-1] == target, [source, path]
 
-                midpoint = self._get_midpoint(path)
-                results[source, target] = midpoint
+        for ((source, target), path) in self.paths.items():
+            assert path[0] == source, [source, path]
+            assert path[-1] == target, [source, path]
+
+            midpoint = self._get_midpoint(path)
+            results[source, target] = midpoint
 
         return results
+
+    def _get_midpoint_dist(self) -> np.ndarray:
+        dim = len(self.device.nodes)
+        dd = np.full([dim, dim], np.inf)
+
+        for ((source, target), (mid_src, mid_tgt)) in self.midpoints.items():
+            smaller = max(
+                self.distance[source, mid_src], self.distance[mid_tgt, target]
+            )
+            dd[source, target] = smaller
+            dd[target, source] = smaller
+
+        return dd
