@@ -1,7 +1,18 @@
 from __future__ import annotations
 
 import typing
-from typing import Any, Dict, FrozenSet, List, NamedTuple, Set, Tuple
+from typing import (
+    Any,
+    Dict,
+    FrozenSet,
+    Iterable,
+    List,
+    NamedTuple,
+    Set,
+    Tuple,
+    Generator,
+)
+from typing_extensions import Self
 
 import loguru
 import networkx as nx
@@ -21,7 +32,7 @@ class OperationEdge(NamedTuple):
         if len(other) != 2:
             return False
 
-        other = OperationEdge(*other)
+        other = OperationEdge.from_tuple(other)
 
         return (
             self.source == other.source
@@ -29,6 +40,10 @@ class OperationEdge(NamedTuple):
             or self.source == other.target
             and self.target == other.source
         )
+
+    @classmethod
+    def from_tuple(cls, tup: Tuple[int, int]) -> Self:
+        return cls(*tup)
 
     def to_json(self) -> List[int]:
         return [self.source, self.target]
@@ -60,6 +75,21 @@ class DependencyGraph(DiGraph, SerDeGraph):
     @property
     def consumer(self) -> Consumer:
         return Consumer(self)
+
+
+class SetView:
+    def __init__(self, set: Set[OperationEdge]) -> None:
+        self._set = set
+
+    def __contains__(self, elem: OperationEdge | Tuple[int, int]) -> bool:
+        return elem in self._set
+
+    def __len__(self) -> int:
+        return len(self._set)
+
+    def __iter__(self) -> Generator[OperationEdge, None, None]:
+        for elem in self._set:
+            yield elem
 
 
 class Consumer:
@@ -133,32 +163,30 @@ class Consumer:
         loguru.logger.debug(f"Blocked: {self.blocked}")
 
     def __len__(self) -> int:
-        return len(self.done) + len(self.ready) + len(self.waiting) + len(self.blocked)
+        return self.finished + self.unfinished
 
     @staticmethod
-    def _freeze(s: Set[OperationEdge]) -> FrozenSet[OperationEdge]:
-        # Using a cast because it's much cheaper than actually creating one.
-        # Also, it's because I always use a type checker so modification would be recorded.
-        return typing.cast(FrozenSet, s)
+    def _freeze(s: Set[OperationEdge]) -> SetView:
+        return SetView(s)
 
     @property
     def graph(self) -> DependencyGraph:
         return self._graph
 
     @property
-    def done(self) -> FrozenSet[OperationEdge]:
+    def done(self) -> SetView:
         return self._freeze(self._done)
 
     @property
-    def ready(self) -> FrozenSet[OperationEdge]:
+    def ready(self) -> SetView:
         return self._freeze(self._ready)
 
     @property
-    def waiting(self) -> FrozenSet[OperationEdge]:
+    def waiting(self) -> SetView:
         return self._freeze(self._waiting)
 
     @property
-    def blocked(self) -> FrozenSet[OperationEdge]:
+    def blocked(self) -> SetView:
         return self._freeze(self._blocked)
 
     @property
@@ -171,14 +199,17 @@ class Consumer:
 
     @staticmethod
     def transfer(
-        node: OperationEdge, source: Set[OperationEdge], target: Set[OperationEdge]
+        node: OperationEdge | Tuple[int, int],
+        source: Set[OperationEdge],
+        target: Set[OperationEdge],
     ) -> None:
         loguru.logger.trace(f"Moving {node} from: {source} to: {target}")
+        node = OperationEdge.from_tuple(node)
         source.remove(node)
         target.add(node)
 
     def visit(self, node: OperationEdge | Tuple[int, int]) -> None:
-        node = OperationEdge(*node)
+        node = OperationEdge.from_tuple(node)
 
         if node not in self.ready:
             raise ValueError(
