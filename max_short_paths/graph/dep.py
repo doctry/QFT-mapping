@@ -7,21 +7,21 @@ import networkx as nx
 from networkx import DiGraph
 from typing_extensions import Self
 
-from .interfaces import SerDeGraph
+from max_short_paths.interfaces import SerDeGraph
 
 
-class OperationEdge(NamedTuple):
+class QuBitOp(NamedTuple):
     source: int
     target: int
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, (OperationEdge, Tuple)):
+        if not isinstance(other, (QuBitOp, Tuple)):
             return False
 
         if len(other) != 2:
             return False
 
-        other = OperationEdge.from_tuple(other)
+        other = QuBitOp.from_tuple(other)
 
         return (
             self.source == other.source
@@ -31,7 +31,9 @@ class OperationEdge(NamedTuple):
         )
 
     @classmethod
-    def from_tuple(cls, tup: Tuple[int, int]) -> Self:
+    def from_tuple(cls, tup: QuBitOp | Tuple[int, int]) -> Self:
+        if isinstance(tup, QuBitOp):
+            return tup
         return cls(*tup)
 
     def to_json(self) -> List[int]:
@@ -44,13 +46,13 @@ class DependencyGraph(DiGraph, SerDeGraph):
 
         for i in range(n - 1):
             for j in range(i + 1, n):
-                edge = OperationEdge(i, j)
+                edge = QuBitOp(i, j)
                 self.add_node(edge)
 
-                if (prev := OperationEdge(i - 1, j)) in self.nodes:
+                if (prev := QuBitOp(i - 1, j)) in self.nodes:
                     self.add_edge(prev, edge)
 
-                if (prev := OperationEdge(i, j - 1)) in self.nodes:
+                if (prev := QuBitOp(i, j - 1)) in self.nodes:
                     self.add_edge(prev, edge)
 
         nx.freeze(self)
@@ -67,16 +69,16 @@ class DependencyGraph(DiGraph, SerDeGraph):
 
 
 class SetView:
-    def __init__(self, set: Set[OperationEdge]) -> None:
+    def __init__(self, set: Set[QuBitOp]) -> None:
         self._set = set
 
-    def __contains__(self, elem: OperationEdge | Tuple[int, int]) -> bool:
-        return elem in self._set
+    def __contains__(self, elem: QuBitOp | Tuple[int, int]) -> bool:
+        return QuBitOp.from_tuple(elem) in self._set
 
     def __len__(self) -> int:
         return len(self._set)
 
-    def __iter__(self) -> Generator[OperationEdge, None, None]:
+    def __iter__(self) -> Generator[QuBitOp, None, None]:
         for elem in self._set:
             yield elem
 
@@ -104,10 +106,10 @@ class Consumer:
 
         # Initially, all nodes are not processed.
         # Except the first node is ready.
-        self._done: Set[OperationEdge] = set()
-        self._ready: Set[OperationEdge] = set()
-        self._waiting: Set[OperationEdge] = set()
-        self._blocked: Set[OperationEdge] = set()
+        self._done: Set[QuBitOp] = set()
+        self._ready: Set[QuBitOp] = set()
+        self._waiting: Set[QuBitOp] = set()
+        self._blocked: Set[QuBitOp] = set()
 
         self._init_sets()
 
@@ -132,7 +134,7 @@ class Consumer:
         if len(self.graph.nodes) == 0:
             return
 
-        first_node = OperationEdge(0, 1)
+        first_node = QuBitOp(0, 1)
         assert first_node in self.graph.nodes, self.graph.nodes
         self._ready.add(first_node)
         loguru.logger.debug(f"Ready: {self.ready}")
@@ -155,7 +157,7 @@ class Consumer:
         return self.finished + self.unfinished
 
     @staticmethod
-    def _freeze(s: Set[OperationEdge]) -> SetView:
+    def _freeze(s: Set[QuBitOp]) -> SetView:
         return SetView(s)
 
     @property
@@ -188,17 +190,17 @@ class Consumer:
 
     @staticmethod
     def transfer(
-        node: OperationEdge | Tuple[int, int],
-        source: Set[OperationEdge],
-        target: Set[OperationEdge],
+        node: QuBitOp | Tuple[int, int],
+        source: Set[QuBitOp],
+        target: Set[QuBitOp],
     ) -> None:
         loguru.logger.trace(f"Moving {node} from: {source} to: {target}")
-        node = OperationEdge.from_tuple(node)
+        node = QuBitOp.from_tuple(node)
         source.remove(node)
         target.add(node)
 
-    def visit(self, node: OperationEdge | Tuple[int, int]) -> None:
-        node = OperationEdge.from_tuple(node)
+    def visit(self, node: QuBitOp | Tuple[int, int]) -> None:
+        node = QuBitOp.from_tuple(node)
 
         if node not in self.ready:
             raise ValueError(
