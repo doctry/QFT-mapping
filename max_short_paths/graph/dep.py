@@ -93,10 +93,6 @@ class Consumer:
     - ready
         Nodes that can be processed in the next turn.
 
-    - waiting
-        Nodes that can be ready if a node is moved from ready to done.
-        This set is checked if it could be ready, so ideally as small as possible.
-
     - blocked
         Nodes that cannot be processed.
     """
@@ -108,7 +104,6 @@ class Consumer:
         # Except the first node is ready.
         self._done: Set[QuBitOp] = set()
         self._ready: Set[QuBitOp] = set()
-        self._waiting: Set[QuBitOp] = set()
         self._blocked: Set[QuBitOp] = set()
 
         self._init_sets()
@@ -122,7 +117,6 @@ class Consumer:
         return {
             "done": sorted([e.to_json() for e in self.done]),
             "ready": sorted([e.to_json() for e in self.ready]),
-            "waiting": sorted([e.to_json() for e in self.waiting]),
             "blocked": sorted([e.to_json() for e in self.blocked]),
         }
 
@@ -139,16 +133,8 @@ class Consumer:
         self._ready.add(first_node)
         loguru.logger.debug(f"Ready: {self.ready}")
 
-        for node in self.graph.adj[first_node]:
-            self._waiting.add(node)
-        loguru.logger.debug(f"Waiting: {self.waiting}")
-        if len(self.graph.nodes) == 1:
-            assert len(self._waiting) == 0, self._waiting
-        else:
-            assert len(self._waiting) == 1, self._waiting
-
         for node in self.graph.nodes:
-            if node in self.ready or node in self.waiting:
+            if node in self.ready:
                 continue
             self._blocked.add(node)
         loguru.logger.debug(f"Blocked: {self.blocked}")
@@ -173,10 +159,6 @@ class Consumer:
         return self._freeze(self._ready)
 
     @property
-    def waiting(self) -> SetView:
-        return self._freeze(self._waiting)
-
-    @property
     def blocked(self) -> SetView:
         return self._freeze(self._blocked)
 
@@ -186,7 +168,7 @@ class Consumer:
 
     @property
     def unfinished(self) -> int:
-        return len(self.ready) + len(self.waiting) + len(self.blocked)
+        return len(self.ready) + len(self.blocked)
 
     @staticmethod
     def transfer(
@@ -212,15 +194,11 @@ class Consumer:
 
         adj_nodes = self.graph.adj[node]
         for node in adj_nodes:
-            # If node is blocked ==> move to waiting.
-            if node in self.blocked:
-                self.transfer(node, self._blocked, self._waiting)
-
-            # If node is waiting ==> move to ready if all in nodes are done.
-            if node in self.waiting and all(
+            # If node is blocked ==> move to ready if all in-nodes are done.
+            if node in self.blocked and all(
                 in_node in self.done for (in_node, _) in self.graph.in_edges(node)
             ):
-                self.transfer(node, self._waiting, self._ready)
+                self.transfer(node, self._ready, self._ready)
 
         loguru.logger.debug(self)
         assert len(self) == len(self.graph.nodes)
