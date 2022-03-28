@@ -17,16 +17,16 @@ def app(cfg: DictConfig):
     loguru.logger.add(sys.stderr, level=cfg["level"])
 
     device = DeviceGraph.from_file(proj_root / device_path)
-    loguru.logger.debug(f"Device: {device.to_json()}")
+    loguru.logger.debug("Device: {}", device.to_json())
 
     driver = DeviceDriver(device)
-    loguru.logger.debug(f"Driver: {driver}")
+    loguru.logger.debug("Driver: {}", driver)
 
     dep_graph = DependencyGraph(len(device.nodes))
-    loguru.logger.debug(dep_graph.to_json())
+    loguru.logger.debug("Dependency graph: {}", dep_graph.to_json())
 
     consumer = dep_graph.consumer
-    loguru.logger.debug(consumer)
+    loguru.logger.debug("Consumer: {}", consumer)
 
 
 if __name__ == "__main__":
