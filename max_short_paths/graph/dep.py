@@ -85,7 +85,7 @@ class SetView:
 
 class Consumer:
     """
-    Each node in the consumer must be in one of the four sets:
+    Each node in the consumer must be in one of the three sets:
 
     - done
         Nodes that are already processed.
