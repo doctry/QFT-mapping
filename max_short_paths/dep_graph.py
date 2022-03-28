@@ -1,22 +1,11 @@
 from __future__ import annotations
 
-import typing
-from typing import (
-    Any,
-    Dict,
-    FrozenSet,
-    Iterable,
-    List,
-    NamedTuple,
-    Set,
-    Tuple,
-    Generator,
-)
-from typing_extensions import Self
+from typing import Any, Dict, Generator, List, NamedTuple, Set, Tuple
 
 import loguru
 import networkx as nx
 from networkx import DiGraph
+from typing_extensions import Self
 
 from .interfaces import SerDeGraph
 
