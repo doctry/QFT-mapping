@@ -1,10 +1,9 @@
 from __future__ import annotations
-from cgitb import small
 
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 import loguru
 import networkx as nx
