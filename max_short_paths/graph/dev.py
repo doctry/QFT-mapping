@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 import json
-from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
@@ -15,6 +14,7 @@ from scipy.sparse import csgraph
 from typing_extensions import Self
 
 from max_short_paths.interfaces import SerDeGraph
+
 from .dep import QuBitOp
 
 
