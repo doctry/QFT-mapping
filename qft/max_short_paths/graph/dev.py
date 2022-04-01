@@ -15,8 +15,6 @@ from numpy import ndarray
 from scipy.sparse import csgraph
 from typing_extensions import Self
 
-from qft.evaluator.physical.qubits import Qubit
-
 from .dep import DependencyGraph, QuBitOp
 
 
