@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import random
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, List, Sequence, Tuple
 
@@ -12,11 +13,10 @@ from networkx import Graph
 from numpy import ndarray
 from scipy.sparse import csgraph
 from typing_extensions import Self
-import random
 
 from max_short_paths.interfaces import SerDeGraph
 
-from .dep import QuBitOp, DependencyGraph
+from .dep import DependencyGraph, QuBitOp
 
 
 class DeviceGraph(Graph, SerDeGraph):
@@ -212,15 +212,14 @@ class DeviceDriver:
 
         return results
 
+
 class BaselineSolver:
     def __init__(self, device: Device, dependency: DependencyGraph) -> None:
         self.device = device
         self.dependency = dependency
         self.safe_interval = max(self.device.middist)
-    
+
     def __iter__(self) -> Generator[QuBitOp, None, None]:
         while not self.device.terminate:
             node = random.choice(self.dependency.ready)
             yield node
-    
-    
