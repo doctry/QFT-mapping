@@ -4,10 +4,9 @@ from typing import Any, Dict, Generator, List, NamedTuple, Set, Tuple
 
 import loguru
 import networkx as nx
+from max_short_paths.interfaces import SerDeGraph
 from networkx import DiGraph
 from typing_extensions import Self
-
-from max_short_paths.interfaces import SerDeGraph
 
 
 class QuBitOp(NamedTuple):

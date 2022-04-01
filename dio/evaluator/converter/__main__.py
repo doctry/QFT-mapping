@@ -1,9 +1,8 @@
 import json
 from argparse import ArgumentParser, Namespace
 
-from hydra import main
-
 from evaluator import Device
+from hydra import main
 
 
 def main(flags: Namespace):
