@@ -15,6 +15,8 @@ from numpy import ndarray
 from scipy.sparse import csgraph
 from typing_extensions import Self
 
+from qft.evaluator.physical.qubits import Qubit
+
 from .dep import DependencyGraph, QuBitOp
 
 
@@ -213,12 +215,24 @@ class DeviceDriver:
 
 
 class BaselineSolver:
-    def __init__(self, device: DeviceGraph, dependency: DependencyGraph) -> None:
-        self.device = device
-        self.dependency = dependency
-        self.safe_interval = max(self.device.middist)
+    def __init__(self, driver: DeviceDriver, dep: DependencyGraph) -> None:
+        self.driver = driver
+        self.dep = dep
+        self.safe_interval = max(self.driver.middist)
 
     def __iter__(self) -> Generator[QuBitOp, None, None]:
-        while not self.device.terminate:
-            node = random.choice(self.dependency.ready)
+        while not self.dev.terminate:
+            node = random.choice(self.dep.ready)
             yield node
+
+
+class GreedySolver:
+    def __init__(self, driver: DeviceDriver, dep: DependencyGraph) -> None:
+        self.driver = driver
+        self.dep = dep
+
+    def __iter__(self) -> Generator[QuBitOp, None, None]:
+        while not self.dev.terminate:
+            nodes = self.dep.ready
+            min_node = min(nodes, self.driver.perceived_distance)
+            yield min_node
