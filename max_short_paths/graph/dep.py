@@ -170,6 +170,10 @@ class Consumer:
     def unfinished(self) -> int:
         return len(self.ready) + len(self.blocked)
 
+    @property
+    def terminate(self) -> bool:
+        return self.unfinished == 0
+
     @staticmethod
     def transfer(
         node: QuBitOp | Tuple[int, int],
