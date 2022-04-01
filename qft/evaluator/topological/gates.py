@@ -1,17 +1,20 @@
+from __future__ import annotations
+
+
 class Gate:
     def __init__(
         self,
         id: int,
         qubits: tuple[int, int],
-        next: list[int or None],
-        prev: list[int or None],
+        next: list[int | None],
+        prev: list[int | None],
     ):
         assert id > -1
         self.id = id
 
         assert qubits[0] > -1 and qubits[1] > -1
         self.qubits = qubits
-        sort(self.qubits)
+        self.qubits = sorted(self.qubits)
 
         self.next = [n for n in next if n is not None]
 

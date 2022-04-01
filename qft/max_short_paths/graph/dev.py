@@ -213,7 +213,7 @@ class DeviceDriver:
 
 
 class BaselineSolver:
-    def __init__(self, device: Device, dependency: DependencyGraph) -> None:
+    def __init__(self, device: DeviceGraph, dependency: DependencyGraph) -> None:
         self.device = device
         self.dependency = dependency
         self.safe_interval = max(self.device.middist)
