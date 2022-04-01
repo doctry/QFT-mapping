@@ -29,7 +29,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
-include = ["max_short_paths"]
+include = ["qft"]
 exclude = [
     "**/node_modules",
     "**/__pycache__",

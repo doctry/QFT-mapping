@@ -14,7 +14,7 @@ class QFTTopo:
                 next_1 = None if j == i - 1 else (count + 1)
                 prev_0 = None if j == i - 1 else (count + 1 - i)
                 prev_1 = None if j == 0 else (count - 1)
-                gate = Gate(count, (j, i), (next_0, next_1), (prev_0, prev_1))
+                gate = Gate(count, (j, i), [next_0, next_1], [prev_0, prev_1])
                 self.gates.append(gate)
                 count += 1
 

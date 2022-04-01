@@ -1,5 +1,6 @@
 import json
 import sys
+from typing import Dict
 
 from rich import traceback
 
@@ -101,14 +102,13 @@ if __name__ == "__main__":
     R_cycle = int(sys.argv[4])
     Swap_cycle = int(sys.argv[5])
 
-    cycle: dict[int] = {"R": R_cycle, "Swap": Swap_cycle}
+    cycle: Dict[str, int] = {"R": R_cycle, "Swap": Swap_cycle}
 
-    operations = output["Operations"]
+    ops = output["Operations"]
     final_cost: int = output["final_cost"]
 
     operations: list[Operation] = [
-        Operation(o["Operator"], tuple(o["Qubits"]), tuple(o["duration"]))
-        for o in operations
+        Operation(o["Operator"], tuple(o["Qubits"]), tuple(o["duration"])) for o in ops
     ]
 
     checker = Checker(device, qft_topo, operations, cycle)
