@@ -1,7 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Iterable, Mapping, Protocol, Tuple
-
-from networkx import adjacne
+from typing import Any, Iterable, Mapping, Protocol, Tuple
 
 from qft.common import QubitOp
 

@@ -3,9 +3,9 @@ from __future__ import annotations
 import itertools
 import json
 import random
+import typing
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, List, Sequence, Tuple
-import typing
 
 import loguru
 import networkx as nx
@@ -15,9 +15,8 @@ from networkx import Graph
 from numpy import ndarray
 from scipy.sparse import csgraph
 from typing_extensions import Self
-from qft.common.ops import QubitOp
 
-from qft.dependencies.interfaces import Consumer
+from qft.common.ops import QubitOp
 
 from .dep import DependencyGraph, QuBitOp
 
