@@ -1,1 +1,1 @@
-from .interfaces import Dependency
+from .interfaces import Consumer, Dependency

@@ -1,5 +1,9 @@
-from typing import Protocol
+from abc import abstractmethod
+from typing import Iterable, Protocol
 
 
 class Device(Protocol):
-    pass
+    @property
+    @abstractmethod
+    def nodes(self) -> Iterable:
+        pass
