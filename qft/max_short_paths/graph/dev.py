@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import json
 import random
+import typing
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, List, Sequence, Tuple
 
@@ -14,6 +15,8 @@ from networkx import Graph
 from numpy import ndarray
 from scipy.sparse import csgraph
 from typing_extensions import Self
+
+from qft.common.ops import QubitOp
 
 from .dep import DependencyGraph, QuBitOp
 
@@ -219,8 +222,9 @@ class BaselineSolver:
         self.safe_interval = max(self.driver.middist)
 
     def __iter__(self) -> Generator[QuBitOp, None, None]:
-        while not self.dev.terminate:
-            node = random.choice(self.dep.ready)
+        consumer = self.dep.consumer
+        while not consumer.terminate:
+            node = random.choice(consumer.ready)
             yield node
 
 
@@ -230,7 +234,9 @@ class GreedySolver:
         self.dep = dep
 
     def __iter__(self) -> Generator[QuBitOp, None, None]:
-        while not self.dev.terminate:
-            nodes = self.dep.ready
-            min_node = min(nodes, self.driver.perceived_distance)
-            yield min_node
+        consumer = self.dep.consumer
+        while not consumer.terminate:
+            nodes = consumer.ready
+            consumer.proc
+            min_node = min(nodes, key=self.driver.perceived_distance)
+            yield typing.cast(QubitOp, min_node)
