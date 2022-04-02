@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from typing import Mapping, Protocol
 
 from qft.devices import Device
