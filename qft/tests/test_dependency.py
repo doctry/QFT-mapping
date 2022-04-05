@@ -10,7 +10,6 @@ def test_dep() -> None:
     function(QFTDependency(2))
 
 
-
 def test_dep_1() -> None:
     dep = QFTDependency(1).json()
 
