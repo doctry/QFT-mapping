@@ -2,12 +2,9 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from ctypes import Union
-from typing import Any, Dict, List, Protocol, Union
+from typing import Any, Dict, List, Mapping, Protocol, Union
 
-# While the correct type definition should be:
-# Union[None, bool, int, float, str, List["Json"], Dict[str, "Json"]]
-# It is not supported by the type checker.
-Json = Union[None, bool, int, float, str, List[Any], Dict[str, Any]]
+Json = Union[None, bool, int, float, str, List["Json"], Mapping[str, "Json"]]
 
 
 class JsonSerDe(Protocol):
