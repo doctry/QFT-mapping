@@ -1,1 +1,1 @@
-from .interfaces import Driver
+from .interfaces import DeviceState
