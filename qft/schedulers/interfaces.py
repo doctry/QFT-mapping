@@ -1,17 +1,19 @@
 from abc import abstractmethod
-from typing import Any, Dict, List, Protocol, Sequence
+from typing import Any, Dict, List, Protocol, Sequence, Tuple
 
-from qft.common import QubitOp
+from qft.common import Compiler, QubitOp
 from qft.dependencies import Dependency
+from qft.devices.interfaces import Device
 
 
-class Scheduler(Protocol):
+class Scheduler(Compiler, Protocol):
     dependency: Dependency
+    device: Device
 
     @abstractmethod
-    def order(self) -> Sequence[QubitOp]:
+    def schedule(self) -> Sequence[QubitOp]:
         ...
 
-    @abstractmethod
-    def instructions(self) -> List[Dict[str, Any]]:
-        ...
+    def compile(self) -> List[Dict[str, Any]]:
+        schedule = self.schedule()
+        return sum((op.compile(self) for op in schedule), [])

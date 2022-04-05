@@ -1,4 +1,5 @@
 import loguru
+import networkx as nx
 from networkx import DiGraph
 
 from qft.common import QubitOp
@@ -15,6 +16,8 @@ class QFTDependency(DiGraph, Dependency):
                 self.__add_dependency(i, j)
 
         loguru.logger.debug(self.json())
+
+        nx.freeze(self)
 
     def __add_dependency(self, i: int, j: int) -> None:
         loguru.logger.trace("__add_dependency(i={}, j={})", i, j)
