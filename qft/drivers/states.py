@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Dict, List
+from typing import List
 
 from qft.devices import Device
 

@@ -1,4 +1,4 @@
-from typing import Mapping, Protocol, Sequence
+from typing import Protocol, Sequence
 
 from qft.devices import Device
 
