@@ -1,5 +1,4 @@
 import copy
-from abc import abstractmethod
 from typing import List, Protocol
 
 from networkx import Graph
