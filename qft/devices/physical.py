@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+import networkx as nx
 from networkx import Graph
 from typing_extensions import Self
 
@@ -27,6 +28,8 @@ class PhysicalDevice(Graph, Device, JsonSerDe):
 
             for adj in adj_list:
                 self.add_edge(id, adj)
+
+        nx.freeze(self)
 
     @property
     def device(self) -> Graph:

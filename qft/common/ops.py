@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, Mapping, Protocol, Sequence
+from typing import Any, Dict, List, Mapping, Protocol, Sequence
 
 from .json import Json, JsonSerDe
 
@@ -19,7 +19,7 @@ class QubitOp(JsonSerDe):
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "tag", tag)
 
-    def compile(self, compiler: Compiler) -> Sequence[Mapping[str, Any]]:
+    def compile(self, compiler: Compiler) -> List[Dict[str, Any]]:
         return compiler.compile(self)
 
     def json(self) -> Json:
@@ -33,5 +33,5 @@ class QubitOp(JsonSerDe):
 
 class Compiler(Protocol):
     @abstractmethod
-    def compile(self, op: QubitOp) -> Sequence[Mapping[str, Any]]:
+    def compile(self, op: QubitOp) -> List[Dict[str, Any]]:
         ...
