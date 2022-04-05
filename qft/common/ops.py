@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Protocol, Sequence
+from typing import Any, Dict, List, Protocol
 
 from .json import Json, JsonSerDe
 

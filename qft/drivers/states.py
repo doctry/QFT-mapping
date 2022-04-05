@@ -1,7 +1,6 @@
 import copy
-from typing import Any, Dict, List, Sequence
+from typing import List
 
-from qft.common import Compiler, QubitOp
 from qft.devices import Device
 
 from .interfaces import DeviceDriver

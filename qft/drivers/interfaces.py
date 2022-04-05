@@ -1,6 +1,5 @@
-from typing import List, Protocol, Sequence
+from typing import List, Protocol
 
-from qft.common import Compiler
 from qft.devices import Device
 
 
