@@ -1,8 +1,7 @@
-from typing import List, Mapping, Sequence
+from typing import Mapping, Sequence
 
 import networkx as nx
 
-from qft.common.ops import QubitOp
 from qft.dependencies import Dependency
 from qft.devices import Device
 
