@@ -2,9 +2,8 @@ import json
 import sys
 from typing import Dict
 
-from rich import traceback
-
 from physical import Device, Operation, Qubit
+from rich import traceback
 from topological import Gate, QFTTopo
 
 traceback.install()
