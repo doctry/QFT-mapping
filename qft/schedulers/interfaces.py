@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, List, Protocol, Sequence
+from typing import Protocol, Sequence
 
 from qft.common import QubitOp
 from qft.dependencies import Dependency
