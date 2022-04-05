@@ -1,8 +1,8 @@
-from typing import Mapping, Protocol
+from typing import Mapping, Protocol, Sequence
 
 from qft.devices import Device
 
 
-class DeviceState(Protocol):
+class DeviceDriver(Protocol):
     device: Device
-    mapping: Mapping[int, int]
+    mapping: Sequence[int]

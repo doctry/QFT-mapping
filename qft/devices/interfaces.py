@@ -1,7 +1,11 @@
+from abc import abstractmethod
 from typing import Protocol
 
 from networkx import Graph
 
 
 class Device(Protocol):
-    graph: Graph
+    @property
+    @abstractmethod
+    def device(self) -> Graph:
+        ...
