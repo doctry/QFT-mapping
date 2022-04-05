@@ -1,4 +1,4 @@
-from .common import Compiler, QubitOp
+from .common import QubitOp
 from .dependencies import Consumer, Dependency, QFTDependency
 from .devices import Device, PhysicalDevice
 from .schedulers import Scheduler

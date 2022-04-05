@@ -19,9 +19,6 @@ class QubitOp(JsonSerDe):
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "tag", tag)
 
-    def compile(self, compiler: Compiler) -> List[Dict[str, Any]]:
-        return compiler.compile(self)
-
     def json(self) -> Json:
         result = {"source": self.source, "target": self.target}
 
@@ -29,9 +26,3 @@ class QubitOp(JsonSerDe):
             result |= {"tag": self.tag}
 
         return result
-
-
-class Compiler(Protocol):
-    @abstractmethod
-    def compile(self, op: QubitOp) -> List[Dict[str, Any]]:
-        ...
