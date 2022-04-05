@@ -315,6 +315,9 @@ std::vector<Operation> device::Device::traceback(device::Qubit &q0, device::Qubi
 
     unsigned R_time = std::max(q0.get_cost(), q1.get_cost());
     Operation R_gate(Operator::R, std::make_tuple(q0.get_id(), q1.get_id()), std::make_tuple(R_time, R_time + args.R_CYCLE));
+    if(q0.get_id() == 15 && q1.get_id() == 24){
+        std::cout << "this";
+    }
     ops.push_back(R_gate);
 
     unsigned trace_0 = q0.get_id();
@@ -342,9 +345,9 @@ std::vector<Operation> device::Device::traceback(device::Qubit &q0, device::Qubi
         trace_1 = trace_pred_1;
     }
 
+    std::sort(ops.begin(), ops.end(), op_order);
     for (unsigned i = 0; i < ops.size(); ++i)
     {
-        std::sort(ops.begin(), ops.end(), op_order);
         apply_gate(ops[i]);
     }
 

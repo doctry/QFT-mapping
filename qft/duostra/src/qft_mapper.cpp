@@ -35,7 +35,6 @@ void QFTMapper::assign_gate(topo::Gate &gate)
         topo_qubit.set_location(i);
     }
     #ifdef DEBUG
-    _device.print_operations(std::cout);
     std::cout << "Gate: Q" << std::get<0>(gate.get_qubits()) << " Q" << std::get<1>(gate.get_qubits()) << "\n";
     _device.print_device_state(std::cout);
     #endif
