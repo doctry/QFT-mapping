@@ -4,8 +4,8 @@ from typing import Dict
 
 from rich import traceback
 
-from .physical import Device, Operation, Qubit
-from .topological import Gate, QFTTopo
+from physical import Device, Operation, Qubit
+from topological import Gate, QFTTopo
 
 traceback.install()
 
@@ -116,3 +116,5 @@ if __name__ == "__main__":
     test_cost = checker.test_operations()
 
     assert test_cost == final_cost, (test_cost, final_cost)
+
+    print("pass test")
