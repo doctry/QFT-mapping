@@ -1,5 +1,3 @@
-from logging import logMultiprocessing
-
 import loguru
 from networkx import DiGraph
 
