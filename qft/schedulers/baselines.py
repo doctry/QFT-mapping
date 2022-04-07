@@ -1,16 +1,28 @@
+import random
 from typing import Sequence
+
+import numpy as np
 
 from qft.common import QubitOp
 from qft.dependencies import Dependency
 from qft.devices import Device
 
-from .interfaces import Scheduler
+from .distances import APSPScheduler
 
 
-class BaseLineScheduler(Scheduler):
+class BaseLineScheduler(APSPScheduler):
     def __init__(self, dep: Dependency, dev: Device) -> None:
-        self.dep = dep
-        self.dev = dev
+        super().__init__(dep, dev)
+
+        self.max_dist = np.max(self.distances)
 
     def schedule(self) -> Sequence[QubitOp]:
-        return super().schedule()
+        consumer = self.dep.consumer()
+        history = []
+
+        while not consumer.terminate:
+            available = random.choice(tuple(consumer.ready))
+            consumer.process(available)
+            history.append(available)
+
+        return history
