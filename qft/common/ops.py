@@ -18,6 +18,13 @@ class QubitOp(JsonSerDe):
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "tag", tag)
 
+        if source >= target:
+            raise ValueError(
+                f"Got source: {source} >= target: {target}."
+                " "
+                "Source should always be smaller than target."
+            )
+
     def json(self) -> Json:
         result = {"source": self.source, "target": self.target}
 
