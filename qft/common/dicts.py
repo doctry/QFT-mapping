@@ -1,5 +1,3 @@
-from operator import getitem, setitem
-from sre_constants import ANY
 from typing import Any, Callable, Dict, Generic, TypeVar
 
 K = TypeVar("K")
