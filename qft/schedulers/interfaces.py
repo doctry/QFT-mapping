@@ -1,10 +1,9 @@
 from abc import abstractmethod
 from typing import Protocol, Sequence
 
-from qft.common import QubitOp
-from qft.common.json import Json
-from qft.dependencies import Dependency
-from qft.devices.interfaces import Device
+from qft.common import CompiledProgram, Json, QubitOp
+from qft.deps import Dependency
+from qft.devs import Device
 
 
 class Scheduler(Protocol):
@@ -12,11 +11,5 @@ class Scheduler(Protocol):
     dev: Device
 
     @abstractmethod
-    def schedule(self) -> Sequence[QubitOp]:
-        ...
-
-
-class Compiler(Scheduler, Protocol):
-    @abstractmethod
-    def compile(self) -> Json:
+    def schedule(self) -> CompiledProgram:
         ...

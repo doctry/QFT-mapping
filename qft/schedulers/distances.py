@@ -6,8 +6,8 @@ import numpy as np
 from numpy import ndarray
 
 from qft.common import QubitOp
-from qft.dependencies import Dependency
-from qft.devices import Device
+from qft.deps import Dependency
+from qft.devs import Device
 
 from .interfaces import Scheduler
 
