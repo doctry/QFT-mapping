@@ -4,13 +4,13 @@ from typing import Sequence
 import numpy as np
 
 from qft.common import QubitOp
-from qft.dependencies import Dependency
-from qft.devices import Device
+from qft.deps import Dependency
+from qft.devs import Device
 
 from .distances import APSPScheduler
 
 
-class BaseLineScheduler(APSPScheduler):
+class RandomScheduler(APSPScheduler):
     def __init__(self, dep: Dependency, dev: Device) -> None:
         super().__init__(dep, dev)
 
@@ -21,8 +21,13 @@ class BaseLineScheduler(APSPScheduler):
         history = []
 
         while not consumer.terminate:
-            available = random.choice(tuple(consumer.ready))
+            available = consumer.ready.pop()
             consumer.process(available)
             history.append(available)
 
         return history
+
+
+class GreedyScheduler(APSPScheduler):
+    def __init__(self, dep: Dependency, dev: Device) -> None:
+        super().__init__(dep, dev)

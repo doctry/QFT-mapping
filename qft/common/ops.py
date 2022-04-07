@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import List, Tuple
 
 from .json import Json, JsonSerDe
 
@@ -24,3 +25,29 @@ class QubitOp(JsonSerDe):
             result |= {"tag": self.tag}
 
         return result
+
+
+@dataclass
+class CompiledOp(JsonSerDe):
+    operator: str
+    qubits: Tuple[int, int]
+    duration: Tuple[int, int]
+
+    def json(self) -> Json:
+        return {
+            "Operator": self.operator,
+            "Qubits": list(self.qubits),
+            "duration": list(self.duration),
+        }
+
+
+@dataclass
+class CompiledProgram(JsonSerDe):
+    operations: List[CompiledOp]
+    cost: int
+
+    def json(self) -> Json:
+        return {
+            "Operations": [op.json() for op in self.operations],
+            "final_cost": self.cost,
+        }
