@@ -1,11 +1,9 @@
 from abc import ABCMeta, abstractmethod
-from turtle import distance
-from typing import Dict, List, Mapping, Protocol, Sequence, Tuple
+from typing import Dict, Sequence, Tuple
 
 import networkx as nx
 import numpy as np
 from numpy import ndarray
-from scipy.sparse import csgraph
 
 from qft.common import QubitOp
 from qft.dependencies import Dependency
