@@ -1,10 +1,8 @@
-from typing import Sequence, List
+from typing import List
 
 import numpy as np
 
-from qft.common import QubitOp
-from qft.common import CompiledProgram
-from qft.common import CompiledOp
+from qft.common import CompiledProgram, QubitOp
 from qft.deps import Dependency
 from qft.devs import Device
 

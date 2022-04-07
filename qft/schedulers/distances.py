@@ -5,8 +5,7 @@ import networkx as nx
 import numpy as np
 from numpy import ndarray
 
-from qft.common import QubitOp
-from qft.common import CompiledOp
+from qft.common import CompiledOp, QubitOp
 from qft.deps import Dependency
 from qft.devs import Device
 
