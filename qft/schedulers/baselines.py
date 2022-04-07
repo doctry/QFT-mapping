@@ -1,5 +1,4 @@
-import random
-from typing import List, Sequence
+from typing import Sequence, List
 
 import numpy as np
 
@@ -25,9 +24,8 @@ class BaselineScheduler(APSPScheduler):
         current_cost = 0
 
         for qop in history:
-            ops = self.execute(qop)
+            ops = self.execute(qop, current_cost)
             program.extend(ops)
-            
 
         raise NotImplementedError
 
@@ -41,7 +39,7 @@ class BaselineScheduler(APSPScheduler):
             history.append(available)
 
         assert consumer.terminate, consumer
-        assert len(history) == len(self.dep), history
+        assert len(history) == len(self.dep.dependency.nodes), history
         return history
 
 

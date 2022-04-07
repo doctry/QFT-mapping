@@ -31,13 +31,15 @@ class APSPScheduler(Scheduler, ABCMeta):
 
         if len(path) <= 1:
             raise ValueError(
-                f"This is impossible. The path between node {i} and {j} is {path}."
+                f"This is impossible. The path between node {qop.source} and {qop.target} is {path}."
             )
 
-        head = path[: len(qop) // 2]
-        tail = path[len(qop) // 2 :]
+        head = path[: len(path) // 2]
+        tail = path[len(path) // 2 :]
 
         head_swaps = []
+
+        raise NotImplementedError
 
     @staticmethod
     def _to_swaps(sequence: Sequence[int]) -> List[CompiledOp]:
