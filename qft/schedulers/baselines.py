@@ -23,8 +23,9 @@ class BaselineScheduler(APSPScheduler):
         cost = 0
 
         for qop in history:
-            (ops, cost) = self.execute(qop, cost)
+            (ops, _) = self.execute(qop, cost)
             program.extend(ops)
+            cost += self.max_cost
 
         return CompiledProgram(program, cost)
 
@@ -45,3 +46,15 @@ class BaselineScheduler(APSPScheduler):
 class SynchronousScheduler(BaselineScheduler):
     def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
         super().__init__(dep, dev, timing)
+
+    def schedule(self) -> CompiledProgram:
+        history = self._history()
+
+        program = []
+        cost = 0
+
+        for qop in history:
+            (ops, cost) = self.execute(qop, cost)
+            program.extend(ops)
+
+        return CompiledProgram(program, cost)
