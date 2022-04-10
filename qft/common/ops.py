@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Tuple
 
+from qft import common
+
 from .json import Json, JsonSerDe
 
 
@@ -27,25 +29,28 @@ class QubitOp(JsonSerDe):
 
     def json(self) -> Json:
         result = {"source": self.source, "target": self.target}
-
-        if self.tag is not None:
-            result |= {"tag": self.tag}
-
+        common.union_if(result, tag=self.tag)
         return result
 
 
 @dataclass
 class CompiledOp(JsonSerDe):
     operator: str
-    qubits: Tuple[int, int]
-    duration: Tuple[int, int]
+    logical: Tuple[int, int] | None = None
+    physical: Tuple[int, int] | None = None
+    duration: Tuple[int, int] | None = None
 
     def json(self) -> Json:
-        return {
-            "Operator": self.operator,
-            "Qubits": list(self.qubits),
-            "duration": list(self.duration),
-        }
+        result = {"Operator": self.operator}
+
+        common.union_if(
+            result,
+            logical=self.logical,
+            physical=self.physical,
+            duration=self.duration,
+        )
+
+        return result
 
 
 @dataclass
