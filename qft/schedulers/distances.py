@@ -6,26 +6,29 @@ import numpy as np
 from numpy import ndarray
 
 from qft.common import CompiledOp, QubitOp
+from qft.common.ops import CompiledProgram
 from qft.deps import Dependency
 from qft.devs import Device
 
-from .interfaces import Scheduler
+from .interfaces import Scheduler, Timing
 
 
 class APSPScheduler(Scheduler, ABCMeta):
-    def __init__(self, dep: Dependency, dev: Device) -> None:
+    def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
         self.dep = dep
         self.dev = dev
+
+        self.timing = timing
 
         (self.shortest_paths, self.distances) = self._shortest_paths()
 
         self._check_symmetry()
 
     @abstractmethod
-    def schedule(self) -> Sequence[QubitOp]:
+    def schedule(self) -> CompiledProgram:
         ...
 
-    def execute(self, qop: QubitOp, start: int) -> List[CompiledOp]:
+    def execute(self, qop: QubitOp, wall: int) -> Tuple[List[CompiledOp], int]:
         path = self.shortest_paths[qop.source, qop.target]
 
         if len(path) <= 1:
@@ -36,17 +39,34 @@ class APSPScheduler(Scheduler, ABCMeta):
         head = path[: len(path) // 2]
         tail = path[len(path) // 2 :]
 
-        head_swaps = []
+        (head_swp, head_wall) = self._to_swaps(head, wall)
+        (tail_swp, tail_wall) = self._to_swaps(tail, wall)
 
-        raise NotImplementedError
+        swp_end_wall = max(head_wall, tail_wall)
+        op_end_wall = swp_end_wall + self.timing.operation
 
-    @staticmethod
-    def _to_swaps(sequence: Sequence[int]) -> List[CompiledOp]:
+        operation = CompiledOp(
+            operator="R",
+            physical=(head[-1], tail[0]),
+            duration=(swp_end_wall, op_end_wall),
+        )
+
+        self.dev.rotate(head, right=False)
+        self.dev.rotate(tail, right=True)
+
+        return ([*head_swp, operation, *tail_swp], op_end_wall)
+
+    def _to_swaps(
+        self, sequence: Sequence[int], wall: int
+    ) -> Tuple[List[CompiledOp], int]:
         ops = []
-        for (s, t) in zip(sequence[:-1], sequence[1:]):
-            ops.append(CompiledOp(operator="swap"))
+        swap = self.timing.swap
+        for (i, (s, t)) in enumerate(zip(sequence[:-1], sequence[1:])):
+            duration = (wall + i * swap, wall + (i + 1) * swap)
+            ops.append(CompiledOp(operator="Swap", physical=(s, t), duration=duration))
+        return (ops, wall + len(sequence) * swap)
 
-    def _shortest_paths(self) -> Tuple[Dict[Tuple[int, int], Sequence[int]], ndarray]:
+    def _shortest_paths(self) -> Tuple[Dict[Tuple[int, int], List[int]], ndarray]:
         sp = nx.shortest_path(self.dev.device)
 
         dimension = len(self.dev.device.nodes)

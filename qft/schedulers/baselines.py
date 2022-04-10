@@ -7,11 +7,12 @@ from qft.deps import Dependency
 from qft.devs import Device
 
 from .distances import APSPScheduler
+from .interfaces import Timing
 
 
 class BaselineScheduler(APSPScheduler):
-    def __init__(self, dep: Dependency, dev: Device) -> None:
-        super().__init__(dep, dev)
+    def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
+        super().__init__(dep, dev, timing)
 
         self.max_cost = np.max(self.distances)
 
@@ -19,13 +20,13 @@ class BaselineScheduler(APSPScheduler):
         history = self._history()
 
         program = []
-        current_cost = 0
+        cost = 0
 
         for qop in history:
-            ops = self.execute(qop, current_cost)
+            (ops, cost) = self.execute(qop, cost)
             program.extend(ops)
 
-        raise NotImplementedError
+        return CompiledProgram(program, cost)
 
     def _history(self) -> List[QubitOp]:
         consumer = self.dep.consumer()
@@ -42,5 +43,5 @@ class BaselineScheduler(APSPScheduler):
 
 
 class SynchronousScheduler(BaselineScheduler):
-    def __init__(self, dep: Dependency, dev: Device) -> None:
-        super().__init__(dep, dev)
+    def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
+        super().__init__(dep, dev, timing)
