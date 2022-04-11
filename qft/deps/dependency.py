@@ -33,7 +33,7 @@ class QFTDependency(DiGraph, Dependency):
         self.add_edge(QubitOp(i, j - 1), current)
 
     @property
-    def dependency(self) -> DiGraph:
+    def g(self) -> DiGraph:
         return self
 
     def consumer(self) -> Consumer:

@@ -39,7 +39,7 @@ class BaselineScheduler(APSPScheduler):
             history.append(available)
 
         assert consumer.terminate, consumer
-        assert len(history) == len(self.dep.dependency.nodes), history
+        assert len(history) == len(self.dep.g.nodes), history
         return history
 
 

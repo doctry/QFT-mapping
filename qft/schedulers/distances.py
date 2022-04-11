@@ -5,8 +5,7 @@ import networkx as nx
 import numpy as np
 from numpy import ndarray
 
-from qft.common import CompiledOp, QubitOp
-from qft.common.ops import CompiledProgram
+from qft.common import CompiledOp, CompiledProgram, QubitOp
 from qft.deps import Dependency
 from qft.devs import Device
 
@@ -17,7 +16,6 @@ class APSPScheduler(Scheduler, ABCMeta):
     def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
         self.dep = dep
         self.dev = dev
-
         self.timing = timing
 
         (self.shortest_paths, self.distances) = self._shortest_paths()
@@ -67,9 +65,9 @@ class APSPScheduler(Scheduler, ABCMeta):
         return (ops, wall + len(sequence) * swap)
 
     def _shortest_paths(self) -> Tuple[Dict[Tuple[int, int], List[int]], ndarray]:
-        sp = nx.shortest_path(self.dev.device)
+        sp = nx.shortest_path(self.dev.g)
 
-        dimension = len(self.dev.device.nodes)
+        dimension = len(self.dev.g.nodes)
         distances = np.zeros(shape=[dimension, dimension], dtype=float)
 
         shortest_paths = {}

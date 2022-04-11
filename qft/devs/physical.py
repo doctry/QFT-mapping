@@ -8,6 +8,7 @@ import networkx as nx
 from networkx import Graph
 from typing_extensions import Self
 
+from qft import common
 from qft.common import Json, JsonSerDe
 
 from .interfaces import Device
@@ -32,7 +33,7 @@ class PhysicalDevice(Graph, Device, JsonSerDe):
         nx.freeze(self)
 
     @property
-    def device(self) -> Graph:
+    def g(self) -> Graph:
         return self
 
     def json(self) -> Json:
@@ -40,8 +41,7 @@ class PhysicalDevice(Graph, Device, JsonSerDe):
 
     @classmethod
     def from_file(cls, filename: Path | str) -> Self:
-        with open(filename) as f:
-            data = json.load(f)
+        data = common.read_json(filename)
 
         assert isinstance(data, List), data
         for d in data:

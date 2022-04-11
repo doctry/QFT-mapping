@@ -1,12 +1,17 @@
 import copy
+from abc import abstractmethod
 from typing import List, Protocol
 
 from networkx import Graph
 
 
 class Device(Protocol):
-    device: Graph
     mapping: List[int]
+
+    @property
+    @abstractmethod
+    def g(self) -> Graph:
+        ...
 
     def rotate(self, indices: List[int], *, right: bool) -> None:
         rotated = self._rotate(indices, right=right)
