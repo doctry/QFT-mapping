@@ -24,6 +24,13 @@ void QFTMapper::assign_gates()
     }
 }
 
+unsigned QFTMapper::get_gate_cost(topo::Gate &gate) const {
+    std::tuple<unsigned, unsigned> device_qubits_idx = get_device_qubits_idx(gate);
+    device::Qubit& q0 = _device.get_qubit(std::get<0>(device_qubits_idx));
+    device::Qubit& q1 = _device.get_qubit(std::get<1>(device_qubits_idx));
+    return std::max(q0.get_avail_time(), q1.get_avail_time());
+}
+
 void QFTMapper::assign_gate(topo::Gate &gate)
 {
     std::tuple<unsigned, unsigned> device_qubits_idx = get_device_qubits_idx(gate);
@@ -40,7 +47,7 @@ void QFTMapper::assign_gate(topo::Gate &gate)
     #endif
 }
 
-std::tuple<unsigned, unsigned> QFTMapper::get_device_qubits_idx(topo::Gate &gate) {
+std::tuple<unsigned, unsigned> QFTMapper::get_device_qubits_idx(topo::Gate &gate) const {
     unsigned topo_idx_q0 = std::get<0>(gate.get_qubits()); // get operation qubit index of gate in topology
     topo::Qubit& topo_q0 = _qft_topo.get_qubit(topo_idx_q0); // get operation qubit of gate in topology
     unsigned device_idx_q0 = topo_q0.get_location(); //get device qubit index of the gate
