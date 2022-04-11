@@ -10,13 +10,10 @@ from qft import common
 from . import (
     APSPScheduler,
     BaselineScheduler,
-    Consumer,
     Dependency,
     Device,
     PhysicalDevice,
     QFTDependency,
-    QubitOp,
-    Scheduler,
     SynchronousScheduler,
     Timing,
 )
