@@ -4,6 +4,7 @@
 #include "device.h"
 #include <tuple>
 #include <iostream>
+#include <algorithm>
 
 class QFTMapper
 {
@@ -14,10 +15,11 @@ public:
 
     void init_place();
     void assign_gates();
+    unsigned get_gate_cost(topo::Gate &gate) const;
 
 private:
     void assign_gate(topo::Gate &gate);
-    std::tuple<unsigned, unsigned> get_device_qubits_idx(topo::Gate &gate);
+    std::tuple<unsigned, unsigned> get_device_qubits_idx(topo::Gate &gate) const;
 
     topo::QFTTopology &_qft_topo;
     device::Device &_device;
