@@ -3,7 +3,7 @@ from qft import Dependency, QFTDependency
 
 def test_dep() -> None:
     def function(dep: Dependency) -> None:
-        dep.dependency
+        dep.g
         dep.consumer
         dep.json()
 

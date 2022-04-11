@@ -14,7 +14,7 @@ from qft.common import Json, JsonSerDe, QubitOp
 class Dependency(JsonSerDe, Protocol):
     @property
     @abstractmethod
-    def dependency(self) -> DiGraph:
+    def g(self) -> DiGraph:
         ...
 
     @abstractmethod
@@ -22,7 +22,7 @@ class Dependency(JsonSerDe, Protocol):
         ...
 
     def json(self) -> Json:
-        dependency = self.dependency
+        dependency = self.g
         return {"nodes": list(dependency.nodes), "edges": list(dependency.edges)}
 
 
@@ -67,7 +67,7 @@ class Consumer:
 
         self.__transfer(op, self.ready, self.done)
 
-        dep_graph = self.dependency.dependency
+        dep_graph = self.dependency.g
 
         blocked_ops = dep_graph.adj[op]
 

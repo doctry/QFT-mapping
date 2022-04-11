@@ -14,7 +14,6 @@ class Timing(NamedTuple):
 class Scheduler(Protocol):
     dep: Dependency
     dev: Device
-
     timing: Timing
 
     @abstractmethod
