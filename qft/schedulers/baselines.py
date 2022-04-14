@@ -1,3 +1,4 @@
+import random
 from typing import List
 
 import numpy as np
@@ -34,7 +35,7 @@ class BaselineScheduler(APSPScheduler):
         history = []
 
         while not consumer.terminate:
-            available = consumer.ready.pop()
+            available = random.choice(tuple(consumer.ready))
             consumer.process(available)
             history.append(available)
 
