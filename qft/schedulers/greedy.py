@@ -1,4 +1,4 @@
-from qft.common import CompiledOp, CompiledProgram
+from qft.common import CompiledProgram
 from qft.deps import Dependency
 from qft.devs import Device
 
