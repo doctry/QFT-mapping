@@ -1,4 +1,3 @@
-proj_root:
 device:
 result: result.json
 level: TRACE
