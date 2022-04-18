@@ -1,9 +1,6 @@
 import random
-from logging.config import dictConfig
-from pickletools import optimize
 from typing import List
 
-import numpy as np
 from omegaconf import DictConfig
 
 from qft.common import CompiledProgram, QubitOp
