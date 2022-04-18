@@ -1,6 +1,6 @@
 device:
 result: result.json
-level: TRACE
+level: INFO
 time:
   swap: 6
   op: 2

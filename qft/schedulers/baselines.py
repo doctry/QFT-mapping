@@ -1,5 +1,10 @@
 import random
+from logging.config import dictConfig
+from pickletools import optimize
 from typing import List
+
+import numpy as np
+from omegaconf import DictConfig
 
 from qft.common import CompiledProgram, QubitOp
 from qft.deps import Dependency
@@ -10,21 +15,27 @@ from .interfaces import Timing
 
 
 class BaselineScheduler(APSPScheduler):
-    def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
-        super().__init__(dep, dev, timing)
+    def __init__(
+        self, cfg: DictConfig, dep: Dependency, dev: Device, timing: Timing
+    ) -> None:
+        super().__init__(cfg, dep, dev, timing)
 
-        self.max_cost = self.distances.max()
+        self._max_dist = self.distances.max()
 
     def schedule(self) -> CompiledProgram:
         history = self._history()
 
         program = []
         cost = 0
+        time_cfg = self.cfg["time"]
+
+        swap_time = time_cfg["swap"]
+        op_time = time_cfg["op"]
 
         for qop in history:
             (ops, _) = self.execute(qop, cost)
             program.extend(ops)
-            cost += self.max_cost
+            cost += (self._max_dist - 1) * swap_time + op_time
 
         return CompiledProgram(program, cost)
 
@@ -43,8 +54,10 @@ class BaselineScheduler(APSPScheduler):
 
 
 class SynchronousScheduler(BaselineScheduler):
-    def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
-        super().__init__(dep, dev, timing)
+    def __init__(
+        self, cfg: DictConfig, dep: Dependency, dev: Device, timing: Timing
+    ) -> None:
+        super().__init__(cfg, dep, dev, timing)
 
     def schedule(self) -> CompiledProgram:
         history = self._history()
