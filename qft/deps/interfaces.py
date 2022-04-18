@@ -40,9 +40,9 @@ class Consumer:
     def __str__(self) -> str:
         return json.dumps(
             {
-                "done": self.done,
-                "ready": self.ready,
-                "blocked": self.blocked,
+                "done": [t.json() for t in self.done],
+                "ready": [t.json() for t in self.ready],
+                "blocked": [t.json() for t in self.blocked],
             }
         )
 
@@ -74,9 +74,9 @@ class Consumer:
         # If node is blocked ==> move to ready if all in-nodes are done.
         for op in blocked_ops:
             if op in self.blocked and all(
-                in_node in self.done for in_node in dep_graph.in_edges(op).keys()
+                in_node in self.done for (in_node, _) in dep_graph.in_edges(op)
             ):
-                self.__transfer(op, self.ready, self.done)
+                self.__transfer(op, self.blocked, self.ready)
 
         loguru.logger.debug(self)
         assert len(self) + len(self.done) == len(dep_graph.nodes)

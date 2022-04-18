@@ -15,7 +15,7 @@ class BaselineScheduler(APSPScheduler):
     def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
         super().__init__(dep, dev, timing)
 
-        self.max_cost = np.max(self.distances)
+        self.max_cost = self.distances.max()
 
     def schedule(self) -> CompiledProgram:
         history = self._history()

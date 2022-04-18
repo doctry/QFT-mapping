@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping
 
-from hydra import main
+from hydra import main, utils
 
 from qft import common
 
@@ -21,11 +21,10 @@ from . import (
 
 @main(config_path="conf", config_name="qft")
 def run(cfg: Mapping[str, Any]) -> None:
-    proj_root = Path(cfg["proj_root"])
     device_path = Path(cfg["device"])
     result_path = Path(cfg["result"])
 
-    dev: Device = PhysicalDevice.from_file(proj_root / device_path)
+    dev: Device = PhysicalDevice.from_file(utils.to_absolute_path(device_path))
     dep: Dependency = QFTDependency(len(dev.g.nodes))
 
     timing = Timing(cfg["time"]["swap"], cfg["time"]["op"])
@@ -39,7 +38,7 @@ def run(cfg: Mapping[str, Any]) -> None:
         raise ValueError(f"Scheduler type: {sch_typ} not supported.")
 
     program = scheduler.schedule()
-    common.write_json(program.json(), proj_root / result_path)
+    common.write_json(program.json(), result_path)
 
 
 if __name__ == "__main__":
