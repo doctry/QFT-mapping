@@ -1,8 +1,9 @@
 import json
 from argparse import ArgumentParser, Namespace
 
-from qft.evaluator import Device
 from hydra import main
+
+from qft.evaluator import Device
 
 
 def main(flags: Namespace):
