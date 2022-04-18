@@ -322,4 +322,3 @@ bin/
 output/
 outputs/
 *.pyc
-topo_*.txt
