@@ -141,7 +141,7 @@ namespace device
         Qubit &get_qubit(const unsigned i);
         std::vector<unsigned> routing(std::tuple<unsigned, unsigned> qs);
 
-        void print_operations(std::ostream &out);
+        void write_assembly(std::ostream &out);
         void to_json(json& j);
         unsigned get_final_cost();
         void print_device_state(std::ostream &out);

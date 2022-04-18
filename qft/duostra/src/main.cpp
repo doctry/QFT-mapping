@@ -45,15 +45,13 @@ int main(int argc, char *argv[])
     {
         std::fstream out_file;
         out_file.open(argv[6], std::fstream::out);
-        json final_cost;
-        device.to_json(final_cost);
-        final_cost["final_cost"] = device.get_final_cost();
-        out_file << final_cost << "\n";
+        device.write_assembly(out_file);
+        out_file << "final_cost: " << device.get_final_cost() << "\n";
     }
 
     if (strcmp(argv[5], "false") != 0)
     {
-        device.print_operations(std::cout);
+        device.write_assembly(std::cout);
         std::cout << "final cost: " << device.get_final_cost() << "\n";
     }
     return 0;

@@ -389,20 +389,27 @@ void device::Device::apply_gate(const Operation &op)
     }
 }
 
-void device::Device::print_operations(std::ostream &out)
+void device::Device::write_assembly(std::ostream &out)
 {
     std::sort(_ops.begin(), _ops.end(), op_order);
 
-    json j;
     for (unsigned i = 0; i < _ops.size(); ++i)
     {
-        Operation &op = _ops[i];
-        json buf = op;
-        j.push_back(buf);
+        Operation& op = _ops[i];
+        switch(op.get_operator()) {
+            case Operator::R:
+                out << "R ";
+                break;
+            case Operator::Swap:
+                out << "Swap ";
+                break;
+            default:
+                assert(false);
+        }
+        std::tuple<unsigned, unsigned> qubits = op.get_qubits();
+        out << "Q[" << std::get<0>(qubits) << "] Q[" << std::get<1>(qubits) << "];";
+        out << "(" << op.get_op_time() << "," << op.get_cost() << ")\n";
     }
-    json o;
-    o["Operations"] = j;
-    out << o << "\n";
 }
 
 void device::Device::to_json(json& j) {
