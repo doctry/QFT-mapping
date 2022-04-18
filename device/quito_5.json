@@ -1,7 +1,1 @@
-[
-  { "id": 0, "adj_list": [1] },
-  { "id": 1, "adj_list": [0, 2, 3] },
-  { "id": 2, "adj_list": [1] },
-  { "id": 3, "adj_list": [1, 4] },
-  { "id": 4, "adj_list": [3] }
-]
+[{"id": 0, "adj_list": [1]}, {"id": 1, "adj_list": [0, 2, 3]}, {"id": 2, "adj_list": [1]}, {"id": 3, "adj_list": [1, 4]}, {"id": 4, "adj_list": [3]}]
