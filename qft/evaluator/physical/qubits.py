@@ -1,5 +1,8 @@
+from typing import List
+
+
 class Qubit:
-    def __init__(self, id: int, adj_list: list[int]):
+    def __init__(self, id: int, adj_list: List[int]):
         assert id > -1, id
         self.id = id
         self.adj_list = adj_list

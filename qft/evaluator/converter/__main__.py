@@ -1,7 +1,7 @@
 import json
 from argparse import ArgumentParser, Namespace
 
-from evaluator import Device
+from qft.evaluator import Device
 from hydra import main
 
 

@@ -1,6 +1,9 @@
+from typing import Tuple
+
+
 class Operation:
     def __init__(
-        self, operator: str, qubits: tuple[int, int], duration: tuple[int, int]
+        self, operator: str, qubits: Tuple[int, int], duration: Tuple[int, int]
     ):
         assert operator == "R" or operator == "Swap", operator
         self.operator = operator

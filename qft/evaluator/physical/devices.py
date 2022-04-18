@@ -1,3 +1,4 @@
+from typing import Dict, List
 from .qubits import Qubit
 
 
@@ -33,7 +34,7 @@ class Device:
             for j in qubit.adj_list:
                 assert i in self.qubits[j].adj_list, (i, j, self.qubits[j].adj_list)
 
-    def to_json(self) -> list[dict]:
+    def to_json(self) -> List[Dict]:
         ret = []
         for q in self.qubits:
             ret.append(q.to_json())
