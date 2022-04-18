@@ -59,7 +59,11 @@ class CompiledProgram(JsonSerDe):
     cost: int
 
     def json(self) -> Json:
+        self.sort()
         return {
             "Operations": [op.json() for op in self.operations],
             "final_cost": self.cost,
         }
+
+    def sort(self) -> None:
+        self.operations.sort(key=lambda op: op.duration)

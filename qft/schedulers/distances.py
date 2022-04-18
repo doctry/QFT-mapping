@@ -4,6 +4,7 @@ from typing import Dict, List, Sequence, Tuple
 import networkx as nx
 import numpy as np
 from numpy import ndarray
+from omegaconf import DictConfig
 
 from qft.common import CompiledOp, CompiledProgram, QubitOp
 from qft.deps import Dependency
@@ -13,7 +14,9 @@ from .interfaces import Scheduler, Timing
 
 
 class APSPScheduler(Scheduler, ABC):
-    def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
+    def __init__(self, cfg:DictConfig, dep: Dependency, dev: Device, timing: Timing) -> None:
+        self.cfg = cfg
+
         self.dep = dep
         self.dev = dev
         self.timing = timing

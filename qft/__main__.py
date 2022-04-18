@@ -31,9 +31,9 @@ def run(cfg: Mapping[str, Any]) -> None:
     scheduler: APSPScheduler | None = None
 
     if (sch_typ := cfg["scheduler"]) == "baseline":
-        scheduler = BaselineScheduler(dep=dep, dev=dev, timing=timing)
+        scheduler = BaselineScheduler(cfg, dep, dev, timing)
     elif sch_typ == "sync":
-        scheduler = SynchronousScheduler(dep=dep, dev=dev, timing=timing)
+        scheduler = SynchronousScheduler(cfg, dep, dev, timing)
     else:
         raise ValueError(f"Scheduler type: {sch_typ} not supported.")
 
