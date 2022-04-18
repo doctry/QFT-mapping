@@ -1,8 +1,6 @@
 import random
 from typing import List
 
-import numpy as np
-
 from qft.common import CompiledProgram, QubitOp
 from qft.deps import Dependency
 from qft.devs import Device
