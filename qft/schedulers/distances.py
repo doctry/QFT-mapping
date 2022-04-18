@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from typing import Dict, List, Sequence, Tuple
 
 import networkx as nx
@@ -12,7 +12,7 @@ from qft.devs import Device
 from .interfaces import Scheduler, Timing
 
 
-class APSPScheduler(Scheduler, ABCMeta):
+class APSPScheduler(Scheduler, ABC):
     def __init__(self, dep: Dependency, dev: Device, timing: Timing) -> None:
         self.dep = dep
         self.dev = dev
@@ -82,6 +82,9 @@ class APSPScheduler(Scheduler, ABCMeta):
     def _check_symmetry(self) -> None:
         for (a, b) in self.shortest_paths.keys():
             assert (b, a) in self.shortest_paths.keys(), [a, b, self.shortest_paths]
-            assert self.shortest_paths[a, b] == self.shortest_paths[b, a]
+            assert len(self.shortest_paths[a, b]) == len(self.shortest_paths[b, a]), [
+                self.shortest_paths[a, b],
+                self.shortest_paths[b, a],
+            ]
 
             assert self.distances[a, b] == self.distances[b, a]

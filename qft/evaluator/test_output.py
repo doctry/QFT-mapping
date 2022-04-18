@@ -1,10 +1,11 @@
 import json
 import sys
-from typing import Dict
+from typing import Dict, List
 
-from physical import Device, Operation, Qubit
 from rich import traceback
-from topological import Gate, QFTTopo
+
+from qft.evaluator.physical import Device, Operation, Qubit
+from qft.evaluator.topological import Gate, QFTTopo
 
 traceback.install()
 
@@ -14,12 +15,12 @@ class Checker:
         self,
         device: Device,
         qft_topo: QFTTopo,
-        operations: list[Operation],
+        operations: List[Operation],
         cycle: dict,
     ):
         self.device: Device = device
         self.qft_topo: QFTTopo = qft_topo
-        self.operations: list[Operation] = operations
+        self.operations: List[Operation] = operations
         self.cycle: dict = cycle
 
     def apply_gate(self, op: Operation, d_q0: Qubit, d_q1: Qubit) -> None:
