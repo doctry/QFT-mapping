@@ -14,7 +14,9 @@ from .interfaces import Scheduler, Timing
 
 
 class APSPScheduler(Scheduler, ABC):
-    def __init__(self, cfg:DictConfig, dep: Dependency, dev: Device, timing: Timing) -> None:
+    def __init__(
+        self, cfg: DictConfig, dep: Dependency, dev: Device, timing: Timing
+    ) -> None:
         self.cfg = cfg
 
         self.dep = dep
