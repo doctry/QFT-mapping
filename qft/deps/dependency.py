@@ -30,7 +30,8 @@ class QFTDependency(DiGraph, Dependency):
         if i >= 1:
             self.add_edge(QubitOp(i - 1, j), current)
 
-        self.add_edge(QubitOp(i, j - 1), current)
+        if j > i + 1:
+            self.add_edge(QubitOp(i, j - 1), current)
 
     @property
     def g(self) -> DiGraph:

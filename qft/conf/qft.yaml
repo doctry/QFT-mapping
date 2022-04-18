@@ -1,3 +1,8 @@
 proj_root:
 device:
+result: result.json
 level: TRACE
+time:
+  swap: 6
+  op: 2
+scheduler: baseline
