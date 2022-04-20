@@ -1,20 +1,5 @@
 #include "qft_mapper.h"
 
-QFTMapper::QFTMapper(topo::QFTTopology &qft_topo, device::Device &device) : _qft_topo(qft_topo), _device(device) {}
-QFTMapper::QFTMapper(QFTMapper &&other) : _qft_topo(other._qft_topo), _device(other._device) {}
-
-void QFTMapper::init_place()
-{
-    for (unsigned i = 0; i < _qft_topo.get_num_qubits(); ++i)
-    {
-        topo::Qubit &topo_qubit = _qft_topo.get_qubit(i);
-        device::Qubit &device_qubit = _device.get_qubit(i);
-
-        topo_qubit.set_location(i);
-        device_qubit.set_topo_qubit(i);
-    }
-}
-
 void QFTMapper::assign_gates()
 {
     for (unsigned i = 0; i < _qft_topo.get_num_gates(); ++i)
