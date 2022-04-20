@@ -12,7 +12,7 @@ DEPS = include/device.h include/qft_mapper.h include/qft_topo.h
 INC = -Iinclude/
 TARGET = bin/qft_mapping
 DBG = bin/qft_mapping_dbg
-SRC = src/device.cpp src/main.cpp src/qft_mapper.cpp src/qft_topo.cpp
+SRC = src/device.cpp src/main.cpp src/qft_topo.cpp
 
 all: $(TARGET)
 

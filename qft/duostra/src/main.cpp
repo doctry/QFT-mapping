@@ -10,22 +10,25 @@ Args args;
 
 int main(int argc, char *argv[])
 {
-    if (argc != 6 && argc != 7)
+    if (argc != 2)
     {
-        std::cerr << "Usage: ./qft_mapping <num_qubit> <device_file> <R_cycle> <swap_cycle> <stdio(true or false)> [output_file]\n";
+        std::cerr << "Usage: ./qft_mapping <config.json>";
         return 0;
     }
 
-    unsigned num_qubit = std::stoi(argv[1]);
-    args.R_CYCLE = std::stoi(argv[3]);
-    args.SWAP_CYCLE = std::stoi(argv[4]);
+    std::ifstream ifs(argv[1]);
+    json conf = json::parse(ifs);
+
+    unsigned num_qubit = conf["num_qubits"].get<unsigned>();
+    args.R_CYCLE = conf["R_CYCLE"].get<unsigned>();
+    args.SWAP_CYCLE = conf["SWAP_CYCLE"].get<unsigned>();
     topo::QFTTopology qft_topo(num_qubit);
 
     std::fstream device_file;
-    device_file.open(argv[2], std::fstream::in);
+    device_file.open(conf["device"], std::fstream::in);
     if (!device_file.is_open())
     {
-        std::cerr << "There is no file" << argv[2] << std::endl;
+        std::cerr << "There is no file" << conf["device"] << std::endl;
         return 1;
     }
 
@@ -37,22 +40,22 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    QFTMapper mapper(qft_topo, device);
-    mapper.init_place();
-    mapper.assign_gates();
+    QFTPlacer placer;
+    placer.place(device, conf["random_place"].get<bool>());
 
-    if (argc == 7)
-    {
-        std::fstream out_file;
-        out_file.open(argv[6], std::fstream::out);
-        device.write_assembly(out_file);
-        out_file << "final_cost: " << device.get_final_cost() << "\n";
-    }
+    QFTScheduler scheduler(qft_topo);
+    QFTRouter router(device);
+    scheduler.assign_gates(device, router);
 
-    if (strcmp(argv[5], "false") != 0)
+    std::fstream out_file;
+    out_file.open(conf["output"], std::fstream::out);
+    device.write_assembly(out_file);
+    out_file << "final_cost: " << device.get_final_cost() << "\n";
+
+    if (conf["stdio"].get<bool>())
     {
         device.write_assembly(std::cout);
-        std::cout << "final cost: " << device.get_final_cost() << "\n";
     }
+    std::cout << "final cost: " << device.get_final_cost() << "\n";
     return 0;
 }
