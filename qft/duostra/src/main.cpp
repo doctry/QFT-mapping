@@ -2,11 +2,8 @@
 #include "device.h"
 #include "qft_topo.h"
 #include "qft_mapper.h"
-#include "args.h"
 #include "string"
 #include "json.hpp"
-
-Args args;
 
 int main(int argc, char *argv[])
 {
@@ -20,8 +17,8 @@ int main(int argc, char *argv[])
     json conf = json::parse(ifs);
 
     unsigned num_qubit = conf["num_qubits"].get<unsigned>();
-    args.R_CYCLE = conf["R_CYCLE"].get<unsigned>();
-    args.SWAP_CYCLE = conf["SWAP_CYCLE"].get<unsigned>();
+    unsigned R_CYCLE = conf["R_CYCLE"].get<unsigned>();
+    unsigned SWAP_CYCLE = conf["SWAP_CYCLE"].get<unsigned>();
     topo::QFTTopology qft_topo(num_qubit);
 
     std::fstream device_file;
@@ -32,7 +29,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    device::Device device(device_file);
+    device::Device device(device_file, R_CYCLE, SWAP_CYCLE);
 
     if (num_qubit > device.get_num_qubits())
     {

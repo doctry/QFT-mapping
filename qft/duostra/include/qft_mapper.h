@@ -74,12 +74,6 @@ public:
 #endif
     }
 
-    std::vector<Operation> get_operations()
-    {
-        std::sort(_ops.begin(), _ops.end(), op_order);
-        return _ops;
-    }
-
 private:
     std::tuple<unsigned, unsigned> get_device_qubits_idx(topo::Gate &gate) const
     {
@@ -94,7 +88,6 @@ private:
 
     device::Device &_device;
     std::vector<unsigned> _topo2device;
-    std::vector<Operation> _ops;
 };
 
 class QFTScheduler

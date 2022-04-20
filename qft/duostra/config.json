@@ -1,9 +1,9 @@
 {
-    "num_qubits": 16,
+    "num_qubits": 1121,
     "R_CYCLE": 2,
     "SWAP_CYCLE": 3,
-    "device": "../../device/guadalupe_16.txt",
-    "output": "../../output/guadalupe_16.q",
+    "device": "../../device/topo_1121.json",
+    "output": "../../output/topo_1121.q",
     "stdio": false,
-    "random_place": true
+    "random_place": false
 }

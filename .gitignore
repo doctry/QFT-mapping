@@ -322,3 +322,4 @@ bin/
 output/
 outputs/
 *.pyc
+*.so

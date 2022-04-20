@@ -12,11 +12,9 @@ std::ostream &operator<<(std::ostream &os, Operation &op)
     switch (op._oper)
     {
     case Operator::Swap:
-        assert(to - from == args.SWAP_CYCLE);
         os << std::setw(20) << "Operation: Swap";
         break;
     case Operator::R:
-        assert(to - from == args.R_CYCLE);
         os << std::setw(20) << "Operation: R";
         break;
     default:
@@ -160,7 +158,7 @@ bool op_order(const Operation &a, const Operation &b)
     return a.get_op_time() < b.get_op_time();
 }
 
-device::Device::Device(std::fstream &file)
+device::Device::Device(std::fstream &file, unsigned r, unsigned s) : _R_CYCLE(r), _SWAP_CYCLE(s)
 {
     unsigned num;
     file >> num;
@@ -185,7 +183,24 @@ device::Device::Device(std::fstream &file)
 
     //TODO:apsp
 }
-device::Device::Device(Device &&other) : _qubits(std::move(other._qubits)), _ops(std::move(other._ops)) {}
+
+device::Device::Device(std::vector<std::vector<unsigned>> &adj_lists, unsigned r, unsigned s) : _R_CYCLE(r), _SWAP_CYCLE(s)
+{
+    for (unsigned i = 0; i < adj_lists.size(); ++i)
+    {
+        std::vector<unsigned> &adj_list = adj_lists[i];
+
+        device::Qubit qubit(i);
+        for (unsigned j = 0; j < adj_list.size(); ++j)
+        {
+            qubit.add_adj(adj_list[j]);
+        }
+
+        _qubits.push_back(std::move(qubit));
+    }
+}
+
+device::Device::Device(Device &&other) : _qubits(std::move(other._qubits)), _R_CYCLE(other._R_CYCLE), _SWAP_CYCLE(other._SWAP_CYCLE), _ops(std::move(other._ops)) {}
 
 const unsigned device::Device::get_num_qubits() const
 {
@@ -235,8 +250,8 @@ std::vector<unsigned> device::Device::routing(std::tuple<unsigned, unsigned> qs)
         assert(q_next.get_swtch() == next.get_swtch());
 
         unsigned cost = next.get_cost();
-        assert(cost >= args.SWAP_CYCLE);
-        unsigned op_time = cost - args.SWAP_CYCLE;
+        assert(cost >= _SWAP_CYCLE);
+        unsigned op_time = cost - _SWAP_CYCLE;
         q_next.take_route(cost, op_time);
         std::tuple<bool, unsigned> touch = touch_adj(q_next, pq, next.get_swtch());
         is_adj = std::get<0>(touch);
@@ -295,7 +310,7 @@ std::tuple<bool, unsigned> device::Device::touch_adj(device::Qubit &qubit, std::
             continue;
         }
 
-        unsigned cost = std::max(qubit.get_cost(), adj.get_avail_time()) + args.SWAP_CYCLE;
+        unsigned cost = std::max(qubit.get_cost(), adj.get_avail_time()) + _SWAP_CYCLE;
         unsigned estimated_cost = 0;
         unsigned heuristic_cost = cost + estimated_cost;
         adj.mark(swtch, qubit.get_id());
@@ -314,7 +329,7 @@ std::vector<Operation> device::Device::traceback(device::Qubit &q0, device::Qubi
     std::vector<Operation> ops;
 
     unsigned R_time = std::max(q0.get_cost(), q1.get_cost());
-    Operation R_gate(Operator::R, std::make_tuple(q0.get_id(), q1.get_id()), std::make_tuple(R_time, R_time + args.R_CYCLE));
+    Operation R_gate(Operator::R, std::make_tuple(q0.get_id(), q1.get_id()), std::make_tuple(R_time, R_time + _R_CYCLE));
     ops.push_back(R_gate);
 
     unsigned trace_0 = q0.get_id();
@@ -325,7 +340,7 @@ std::vector<Operation> device::Device::traceback(device::Qubit &q0, device::Qubi
         unsigned trace_pred_0 = q_trace_0.get_pred();
 
         unsigned swap_time = q_trace_0.get_swap_time();
-        Operation swap_gate(Operator::Swap, std::make_tuple(trace_0, trace_pred_0), std::make_tuple(swap_time, swap_time + args.SWAP_CYCLE));
+        Operation swap_gate(Operator::Swap, std::make_tuple(trace_0, trace_pred_0), std::make_tuple(swap_time, swap_time + _SWAP_CYCLE));
         ops.push_back(swap_gate);
 
         trace_0 = trace_pred_0;
@@ -336,7 +351,7 @@ std::vector<Operation> device::Device::traceback(device::Qubit &q0, device::Qubi
         unsigned trace_pred_1 = q_trace_1.get_pred();
 
         unsigned swap_time = q_trace_1.get_swap_time();
-        Operation swap_gate(Operator::Swap, std::make_tuple(trace_1, trace_pred_1), std::make_tuple(swap_time, swap_time + args.SWAP_CYCLE));
+        Operation swap_gate(Operator::Swap, std::make_tuple(trace_1, trace_pred_1), std::make_tuple(swap_time, swap_time + _SWAP_CYCLE));
         ops.push_back(swap_gate);
 
         trace_1 = trace_pred_1;
@@ -363,22 +378,22 @@ void device::Device::apply_gate(const Operation &op)
     {
     case Operator::Swap:
     { // swap topo qubit
-        assert(t + args.SWAP_CYCLE == op.get_cost());
+        assert(t + _SWAP_CYCLE == op.get_cost());
 
         unsigned temp = q0.get_topo_qubit();
         q0.set_topo_qubit(q1.get_topo_qubit());
         q1.set_topo_qubit(temp);
-        q0.set_occupied_time(t + args.SWAP_CYCLE);
-        q1.set_occupied_time(t + args.SWAP_CYCLE);
+        q0.set_occupied_time(t + _SWAP_CYCLE);
+        q1.set_occupied_time(t + _SWAP_CYCLE);
         break;
     }
 
     case Operator::R:
     {
-        assert(t + args.R_CYCLE == op.get_cost());
+        assert(t + _R_CYCLE == op.get_cost());
 
-        q0.set_occupied_time(t + args.R_CYCLE);
-        q1.set_occupied_time(t + args.R_CYCLE);
+        q0.set_occupied_time(t + _R_CYCLE);
+        q1.set_occupied_time(t + _R_CYCLE);
         break;
     }
 
@@ -441,4 +456,9 @@ void device::Device::print_device_state(std::ostream &out)
         out << _qubits[i] << "\n";
     }
     out << "\n";
+}
+
+std::vector<Operation> &device::Device::get_operations()
+{
+    return _ops;
 }
