@@ -8,12 +8,9 @@
 #include <assert.h>
 #include <iomanip>
 #include <limits.h>
-#include "args.h"
 #include "json.hpp"
 #include <string>
 using nlohmann::json;
-
-extern Args args;
 
 enum Operator
 {
@@ -50,6 +47,18 @@ public:
     unsigned get_cost() const { return std::get<1>(_duration); }
     unsigned get_op_time() const { return std::get<0>(_duration); }
     Operator get_operator() const { return _oper; }
+    std::string get_operator_name() const
+    {
+        switch (_oper)
+        {
+            case Operator::R:
+                return "R";
+            case Operator::Swap:
+                return "Swap";
+            default:
+                return "Error";
+        }
+    }
     std::tuple<unsigned, unsigned> get_qubits() const { return _qubits; }
 
 private:
@@ -134,7 +143,8 @@ namespace device
     class Device
     {
     public:
-        Device(std::fstream &file);
+        Device(std::fstream &file, unsigned r, unsigned s);
+        Device(std::vector<std::vector<unsigned>> &, unsigned r, unsigned s);
         Device(const Qubit &other) = delete;
         Device(Device &&other);
 
@@ -146,6 +156,7 @@ namespace device
         void to_json(json &j);
         unsigned get_final_cost();
         void print_device_state(std::ostream &out);
+        std::vector<Operation>& get_operations();
 
     private:
         // A*
@@ -154,6 +165,8 @@ namespace device
         void apply_gate(const Operation &op);
 
         std::vector<Qubit> _qubits;
+        unsigned _R_CYCLE;
+        unsigned _SWAP_CYCLE;
         // std::vector<std::vector<unsigned>> _apsp;
         std::vector<Operation> _ops;
     };
