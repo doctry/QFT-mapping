@@ -24,7 +24,6 @@ enum Operator
 class Operation
 {
 public:
-    friend bool op_order(const Operation &, const Operation &);
     friend std::ostream &operator<<(std::ostream &, Operation &);
     friend void to_json(json &j, const Operation &op);
     Operation(Operator oper, std::tuple<unsigned, unsigned> qs, std::tuple<unsigned, unsigned> du) : _oper(oper), _qubits(qs), _duration(du)
@@ -58,6 +57,8 @@ private:
     std::tuple<unsigned, unsigned> _qubits;
     std::tuple<unsigned, unsigned> _duration; // <from, to>
 };
+
+bool op_order(const Operation &a, const Operation &b);
 
 namespace device
 {
@@ -142,7 +143,7 @@ namespace device
         std::vector<unsigned> routing(std::tuple<unsigned, unsigned> qs);
 
         void write_assembly(std::ostream &out);
-        void to_json(json& j);
+        void to_json(json &j);
         unsigned get_final_cost();
         void print_device_state(std::ostream &out);
 

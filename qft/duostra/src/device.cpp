@@ -27,11 +27,6 @@ std::ostream &operator<<(std::ostream &os, Operation &op)
     return os;
 }
 
-bool op_order(const Operation &a, const Operation &b)
-{
-    return std::get<0>(a._duration) < std::get<0>(b._duration);
-}
-
 void to_json(json &j, const Operation &op)
 {
     std::string oper;
@@ -158,6 +153,11 @@ void device::Qubit::take_route(unsigned cost, unsigned swap_time)
 std::ostream &operator<<(std::ostream &os, device::Qubit &q)
 {
     return os << "Q" << q.get_id() << ": topo qubit: " << q.get_topo_qubit() << " occupied until: " << q.get_avail_time();
+}
+
+bool op_order(const Operation &a, const Operation &b)
+{
+    return a.get_op_time() < b.get_op_time();
 }
 
 device::Device::Device(std::fstream &file)
@@ -395,24 +395,26 @@ void device::Device::write_assembly(std::ostream &out)
 
     for (unsigned i = 0; i < _ops.size(); ++i)
     {
-        Operation& op = _ops[i];
-        switch(op.get_operator()) {
-            case Operator::R:
-                out << "R ";
-                break;
-            case Operator::Swap:
-                out << "Swap ";
-                break;
-            default:
-                assert(false);
+        Operation &op = _ops[i];
+        switch (op.get_operator())
+        {
+        case Operator::R:
+            out << "R ";
+            break;
+        case Operator::Swap:
+            out << "Swap ";
+            break;
+        default:
+            assert(false);
         }
         std::tuple<unsigned, unsigned> qubits = op.get_qubits();
-        out << "Q[" << std::get<0>(qubits) << "] Q[" << std::get<1>(qubits) << "];";
+        out << "Q[" << std::get<0>(qubits) << "] Q[" << std::get<1>(qubits) << "]; ";
         out << "(" << op.get_op_time() << "," << op.get_cost() << ")\n";
     }
 }
 
-void device::Device::to_json(json& j) {
+void device::Device::to_json(json &j)
+{
     std::sort(_ops.begin(), _ops.end(), op_order);
 
     json o;
