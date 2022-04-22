@@ -21,7 +21,7 @@ class FixedLenDataGen(Dataset):
         return len(self.data)
 
     def __getitem__(self, index: Any) -> Dict:
-        return {"data": self.data[index, :-1], "label": self.data[index][-1]}
+        return {"data": self.data[index, :-1], "label": self.data[index, -1]}
 
 
 class DataGen(IterableDataset):
