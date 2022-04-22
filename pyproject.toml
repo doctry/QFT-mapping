@@ -16,6 +16,7 @@ scipy = "^1.8.0"
 hydra-core = "^1.1.1"
 omegaconf = "^2.1.1"
 loguru = "^0.6.0"
+pybind11 = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^1.4"
