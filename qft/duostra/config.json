@@ -1,9 +1,11 @@
 {
-    "num_qubits": 1121,
+    "num_qubits": 16,
     "R_CYCLE": 2,
     "SWAP_CYCLE": 3,
-    "device": "../../device/topo_1121.json",
-    "output": "../../output/topo_1121.q",
+    "device": "../../device/guadalupe_16.json",
+    "output": "../../output/guadalupe_16.qasm",
     "stdio": false,
-    "random_place": false
+    "random_place": true,
+    "gen_data": 1,
+    "h5": "../../data/guadalupe_16_1.hdf5"
 }
