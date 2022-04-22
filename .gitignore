@@ -323,3 +323,4 @@ output/
 outputs/
 *.pyc
 *.so
+data/

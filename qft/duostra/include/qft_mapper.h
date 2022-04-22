@@ -16,7 +16,7 @@ public:
     QFTPlacer(const QFTPlacer &other) = delete;
     QFTPlacer(QFTPlacer &&other) {}
 
-    void place(device::Device &device, bool rand = false)
+    std::vector<unsigned> place(device::Device &device, bool rand = false)
     {
         std::vector<unsigned> assign;
         for (unsigned i = 0; i < device.get_num_qubits(); ++i)
@@ -35,6 +35,7 @@ public:
             device::Qubit &device_qubit = device.get_qubit(i);
             device_qubit.set_topo_qubit(assign[i]);
         }
+        return assign;
     }
 };
 
