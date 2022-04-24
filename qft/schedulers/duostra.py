@@ -14,8 +14,8 @@ class DuostraScheduler(Scheduler):
             device_file = json.load(f)
         device_file = [i["adj_list"] for i in device_file]
         device_cpp = ds.DeviceCpp(device_file, cfg["time"]["op"], cfg["time"]["swap"])
-        device = 
-        
+        device = None
+
         qft_topo = QFTDependency(len(device_file))
 
     with open(conf["device"], "r") as f:
@@ -33,3 +33,4 @@ class DuostraScheduler(Scheduler):
     print("final cost: ", device.get_final_cost())
 
     def schedule(self):
+        pass
