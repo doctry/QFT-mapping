@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import NamedTuple, Protocol
 
-from qft.common import CompiledOp, CompiledProgram
+from qft.common import CompiledProgram
 from qft.router import Router
 from qft.schedulers import Scheduler
 

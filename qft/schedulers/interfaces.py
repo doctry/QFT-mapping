@@ -1,10 +1,8 @@
 from abc import abstractmethod
-from typing import NamedTuple, Protocol
+from typing import Protocol
 
-from qft.common import CompiledProgram
 from qft.common.ops import QubitOp
 from qft.deps import Dependency
-from qft.devs import Device
 
 
 class Scheduler(Protocol):
