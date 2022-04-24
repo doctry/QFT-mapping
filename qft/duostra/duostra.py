@@ -1,10 +1,9 @@
 import json
 import sys
 
+import duostra
 import h5py
 import numpy as np
-
-import duostra
 
 
 def main():
@@ -12,7 +11,7 @@ def main():
 
     with open(sys.argv[1], "r") as f:
         conf = json.load(f)
-    
+
     data = []
     for i in range(conf["gen_data"]):
         num_qubit = conf["num_qubits"]
@@ -38,8 +37,9 @@ def main():
         shuffle.append(device.get_final_cost())
         data.append(shuffle)
 
-    with h5py.File(conf["h5"], 'w') as f:
-        dset = f.create_dataset("all_data", data = np.array(data))
+    with h5py.File(conf["h5"], "w") as f:
+        dset = f.create_dataset("all_data", data=np.array(data))
+
 
 if __name__ == "__main__":
     main()

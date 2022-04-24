@@ -1,9 +1,10 @@
 import math
 from typing import Any, Dict
 
-from torch.utils.data import Dataset, IterableDataset, get_worker_info
 import h5py
 import numpy as np
+from torch.utils.data import Dataset, IterableDataset, get_worker_info
+
 
 class FixedLenDataGen(Dataset):
     """
@@ -12,7 +13,7 @@ class FixedLenDataGen(Dataset):
 
     def __init__(self, h5_file: str) -> None:
         super().__init__()
-        with h5py.File(h5_file, 'r') as f:
+        with h5py.File(h5_file, "r") as f:
             print(list(f.keys()))
             self.data = f["all_data"]
             self.data = np.array(self.data)
@@ -45,7 +46,8 @@ class DataGen(IterableDataset):
             worker_id = worker_info.id
             iter_start = worker_id * per_worker
             iter_end = min(iter_start + per_worker, len(self.data))
-        return iter(self.data[iter_start: iter_end])
+        return iter(self.data[iter_start:iter_end])
+
 
 if __name__ == "__main__":
     data = FixedLenDataGen("../../data/guadalupe_16_1000000.hdf5")
