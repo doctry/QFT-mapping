@@ -2,9 +2,7 @@ import json
 
 import qft.duostra as ds
 from qft.deps import QFTDependency
-from qft.devs import Device
 
-from .baselines import BaselineScheduler
 from .interfaces import Scheduler
 
 
