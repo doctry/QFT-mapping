@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import typing
+from codeop import Compile
 from dataclasses import dataclass
 from typing import List, Tuple
+
+from typing_extensions import Self
 
 from qft import common
 
@@ -65,5 +69,18 @@ class CompiledProgram(JsonSerDe):
             "final_cost": self.cost,
         }
 
+    @staticmethod
+    def _check_duration(op: CompiledOp) -> Tuple[int, int]:
+        assert op.duration is not None
+        return op.duration
+
     def sort(self) -> None:
-        self.operations.sort(key=lambda op: op.duration)
+
+        self.operations.sort(key=self._check_duration)
+
+    @classmethod
+    def from_ops(cls, ops: List[CompiledOp]) -> Self:
+        cost = max(map(lambda op: cls._check_duration(op)[1], ops))
+        program = CompiledProgram(ops, cost)
+        program.sort()
+        return program
