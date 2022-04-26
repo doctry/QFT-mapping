@@ -18,7 +18,6 @@ class Controller(Protocol):
     router: Router
     timing: Timing
 
-    @abstractmethod
     def compile(self) -> CompiledProgram:
         nodes = len(self.scheduler.dep.g.nodes)
         total_dependencies = nodes * (nodes - 1) // 2
@@ -34,13 +33,7 @@ class Controller(Protocol):
 
         assert self.scheduler.done, self.scheduler
 
-        cost = max(
-            map(lambda x: tuple(typing.cast(Tuple[int, int], x.duration))[1], ops)
-        )
-
-        program = CompiledProgram(ops, cost)
-        program.sort()
-        return program
+        return CompiledProgram.from_ops(ops)
 
     @abstractmethod
     def compile_route(self, route: List[int]) -> List[CompiledOp]:
