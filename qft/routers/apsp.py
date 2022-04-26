@@ -1,10 +1,10 @@
 from typing import List
 
+import networkx as nx
 from networkx import Graph
-from scipy.sparse import csgraph
 
 from qft.devs import Device
-import networkx as nx
+
 from .interfaces import Router
 
 

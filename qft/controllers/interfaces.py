@@ -1,6 +1,5 @@
-import typing
 from abc import abstractmethod
-from typing import List, NamedTuple, Protocol, Tuple
+from typing import List, NamedTuple, Protocol
 
 from qft.common import CompiledProgram
 from qft.common.ops import CompiledOp
