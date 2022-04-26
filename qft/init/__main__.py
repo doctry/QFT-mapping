@@ -1,3 +1,4 @@
+# pyright: reportGeneralTypeIssues=false, reportOptionalCall=false, reportPrivateImportUsage=false
 from typing import Any
 
 import hydra
@@ -10,8 +11,8 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from transformers import AutoModel
 
+from ..common.progress import progress
 from .datasets import FixedLenDataGen
-from .progress import progress
 
 
 class EmbeddingsWrapper(Module):
