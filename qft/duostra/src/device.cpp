@@ -449,6 +449,19 @@ unsigned device::Device::get_final_cost()
     return _ops[_ops.size() - 1].get_cost();
 }
 
+unsigned device::Device::get_swap_num()
+{
+    std::sort(_ops.begin(), _ops.end(), op_order);
+    unsigned ret = 0;
+    for (unsigned i = 0; i < _ops.size(); ++i) {
+        if (_ops[i].get_operator() == Operator::Swap)
+        {
+            ret += 1;
+        }
+    }
+    return ret;
+}
+
 void device::Device::print_device_state(std::ostream &out)
 {
     for (unsigned i = 0; i < _qubits.size(); ++i)

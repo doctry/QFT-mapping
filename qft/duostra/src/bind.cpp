@@ -27,6 +27,7 @@ PYBIND11_MODULE(duostra, m)
     py::class_<device::Device>(m, "DeviceCpp")
         .def(py::init<std::vector<std::vector<unsigned>> &, unsigned, unsigned>())
         .def("get_final_cost", &device::Device::get_final_cost)
+        .def("get_swap_num", &device::Device::get_swap_num)
         .def("get_num_qubits", &device::Device::get_num_qubits)
         .def("get_operations", &device::Device::get_operations);
 
