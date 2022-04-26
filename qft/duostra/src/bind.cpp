@@ -11,7 +11,9 @@ PYBIND11_MODULE(duostra, m)
     m.doc() = "Dual-source Dijkstra algorithm"; // optional module docstring
 
     // qft_topo.h
-    py::class_<topo::Gate>(m, "GateCpp").def(py::init<std::tuple<unsigned, unsigned>>());
+    py::class_<topo::Gate>(m, "GateCpp")
+        .def(py::init<std::tuple<unsigned, unsigned>>())
+        .def("get_qubits", &topo::Gate::get_qubits);
     py::class_<topo::QFTTopology>(m, "QFTTopologyCpp").def(py::init<unsigned>());
 
     // device.h
@@ -35,7 +37,8 @@ PYBIND11_MODULE(duostra, m)
     py::class_<QFTRouter>(m, "QFTRouterCpp")
         .def(py::init<device::Device &>())
         .def("get_gate_cost", &QFTRouter::get_gate_cost)
-        .def("assign_gate", &QFTRouter::assign_gate);
+        .def("assign_gate", &QFTRouter::assign_gate)
+        .def("route", &QFTRouter::route);
     py::class_<QFTScheduler>(m, "QFTSchedulerCpp")
         .def(py::init<topo::QFTTopology &>())
         .def("assign_gates", &QFTScheduler::assign_gates);
