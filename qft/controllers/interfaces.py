@@ -19,7 +19,7 @@ class Controller(Protocol):
     @abstractmethod
     def compile(self) -> CompiledProgram:
         nodes = len(self.scheduler.dep.g.nodes)
-        total_dependencies = nodes * (nodes - 1)
+        total_dependencies = nodes * (nodes - 1) // 2
 
         result = []
         for _ in range(total_dependencies):
