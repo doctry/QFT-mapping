@@ -8,7 +8,7 @@ from networkx import Graph
 from typing_extensions import Self
 
 from qft import common
-from qft.common import Json, JsonSerDe
+from qft.common import Json, JsonSerDe, TwoWayDict
 
 from .interfaces import Device
 
@@ -17,7 +17,7 @@ class PhysicalDevice(Graph, Device, JsonSerDe):
     def __init__(self, data: List[Dict[str, Any]]) -> None:
         super().__init__()
 
-        self.mapping = [d["id"] for d in data]
+        self.mapping = TwoWayDict({i: d["id"] for (i, d) in enumerate(data)})
         self.add_nodes_from(self.mapping)
 
         for d in data:

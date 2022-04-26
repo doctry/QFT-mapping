@@ -4,9 +4,11 @@ from typing import List, Protocol
 
 from networkx import Graph
 
+from qft.common import TwoWayDict
+
 
 class Device(Protocol):
-    mapping: List[int]
+    mapping: TwoWayDict[int, int]
 
     @property
     @abstractmethod
@@ -18,7 +20,7 @@ class Device(Protocol):
         cloned_map = copy.copy(self.mapping)
 
         for (idx, ridx) in zip(indices, rotated):
-            self.mapping[idx] = cloned_map[ridx]
+            self.mapping.mapping[idx] = cloned_map.mapping[ridx]
 
     @staticmethod
     def _rotate(indices: List[int], *, right: bool) -> List[int]:

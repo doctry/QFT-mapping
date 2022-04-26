@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Generic, TypeVar
+from typing import Any, Callable, Dict, Generic, Mapping, TypeVar
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -34,13 +34,19 @@ class CallbackDict(Dict[K, V]):
 
 
 class TwoWayDict(Generic[K, V]):
-    def __init__(self) -> None:
+    def __init__(self, mapping: Mapping[K, V]) -> None:
         self._reverse = Dict[V, K]()
 
         def _mapping_setitem_callback(k: K, v: V) -> None:
             self._reverse[v] = k
 
         self._mapping = CallbackDict[K, V](setitem=_mapping_setitem_callback)
+
+        for (key, val) in mapping.items():
+            self._mapping[key] = val
+
+            assert self.mapping[key] == val
+            assert self.reverse[val] == key
 
     @property
     def mapping(self) -> Dict[K, V]:
