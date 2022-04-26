@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Protocol, Tuple
+from typing import List, Protocol
 
 from qft.devs import Device
 

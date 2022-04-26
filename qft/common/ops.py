@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import typing
-from codeop import Compile
 from dataclasses import dataclass
 from typing import List, Tuple
 
