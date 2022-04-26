@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generator, Iterable, Sequence
+from typing import Any, Generator, Sequence
 
 from alive_progress import alive_bar
 
