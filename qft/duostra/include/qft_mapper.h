@@ -60,6 +60,10 @@ public:
         device::Qubit &q1 = _device.get_qubit(std::get<1>(device_qubits_idx));
         return std::max(q0.get_avail_time(), q1.get_avail_time());
     }
+    void route(unsigned source, unsigned target) {
+        topo::Gate g(std::make_tuple(source, target));
+        assign_gate(g);
+    }
     void assign_gate(topo::Gate &gate)
     {
         std::tuple<unsigned, unsigned> device_qubits_idx = get_device_qubits_idx(gate);
