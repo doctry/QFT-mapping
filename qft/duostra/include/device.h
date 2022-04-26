@@ -155,6 +155,7 @@ namespace device
         void write_assembly(std::ostream &out);
         void to_json(json &j);
         unsigned get_final_cost();
+        unsigned get_swap_num();
         void print_device_state(std::ostream &out);
         std::vector<Operation>& get_operations();
 
