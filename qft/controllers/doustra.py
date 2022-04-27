@@ -1,13 +1,21 @@
 from typing import List, Tuple
-from .interfaces import Controller, Timing
-from qft.common import CompiledProgram
+
 from qft.common.ops import CompiledOp
+from qft.duostra import duostra
 from qft.routers import Router
 from qft.schedulers import Scheduler
-from qft.duostra import duostra
+
+from .interfaces import Controller, Timing
+
 
 class DuostraController(Controller):
-    def __init__(self, device: duostra.DeviceCpp, router: Router, scheduler: Scheduler, timing: Timing):
+    def __init__(
+        self,
+        device: duostra.DeviceCpp,
+        router: Router,
+        scheduler: Scheduler,
+        timing: Timing,
+    ):
         self.device = device
         self.router = router
         self.scheduler = scheduler

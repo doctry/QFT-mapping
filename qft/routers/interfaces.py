@@ -7,7 +7,9 @@ from qft.devs import Device
 class Router(Protocol):
     device: Device
 
-    def route(self, source: int, target: int, physical: bool = False) -> Tuple[List[int], List[int]]:
+    def route(
+        self, source: int, target: int, physical: bool = False
+    ) -> Tuple[List[int], List[int]]:
         projector = self.device.mapping
 
         if not physical:
