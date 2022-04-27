@@ -23,8 +23,6 @@ class Controller(Protocol):
         nodes = len(self.scheduler.dep.g.nodes)
         total_dependencies = nodes * (nodes - 1) // 2
 
-
-
         ops: List[CompiledOp] = []
         for _ in range(total_dependencies):
             assert not self.scheduler.done, self.scheduler

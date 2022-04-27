@@ -1,8 +1,10 @@
+import random
+
 from networkx import DiGraph
 
 from qft.common import QubitOp
 from qft.deps import Dependency
-import random
+
 from .interfaces import Scheduler
 
 
