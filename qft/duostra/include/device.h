@@ -150,7 +150,8 @@ namespace device
 
         const unsigned get_num_qubits() const;
         Qubit &get_qubit(const unsigned i);
-        std::vector<unsigned> routing(std::tuple<unsigned, unsigned> qs);
+        std::vector<unsigned> routing(std::tuple<unsigned, unsigned> qs); // standalone
+        std::tuple<std::vector<unsigned>, std::vector<unsigned>> route(unsigned source, unsigned target); // python integration
 
         void write_assembly(std::ostream &out);
         void to_json(json &j);
@@ -159,11 +160,14 @@ namespace device
         void print_device_state(std::ostream &out);
         std::vector<Operation>& get_operations();
 
+        std::vector<Operation> compile_route(std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes); // python integration
+
     private:
         // A*
         std::tuple<bool, unsigned> touch_adj(device::Qubit &qubit, std::priority_queue<device::AStarNode, std::vector<device::AStarNode>, device::AStarComp> &pq, bool swtch); // return <if touch target, target id>, swtch: false q0 propagate, true q1 propagate
-        std::vector<Operation> traceback(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1);
-        void apply_gate(const Operation &op);
+        std::vector<Operation> traceback(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1); // standalone
+        void apply_gate(const Operation &op); 
+        std::tuple<std::vector<unsigned>, std::vector<unsigned>> trace(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1); // python integration
 
         std::vector<Qubit> _qubits;
         unsigned _R_CYCLE;
