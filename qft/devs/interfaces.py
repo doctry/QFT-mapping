@@ -8,7 +8,10 @@ from qft.common import TwoWayDict
 
 
 class Device(Protocol):
-    mapping: TwoWayDict[int, int]
+    
+    @abstractmethod
+    def mapping(self)-> TwoWayDict[int, int]:
+        ...
 
     @property
     @abstractmethod
