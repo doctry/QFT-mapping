@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, NamedTuple, Protocol
+from typing import List, NamedTuple, Protocol, Tuple
 
 from qft.common import CompiledProgram
 from qft.common.ops import CompiledOp
@@ -35,5 +35,5 @@ class Controller(Protocol):
         return CompiledProgram.from_ops(ops)
 
     @abstractmethod
-    def compile_route(self, route: List[int]) -> List[CompiledOp]:
+    def compile_route(self, route: Tuple[List[int], List[int]]) -> List[CompiledOp]:
         ...

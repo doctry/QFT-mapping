@@ -212,6 +212,66 @@ device::Qubit &device::Device::get_qubit(const unsigned i)
     return _qubits[i];
 }
 
+std::tuple<std::vector<unsigned>, std::vector<unsigned>> device::Device::route(unsigned source, unsigned target)
+{
+    unsigned q0_idx = source; // source 0
+    unsigned q1_idx = target; // source 1
+
+    if (get_qubit(q0_idx).get_avail_time() > get_qubit(q1_idx).get_avail_time())
+    {
+        std::swap(q0_idx, q1_idx);
+    }
+
+    device::Qubit &t0 = get_qubit(q0_idx); // target 0
+    device::Qubit &t1 = get_qubit(q1_idx); // target 1
+
+    // priority queue
+    std::priority_queue<device::AStarNode, std::vector<device::AStarNode>, device::AStarComp> pq;
+
+    t0.mark(false, t0.get_id());
+    t0.take_route(t0.get_cost(), 0);
+    t1.mark(true, t1.get_id());
+    t1.take_route(t1.get_cost(), 0);
+    std::tuple<bool, unsigned> touch0 = touch_adj(t0, pq, false);
+    bool is_adj = std::get<0>(touch0);
+#ifdef DEBUG
+    std::tuple<bool, unsigned> touch1 = touch_adj(t1, pq, true);
+    assert(is_adj == std::get<0>(touch1));
+#else
+    touch_adj(t1, pq, true);
+#endif
+
+    while (!is_adj) // set not adjacent
+    {
+        device::AStarNode next(pq.top());
+        pq.pop();
+        unsigned q_next_idx = next.get_id();
+        device::Qubit &q_next = get_qubit(q_next_idx);
+        assert(q_next.get_swtch() == next.get_swtch());
+
+        unsigned cost = next.get_cost();
+        assert(cost >= _SWAP_CYCLE);
+        unsigned op_time = cost - _SWAP_CYCLE;
+        q_next.take_route(cost, op_time);
+        std::tuple<bool, unsigned> touch = touch_adj(q_next, pq, next.get_swtch());
+        is_adj = std::get<0>(touch);
+        if (is_adj)
+        {
+            if (next.get_swtch()) // 0 get true means touch 1's set
+            {
+                q0_idx = std::get<1>(touch);
+                q1_idx = q_next_idx;
+            }
+            else
+            {
+                q0_idx = q_next_idx;
+                q1_idx = std::get<1>(touch);
+            }
+        }
+    }
+    return trace(get_qubit(q0_idx), get_qubit(q1_idx), t0, t1);
+}
+
 std::vector<unsigned> device::Device::routing(std::tuple<unsigned, unsigned> qs)
 {
     unsigned q0_idx = std::get<0>(qs); // source 0
@@ -355,6 +415,85 @@ std::vector<Operation> device::Device::traceback(device::Qubit &q0, device::Qubi
         ops.push_back(swap_gate);
 
         trace_1 = trace_pred_1;
+    }
+
+    std::sort(ops.begin(), ops.end(), op_order);
+    for (unsigned i = 0; i < ops.size(); ++i)
+    {
+        apply_gate(ops[i]);
+    }
+
+    return ops;
+}
+
+std::tuple<std::vector<unsigned>, std::vector<unsigned>> device::Device::trace(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1)
+{
+    assert(t0.get_id() == t0.get_pred());
+    assert(t1.get_id() == t1.get_pred());
+
+    assert(q0.is_adj(q1));
+    std::vector<unsigned> route_0;
+    std::vector<unsigned> route_1;
+
+    unsigned trace_0 = q0.get_id();
+    route_0.push_back(trace_0);
+    unsigned trace_1 = q1.get_id();
+    route_1.push_back(trace_1);
+    while (trace_0 != t0.get_id()) // trace 0
+    {
+        device::Qubit &q_trace_0 = get_qubit(trace_0);
+        unsigned trace_pred_0 = q_trace_0.get_pred();
+        route_0.push_back(trace_pred_0);
+        trace_0 = trace_pred_0;
+    }
+    std::reverse(route_0.begin(), route_0.end());
+    assert(route_0[0] == t0.get_id());
+
+    while (trace_1 != t1.get_id()) // trace 1
+    {
+        device::Qubit &q_trace_1 = get_qubit(trace_1);
+        unsigned trace_pred_1 = q_trace_1.get_pred();
+        route_1.push_back(trace_pred_1);
+        trace_1 = trace_pred_1;
+    }
+    std::reverse(route_1.begin(), route_1.end());
+    assert(route_1[0] == t1.get_id());
+
+    return std::make_tuple(route_0, route_1);
+}
+std::vector<Operation> device::Device::compile_route(std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes)
+{
+    std::vector<unsigned>& route_0 = std::get<0>(routes);
+    std::vector<unsigned>& route_1 = std::get<1>(routes);
+    device::Qubit& t0 = get_qubit(route_0[0]);
+    device::Qubit& t1 = get_qubit(route_1[0]);
+    device::Qubit& q0 = get_qubit(route_0.back());
+    device::Qubit& q1 = get_qubit(route_1.back());
+    assert(t0.get_id() == t0.get_pred());
+    assert(t1.get_id() == t1.get_pred());
+
+    assert(q0.is_adj(q1));
+    std::vector<Operation> ops;
+
+    unsigned R_time = std::max(q0.get_cost(), q1.get_cost());
+    Operation R_gate(Operator::R, std::make_tuple(q0.get_id(), q1.get_id()), std::make_tuple(R_time, R_time + _R_CYCLE));
+    ops.push_back(R_gate);
+
+    for (unsigned i = 1; i < route_0.size(); ++i) // trace 0
+    {
+        unsigned parent = route_0[i - 1];
+        unsigned child = route_0[i];
+        unsigned swap_time = get_qubit(child).get_swap_time();
+        Operation swap_gate(Operator::Swap, std::make_tuple(parent, child), std::make_tuple(swap_time, swap_time + _SWAP_CYCLE));
+        ops.push_back(swap_gate);
+    }
+    for (unsigned i = 1; i < route_1.size(); ++i) // trace 0
+    {
+        unsigned parent = route_1[i - 1];
+        unsigned child = route_1[i];
+        unsigned swap_time = get_qubit(child).get_swap_time();
+        Operation swap_gate(Operator::Swap, std::make_tuple(parent, child), std::make_tuple(swap_time, swap_time + _SWAP_CYCLE));
+        ops.push_back(swap_gate);
     }
 
     std::sort(ops.begin(), ops.end(), op_order);

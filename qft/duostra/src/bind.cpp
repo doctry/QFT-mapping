@@ -29,7 +29,9 @@ PYBIND11_MODULE(duostra, m)
         .def("get_final_cost", &device::Device::get_final_cost)
         .def("get_swap_num", &device::Device::get_swap_num)
         .def("get_num_qubits", &device::Device::get_num_qubits)
-        .def("get_operations", &device::Device::get_operations);
+        .def("get_operations", &device::Device::get_operations)
+        .def("route", &device::Device::route)
+        .def("compile_orute", &device::Device::compile_route);
 
     // qft_mapper.h
     py::class_<QFTPlacer>(m, "QFTPlacerCpp")
@@ -38,8 +40,7 @@ PYBIND11_MODULE(duostra, m)
     py::class_<QFTRouter>(m, "QFTRouterCpp")
         .def(py::init<device::Device &>())
         .def("get_gate_cost", &QFTRouter::get_gate_cost)
-        .def("assign_gate", &QFTRouter::assign_gate)
-        .def("route", &QFTRouter::route);
+        .def("assign_gate", &QFTRouter::assign_gate);
     py::class_<QFTScheduler>(m, "QFTSchedulerCpp")
         .def(py::init<topo::QFTTopology &>())
         .def("assign_gates", &QFTScheduler::assign_gates);
