@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Generic, Mapping, TypeVar
+from typing import Any, Callable, Dict, Generic, Iterator, Mapping, TypeVar
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -47,6 +47,27 @@ class TwoWayDict(Generic[K, V]):
 
             assert self.mapping[key] == val
             assert self.reverse[val] == key
+
+    def __iter__(self) -> Iterator[K]:
+        return iter(self.mapping)
+
+    def keys(self) -> Iterator[K]:
+        return self.mapping.keys()
+
+    def values(self) -> Iterator[V]:
+        return self.mapping.values()
+
+    def items(self, reverse: bool = False):
+        if reverse:
+            return self.reverse.items()
+        else:
+            return self.mapping.items()
+
+    def __getitem__(self, key: K) -> V:
+        return self.mapping[key]
+
+    def __setitem__(self, key: K, val: V) -> None:
+        self.mapping[key] = val
 
     @property
     def mapping(self) -> Dict[K, V]:
