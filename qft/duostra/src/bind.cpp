@@ -23,7 +23,8 @@ PYBIND11_MODULE(duostra, m)
         .def("get_cost", &Operation::get_cost)
         .def("get_op_time", &Operation::get_op_time)
         .def("get_operator_name", &Operation::get_operator_name)
-        .def("get_qubits", &Operation::get_qubits);
+        .def("get_qubits", &Operation::get_qubits)
+        .def("get_duration", &Operation::get_duration);
     py::class_<device::Device>(m, "DeviceCpp")
         .def(py::init<std::vector<std::vector<unsigned>> &, unsigned, unsigned>())
         .def("get_final_cost", &device::Device::get_final_cost)

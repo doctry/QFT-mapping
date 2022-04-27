@@ -46,6 +46,7 @@ public:
 
     unsigned get_cost() const { return std::get<1>(_duration); }
     unsigned get_op_time() const { return std::get<0>(_duration); }
+    std::tuple<unsigned, unsigned> get_duration() const { return _duration; }
     Operator get_operator() const { return _oper; }
     std::string get_operator_name() const
     {
@@ -160,7 +161,7 @@ namespace device
         void print_device_state(std::ostream &out);
         std::vector<Operation>& get_operations();
 
-        std::vector<Operation> compile_route(std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes); // python integration
+        std::vector<Operation> compile_route(const std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes); // python integration
 
     private:
         // A*

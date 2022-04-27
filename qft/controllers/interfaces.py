@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from typing import List, NamedTuple, Protocol, Tuple
 
@@ -15,7 +17,7 @@ class Timing(NamedTuple):
 class Controller(Protocol):
     scheduler: Scheduler
     router: Router
-    timing: Timing
+    timing: Timing | None
 
     def compile(self) -> CompiledProgram:
         nodes = len(self.scheduler.dep.g.nodes)
