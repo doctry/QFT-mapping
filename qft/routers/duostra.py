@@ -10,5 +10,4 @@ class DuostraRouter(Router):
         self.device = device
 
     def route_physical(self, source: int, target: int) -> Tuple[List[int], List[int]]:
-        print(source, target)
         return self.device.route(source, target)

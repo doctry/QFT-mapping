@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import sys
 from typing import Any, Mapping
 
 from black import json
 from hydra import main, utils
+from loguru import logger
 
 from . import (Consumer, Dependency, Device, DuostraController, DuostraRouter,
                PhysicalDevice, QFTDependency, RandomScheduler, Timing, duostra,
@@ -12,6 +14,8 @@ from . import (Consumer, Dependency, Device, DuostraController, DuostraRouter,
 
 @main(config_path="conf", config_name="qft")
 def run(cfg: Mapping[str, Any]) -> None:
+    logger.remove()
+    logger.add(sys.stderr, level=cfg["level"])
     device_path = str(cfg["device"])
     result_path = cfg["result"]
 
