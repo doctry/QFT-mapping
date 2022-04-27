@@ -5,9 +5,18 @@ from typing import Any, Mapping
 from black import json
 from hydra import main, utils
 
-from . import (Consumer, Dependency, Device, DuostraController, DuostraRouter,
-               PhysicalDevice, QFTDependency, RandomScheduler, Timing, duostra,
-               write_json)
+from . import (
+    Dependency,
+    Device,
+    DuostraController,
+    DuostraRouter,
+    PhysicalDevice,
+    QFTDependency,
+    RandomScheduler,
+    Timing,
+    duostra,
+    write_json,
+)
 
 
 @main(config_path="conf", config_name="qft")
