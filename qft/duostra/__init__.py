@@ -1,1 +1,1 @@
-import duostra
+from . import duostra

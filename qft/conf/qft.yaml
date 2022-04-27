@@ -1,10 +1,10 @@
 defaults:
   - init: init.yaml 
 
-device:
-result: result.json
+device: device/guadalupe_16.json
+result: 
 level: INFO
 time:
-  swap: 6
+  swap: 3
   op: 2
 scheduler: baseline

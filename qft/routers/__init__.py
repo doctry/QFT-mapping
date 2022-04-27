@@ -1,2 +1,2 @@
-from .doustra import DuostraRouter
+from .duostra import DuostraRouter
 from .interfaces import Router

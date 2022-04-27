@@ -461,10 +461,10 @@ std::tuple<std::vector<unsigned>, std::vector<unsigned>> device::Device::trace(d
 
     return std::make_tuple(route_0, route_1);
 }
-std::vector<Operation> device::Device::compile_route(std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes)
+std::vector<Operation> device::Device::compile_route(const std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes)
 {
-    std::vector<unsigned>& route_0 = std::get<0>(routes);
-    std::vector<unsigned>& route_1 = std::get<1>(routes);
+    const std::vector<unsigned>& route_0 = std::get<0>(routes);
+    const std::vector<unsigned>& route_1 = std::get<1>(routes);
     device::Qubit& t0 = get_qubit(route_0[0]);
     device::Qubit& t1 = get_qubit(route_1[0]);
     device::Qubit& q0 = get_qubit(route_0.back());

@@ -2,31 +2,39 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from black import json
 from hydra import main, utils
 
-from . import Dependency, Device, PhysicalDevice, QFTDependency, Timing
+from . import (Dependency, Device, DuostraController, DuostraRouter,
+               PhysicalDevice, QFTDependency, RandomScheduler, Timing, duostra, write_json)
 
 
 @main(config_path="conf", config_name="qft")
 def run(cfg: Mapping[str, Any]) -> None:
     device_path = str(cfg["device"])
-    result_path = str(cfg["result"])
-
-    dev: Device = PhysicalDevice.from_file(utils.to_absolute_path(device_path))
-    dep: Dependency = QFTDependency(len(dev.g.nodes))
+    result_path = cfg["result"]
 
     timing = Timing(cfg["time"]["swap"], cfg["time"]["op"])
-    # scheduler: APSPScheduler | None = None
 
-    # if (sch_typ := cfg["scheduler"]) == "baseline":
-    #     scheduler = BaselineScheduler(cfg, dep, dev, timing)
-    # elif sch_typ == "sync":
-    #     scheduler = SynchronousScheduler(cfg, dep, dev, timing)
-    # else:
-    #     raise ValueError(f"Scheduler type: {sch_typ} not supported.")
+    # scheduler
+    dev: Device = PhysicalDevice.from_file(utils.to_absolute_path(device_path))
+    dep: Dependency = QFTDependency(len(dev.g.nodes))
+    scheduler = RandomScheduler(dep)
 
-    # program = scheduler.schedule()
-    # common.write_json(program.json(), result_path)
+    if(cfg["router"] == "duostra"):
+        with open(cfg["device"], "r") as f:
+            device_file = json.load(f)
+        device_file = [i["adj_list"] for i in device_file]
+        device = duostra.DeviceCpp(device_file, cfg["time"]["op"], cfg["time"]["swap"])
+        router = DuostraRouter(device)
+        controller = DuostraController(device, router, scheduler)
+
+    result = controller.compile()
+
+    if(result_path is not None):
+        write_json(result.json(), result_path)
+
+    print(f"final_cost: {result.cost}")    
 
 
 if __name__ == "__main__":
