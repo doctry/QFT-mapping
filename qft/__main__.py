@@ -5,18 +5,9 @@ from typing import Any, Mapping
 from black import json
 from hydra import main, utils
 
-from . import (
-    Dependency,
-    Device,
-    DuostraController,
-    DuostraRouter,
-    PhysicalDevice,
-    QFTDependency,
-    RandomScheduler,
-    Timing,
-    duostra,
-    write_json,
-)
+from . import (Consumer, Dependency, Device, DuostraController, DuostraRouter,
+               PhysicalDevice, QFTDependency, RandomScheduler, Timing, duostra,
+               write_json)
 
 
 @main(config_path="conf", config_name="qft")
@@ -32,10 +23,14 @@ def run(cfg: Mapping[str, Any]) -> None:
     scheduler = RandomScheduler(dep)
 
     if cfg["router"] == "duostra":
+        placer = duostra.QFTPlacerCpp()
+
+        # device2topo
         with open(cfg["device"], "r") as f:
             device_file = json.load(f)
         device_file = [i["adj_list"] for i in device_file]
         device = duostra.DeviceCpp(device_file, cfg["time"]["op"], cfg["time"]["swap"])
+        placer.place(device, False)
         router = DuostraRouter(device)
         controller = DuostraController(device, router, scheduler)
 

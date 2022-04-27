@@ -1,10 +1,11 @@
 defaults:
   - init: init.yaml 
 
-device: device/guadalupe_16.json
+device: /home/doctry/桌面/QFT-mapping/device/guadalupe_16.json
 result: 
 level: INFO
 time:
   swap: 3
   op: 2
 scheduler: baseline
+router: duostra

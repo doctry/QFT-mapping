@@ -1,20 +1,25 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from typing import List, Protocol, Tuple
 
 from qft.devs import Device
+from qft.duostra import duostra
 
 
 class Router(Protocol):
-    device: Device
+    device: Device | duostra.DeviceCpp
 
     def route(
         self, source: int, target: int, physical: bool = False
     ) -> Tuple[List[int], List[int]]:
-        projector = self.device.mapping
+        print(source, target, physical)
+        projector = self.device.mapping()
+        print("projector")
 
         if not physical:
-            source = projector.mapping[source]
-            target = projector.mapping[target]
+            source = projector[source]
+            target = projector[target]
 
         return self.route_physical(source, target)
 

@@ -32,7 +32,8 @@ PYBIND11_MODULE(duostra, m)
         .def("get_num_qubits", &device::Device::get_num_qubits)
         .def("get_operations", &device::Device::get_operations)
         .def("route", &device::Device::route)
-        .def("compile_orute", &device::Device::compile_route);
+        .def("compile_route", &device::Device::compile_route)
+        .def("mapping", &device::Device::mapping);
 
     // qft_mapper.h
     py::class_<QFTPlacer>(m, "QFTPlacerCpp")
