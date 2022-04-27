@@ -2,7 +2,7 @@
 import json
 import sys
 
-import duostra
+from . import duostra
 import h5py
 import numpy as np
 
