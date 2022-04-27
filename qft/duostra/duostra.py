@@ -2,9 +2,10 @@
 import json
 import sys
 
-from . import duostra
 import h5py
 import numpy as np
+
+from . import duostra
 
 
 def main():
