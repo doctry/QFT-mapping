@@ -162,6 +162,7 @@ namespace device
         std::vector<Operation>& get_operations();
 
         std::vector<Operation> compile_route(const std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes); // python integration
+        std::vector<unsigned> mapping() const; // python integration
 
     private:
         // A*

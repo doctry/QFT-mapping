@@ -505,6 +505,19 @@ std::vector<Operation> device::Device::compile_route(const std::tuple<std::vecto
     return ops;
 }
 
+std::vector<unsigned> device::Device::mapping() const
+{
+    std::vector<unsigned> ret(_qubits.size(), UINT_MAX);
+
+    for (unsigned i = 0; i < _qubits.size(); ++i)
+    {
+        unsigned topo_idx = _qubits[i].get_topo_qubit();
+        assert(ret[topo_idx] == UINT_MAX);
+        ret[topo_idx] = i;
+    }
+    return ret;
+}
+
 void device::Device::apply_gate(const Operation &op)
 {
     Operator gate = op.get_operator();

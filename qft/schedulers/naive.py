@@ -17,7 +17,9 @@ class RandomScheduler(Scheduler):
 
     def next_op(self) -> QubitOp:
         ready = self.consumer.ready
-        return ready.pop()
+        op = ready.pop()
+        self.consumer.process(op)
+        return op
 
     @property
     def done(self) -> bool:

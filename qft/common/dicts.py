@@ -35,7 +35,7 @@ class CallbackDict(Dict[K, V]):
 
 class TwoWayDict(Generic[K, V]):
     def __init__(self, mapping: Mapping[K, V]) -> None:
-        self._reverse = Dict[V, K]()
+        self._reverse = dict[V, K]()
 
         def _mapping_setitem_callback(k: K, v: V) -> None:
             self._reverse[v] = k
