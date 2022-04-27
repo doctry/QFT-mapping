@@ -1,3 +1,4 @@
+# pyright: reportGeneralTypeIssues=false
 from typing import List, Tuple
 
 from qft.duostra import duostra

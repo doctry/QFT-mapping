@@ -20,14 +20,11 @@ class Controller(Protocol):
     timing: Timing | None
 
     def compile(self) -> CompiledProgram:
-        nodes = len(self.scheduler.dep.g.nodes)
-        total_dependencies = nodes * (nodes - 1) // 2
-
-
+        nodes = max(self.scheduler.dep.g.nodes, key=lambda x: x.target).target + 1
+        total_dependencies = (nodes * (nodes - 1)) // 2
 
         ops: List[CompiledOp] = []
         for _ in range(total_dependencies):
-            assert not self.scheduler.done, self.scheduler
             operation = self.scheduler.next_op()
             route = self.router.route(
                 operation.source, operation.target, physical=False

@@ -1,3 +1,4 @@
+# pyright: reportGeneralTypeIssues=false
 from typing import List, Tuple
 
 from qft.common.ops import CompiledOp
@@ -27,7 +28,7 @@ class DuostraController(Controller):
                 op.get_operator_name(),
                 logical=None,
                 physical=op.get_qubits(),
-                duration=op.get_duration,
+                duration=op.get_duration(),
             )
             for op in opers
         ]
