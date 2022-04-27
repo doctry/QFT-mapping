@@ -13,9 +13,7 @@ class Router(Protocol):
     def route(
         self, source: int, target: int, physical: bool = False
     ) -> Tuple[List[int], List[int]]:
-        print(source, target, physical)
         projector = self.device.mapping()
-        print("projector")
 
         if not physical:
             source = projector[source]

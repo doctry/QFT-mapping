@@ -240,7 +240,6 @@ std::tuple<std::vector<unsigned>, std::vector<unsigned>> device::Device::route(u
 #else
     touch_adj(t1, pq, true);
 #endif
-
     while (!is_adj) // set not adjacent
     {
         device::AStarNode next(pq.top());
@@ -270,6 +269,15 @@ std::tuple<std::vector<unsigned>, std::vector<unsigned>> device::Device::route(u
         }
     }
     return trace(get_qubit(q0_idx), get_qubit(q1_idx), t0, t1);
+}
+
+void device::Device::reset()
+{
+    for (unsigned i = 0; i < _qubits.size(); ++i)
+    {
+        device::Qubit &qubit = _qubits[i];
+        qubit.reset();
+    }
 }
 
 std::vector<unsigned> device::Device::routing(std::tuple<unsigned, unsigned> qs)

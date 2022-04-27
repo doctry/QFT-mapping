@@ -21,6 +21,7 @@ class DuostraController(Controller):
 
     def compile_route(self, route: Tuple[List[int], List[int]]) -> List[CompiledOp]:
         opers = self.device.compile_route(route)
+        self.device.reset()
         ret = [
             CompiledOp(
                 op.get_operator_name(),

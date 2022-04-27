@@ -2,7 +2,7 @@ from networkx import DiGraph
 
 from qft.common import QubitOp
 from qft.deps import Dependency
-
+import random
 from .interfaces import Scheduler
 
 
@@ -17,7 +17,7 @@ class RandomScheduler(Scheduler):
 
     def next_op(self) -> QubitOp:
         ready = self.consumer.ready
-        op = ready.pop()
+        op = random.choice(tuple(ready))
         self.consumer.process(op)
         return op
 
