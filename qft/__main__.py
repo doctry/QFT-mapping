@@ -5,8 +5,18 @@ from typing import Any, Mapping
 from black import json
 from hydra import main, utils
 
-from . import (Dependency, Device, DuostraController, DuostraRouter,
-               PhysicalDevice, QFTDependency, RandomScheduler, Timing, duostra, write_json)
+from . import (
+    Dependency,
+    Device,
+    DuostraController,
+    DuostraRouter,
+    PhysicalDevice,
+    QFTDependency,
+    RandomScheduler,
+    Timing,
+    duostra,
+    write_json,
+)
 
 
 @main(config_path="conf", config_name="qft")
@@ -21,7 +31,7 @@ def run(cfg: Mapping[str, Any]) -> None:
     dep: Dependency = QFTDependency(len(dev.g.nodes))
     scheduler = RandomScheduler(dep)
 
-    if(cfg["router"] == "duostra"):
+    if cfg["router"] == "duostra":
         with open(cfg["device"], "r") as f:
             device_file = json.load(f)
         device_file = [i["adj_list"] for i in device_file]
@@ -31,10 +41,10 @@ def run(cfg: Mapping[str, Any]) -> None:
 
     result = controller.compile()
 
-    if(result_path is not None):
+    if result_path is not None:
         write_json(result.json(), result_path)
 
-    print(f"final_cost: {result.cost}")    
+    print(f"final_cost: {result.cost}")
 
 
 if __name__ == "__main__":

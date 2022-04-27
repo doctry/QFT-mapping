@@ -5,7 +5,7 @@ from qft.duostra import duostra
 from qft.routers import DuostraRouter
 from qft.schedulers import Scheduler
 
-from .interfaces import Controller, Timing
+from .interfaces import Controller
 
 
 class DuostraController(Controller):
@@ -21,5 +21,13 @@ class DuostraController(Controller):
 
     def compile_route(self, route: Tuple[List[int], List[int]]) -> List[CompiledOp]:
         opers = self.device.compile_route(route)
-        ret = [CompiledOp(op.get_operator_name(), logical=None, physical=op.get_qubits(), duration = op.get_duration) for op in opers]
+        ret = [
+            CompiledOp(
+                op.get_operator_name(),
+                logical=None,
+                physical=op.get_qubits(),
+                duration=op.get_duration,
+            )
+            for op in opers
+        ]
         return ret
