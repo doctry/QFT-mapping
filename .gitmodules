@@ -1,0 +1,3 @@
+[submodule "qft/decision-transformer"]
+	path = qft/decision-transformer
+	url = https://github.com/kzl/decision-transformer.git
