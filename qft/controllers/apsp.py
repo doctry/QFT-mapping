@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Tuple
 
 from qft.common import CompiledOp, QubitOp
-from qft.deps.interfaces import Consumer, Dependency
+from qft.deps.interfaces import Dependency
 from qft.devs import Device
 from qft.routers import Router
 from qft.schedulers import Scheduler
