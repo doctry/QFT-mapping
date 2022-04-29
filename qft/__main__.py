@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import sys
-from multiprocessing.sharedctypes import Value
 from typing import Any, Mapping
 
 from black import json
