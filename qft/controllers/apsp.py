@@ -20,7 +20,9 @@ class APSPMixin:
         return self._swap_path(r0) + self._swap_path(r1) + [self._op(r0[-1], r1[-1])]
 
     def _swap_path(self, route: List[int]) -> List[CompiledOp]:
-        wall_clock = max(self.available[r] for r in route)
+        wall_clock = max(
+            self.available[r] - td for (r, td) in (route, self._tight_path(route))
+        )
 
         ops = []
         for (s, t) in zip(route[:-1], route[1:]):
@@ -37,6 +39,11 @@ class APSPMixin:
         end = start + self.timing.operation
         self.available[a] = self.available[b] = end
         return CompiledOp(operator="R", physical=(a, b), duration=(start, end))
+
+    def _tight_path(self, route: List[int]) -> List[int]:
+        time_diff = [0] + list(range(len(route) - 1))
+        time_diff = [self.timing.swap * x for x in time_diff]
+        return time_diff
 
 
 class APSPController(APSPMixin, Controller):
