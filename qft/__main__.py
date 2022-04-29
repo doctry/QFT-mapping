@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+from multiprocessing.sharedctypes import Value
 from typing import Any, Mapping
 
 from black import json
@@ -33,10 +34,18 @@ def run(cfg: Mapping[str, Any]) -> None:
 
     # scheduler
     dev: Device = PhysicalDevice.from_file(utils.to_absolute_path(device_path))
-    dep: Dependency = QFTDependency(len(dev.g.nodes))
-    scheduler = RandomScheduler(dep)
 
-    if cfg["router"] == "duostra":
+    if cfg["components"]["dependency"] == "qft":
+        dep: Dependency = QFTDependency(len(dev.g.nodes))
+    else:
+        raise ValueError
+
+    if cfg["components"]["scheduler"] == "random":
+        scheduler = RandomScheduler(dep)
+    else:
+        raise ValueError
+
+    if cfg["components"]["device"] == "duostra":
         placer = duostra.QFTPlacerCpp()
 
         # device2topo
@@ -45,8 +54,18 @@ def run(cfg: Mapping[str, Any]) -> None:
         device_file = [i["adj_list"] for i in device_file]
         device = duostra.DeviceCpp(device_file, cfg["time"]["op"], cfg["time"]["swap"])
         placer.place(device, False)
+    else:
+        raise ValueError
+
+    if cfg["components"]["router"] == "duostra":
         router = DuostraRouter(device)
+    else:
+        raise ValueError
+
+    if cfg["components"]["controller"] == "duostra":
         controller = DuostraController(device, router, scheduler)
+    else:
+        raise ValueError
 
     result = controller.compile()
 

@@ -17,8 +17,8 @@ class PhysicalDevice(Graph, Device, JsonSerDe):
     def __init__(self, data: List[Dict[str, Any]]) -> None:
         super().__init__()
 
-        self.mapping = TwoWayDict({i: d["id"] for (i, d) in enumerate(data)})
-        self.add_nodes_from(self.mapping)
+        self._mapping = [d["id"] for d in data]
+        self.add_nodes_from(self._mapping)
 
         for d in data:
             id = d["id"]
@@ -30,6 +30,9 @@ class PhysicalDevice(Graph, Device, JsonSerDe):
                 self.add_edge(id, adj)
 
         nx.freeze(self)
+
+    def mapping(self) -> List[int]:
+        return self._mapping
 
     @property
     def g(self) -> Graph:
