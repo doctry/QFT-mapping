@@ -1,5 +1,6 @@
 # pyright: reportGeneralTypeIssues=false
 from __future__ import annotations
+import random
 
 import sys
 from typing import Any, Mapping
@@ -7,6 +8,8 @@ from typing import Any, Mapping
 from black import json
 from hydra import main, utils
 from loguru import logger
+
+from qft.controllers.apsp import APSPController
 
 from . import (
     Dependency,
@@ -19,8 +22,8 @@ from . import (
     Timing,
     duostra,
     write_json,
+    APSPRouter
 )
-
 
 @main(config_path="conf", config_name="qft")
 def run(cfg: Mapping[str, Any]) -> None:
@@ -53,16 +56,25 @@ def run(cfg: Mapping[str, Any]) -> None:
         device_file = [i["adj_list"] for i in device_file]
         device = duostra.DeviceCpp(device_file, cfg["time"]["op"], cfg["time"]["swap"])
         placer.place(device, False)
+    elif cfg["components"]["device"] == "apsp":
+        with open(cfg["device"], "r") as f:
+            device_file = json.load(f)
+        device = PhysicalDevice(device_file)
+        random.shuffle(device.mapping())
     else:
         raise ValueError
 
     if cfg["components"]["router"] == "duostra":
         router = DuostraRouter(device)
+    elif cfg["components"]["router"] == "apsp":
+        router = APSPRouter(device)
     else:
         raise ValueError
 
     if cfg["components"]["controller"] == "duostra":
         controller = DuostraController(device, router, scheduler)
+    elif cfg["components"]["controller"] == "apsp":
+        controller = APSPController(device, scheduler, router, timing)
     else:
         raise ValueError
 

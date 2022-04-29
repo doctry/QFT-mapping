@@ -21,7 +21,7 @@ class APSPMixin:
 
     def _swap_path(self, route: List[int]) -> List[CompiledOp]:
         wall_clock = max(
-            self.available[r] - td for (r, td) in (route, self._tight_path(route))
+            self.available[r] - td for (r, td) in zip(route, self._tight_path(route))
         )
 
         ops = []
@@ -33,6 +33,7 @@ class APSPMixin:
             ops.append(
                 CompiledOp(operator="Swap", physical=(s, t), duration=(start, end))
             )
+        return ops
 
     def _op(self, a: int, b: int) -> CompiledOp:
         start = max(self.available[a], self.available[b])

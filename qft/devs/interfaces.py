@@ -24,7 +24,7 @@ class Device(Protocol):
         cloned_map = copy.copy(self.state)
 
         for (idx, ridx) in zip(indices, rotated):
-            self.state[idx] = cloned_map.state[ridx]
+            self.state[idx] = cloned_map[ridx]
 
     @staticmethod
     def _rotate(indices: List[int], *, right: bool) -> List[int]:

@@ -157,10 +157,12 @@ namespace device
         void write_assembly(std::ostream &out);
         void to_json(json &j);
         unsigned get_final_cost();
+        unsigned get_total_time();
         unsigned get_swap_num();
         void print_device_state(std::ostream &out);
         std::vector<Operation>& get_operations();
 
+        void place(std::vector<unsigned> & assign); // topo2device
         std::vector<Operation> compile_route(const std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes); // python integration
         std::vector<unsigned> mapping() const; // python integration
         void reset(); //python integration

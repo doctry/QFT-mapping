@@ -1,7 +1,7 @@
 defaults:
   - init: init.yaml 
 
-device: /home/doctry/桌面/QFT-mapping/device/guadalupe_16.json
+device: /home/doctry/桌面/QFT-mapping/device/washington_127.json
 result: 
 level: INFO
 time:
@@ -9,8 +9,8 @@ time:
   op: 2
 scheduler: baseline
 components:
-  device: duostra
+  device: apsp
   dependency: qft
   scheduler: random
-  router: duostra
-  compiler: duostra
+  router: apsp
+  controller: apsp

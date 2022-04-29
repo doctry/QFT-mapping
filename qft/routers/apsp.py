@@ -21,8 +21,8 @@ class APSPRouter(Router):
         path = self.shortest_paths[source, target]
         length = len(path)
         return (
-            self.shortest_paths[: length // 2 : 1],
-            self.shortest_paths[: length // 2 - 1 : -1],
+            path[: length // 2 : 1],
+            path[: length // 2 - 1 : -1],
         )
 
     def _flattened_shortest_paths(self) -> Dict[Tuple[int, int], List[int]]:
@@ -36,7 +36,7 @@ class APSPRouter(Router):
                 assert paths[-1] == target, [paths, target]
 
         for (source, target) in result.keys():
-            assert result[source, target] == result[target, source], [
+            assert result[source, target] == result[target, source][::-1], [
                 result[source, target],
                 result[target, source],
             ]
