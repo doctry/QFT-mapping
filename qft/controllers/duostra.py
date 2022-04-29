@@ -1,7 +1,7 @@
 # pyright: reportGeneralTypeIssues=false
 from typing import List, Tuple
 
-from qft.common.ops import CompiledOp
+from qft.common import CompiledOp
 from qft.duostra import duostra
 from qft.routers import DuostraRouter
 from qft.schedulers import Scheduler
@@ -19,6 +19,9 @@ class DuostraController(Controller):
         self.device = device
         self.router = router
         self.scheduler = scheduler
+
+    def exec_route(self, route: Tuple[List[int], List[int]]) -> List[CompiledOp]:
+        return self.compile_route(route)
 
     def compile_route(self, route: Tuple[List[int], List[int]]) -> List[CompiledOp]:
         opers = self.device.compile_route(route)

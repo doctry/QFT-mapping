@@ -8,4 +8,9 @@ time:
   swap: 3
   op: 2
 scheduler: baseline
-router: duostra
+components:
+  device: duostra
+  dependency: qft
+  scheduler: random
+  router: duostra
+  compiler: duostra

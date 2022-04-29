@@ -8,8 +8,12 @@ from qft.common import TwoWayDict
 
 
 class Device(Protocol):
+    @property
+    def state(self) -> List[int]:
+        return self.mapping()
+
     @abstractmethod
-    def mapping(self) -> TwoWayDict[int, int]:
+    def mapping(self) -> List[int]:
         ...
 
     @property
@@ -19,10 +23,10 @@ class Device(Protocol):
 
     def rotate(self, indices: List[int], *, right: bool) -> None:
         rotated = self._rotate(indices, right=right)
-        cloned_map = copy.copy(self.mapping)
+        cloned_map = copy.copy(self.state)
 
         for (idx, ridx) in zip(indices, rotated):
-            self.mapping.mapping[idx] = cloned_map.mapping[ridx]
+            self.state[idx] = cloned_map.state[ridx]
 
     @staticmethod
     def _rotate(indices: List[int], *, right: bool) -> List[int]:
