@@ -1,9 +1,9 @@
 {
-    "num_qubits": 16,
+    "num_qubits": 127,
     "R_CYCLE": 2,
     "SWAP_CYCLE": 3,
-    "device": "../../device/guadalupe_16.json",
-    "output": "../../output/guadalupe_16.qasm",
+    "device": "../../device/washington_127.txt",
+    "output": "../../output/temp.qasm",
     "stdio": false,
     "random_place": true,
     "gen_data": 1,

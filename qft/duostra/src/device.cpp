@@ -469,14 +469,23 @@ std::tuple<std::vector<unsigned>, std::vector<unsigned>> device::Device::trace(d
 
     return std::make_tuple(route_0, route_1);
 }
-std::vector<Operation> device::Device::compile_route(const std::tuple<std::vector<unsigned>, std::vector<unsigned>>& routes)
+
+void device::Device::place(std::vector<unsigned> &assign)
 {
-    const std::vector<unsigned>& route_0 = std::get<0>(routes);
-    const std::vector<unsigned>& route_1 = std::get<1>(routes);
-    device::Qubit& t0 = get_qubit(route_0[0]);
-    device::Qubit& t1 = get_qubit(route_1[0]);
-    device::Qubit& q0 = get_qubit(route_0.back());
-    device::Qubit& q1 = get_qubit(route_1.back());
+    for (unsigned i = 0; i < assign.size(); ++i)
+    {
+        _qubits[assign[i]].set_topo_qubit(i);
+    }
+}
+
+std::vector<Operation> device::Device::compile_route(const std::tuple<std::vector<unsigned>, std::vector<unsigned>> &routes)
+{
+    const std::vector<unsigned> &route_0 = std::get<0>(routes);
+    const std::vector<unsigned> &route_1 = std::get<1>(routes);
+    device::Qubit &t0 = get_qubit(route_0[0]);
+    device::Qubit &t1 = get_qubit(route_1[0]);
+    device::Qubit &q0 = get_qubit(route_0.back());
+    device::Qubit &q1 = get_qubit(route_1.back());
     assert(t0.get_id() == t0.get_pred());
     assert(t1.get_id() == t1.get_pred());
 
@@ -609,11 +618,25 @@ unsigned device::Device::get_final_cost()
     return _ops[_ops.size() - 1].get_cost();
 }
 
+unsigned device::Device::get_total_time()
+{
+    std::sort(_ops.begin(), _ops.end(), op_order);
+
+    unsigned ret = 0;
+    for (unsigned i = 0; i < _ops.size(); ++i)
+    {
+        std::tuple<unsigned, unsigned> dur = _ops[i].get_duration();
+        ret += std::get<1>(dur) - std::get<0>(dur);
+    }
+    return ret;
+}
+
 unsigned device::Device::get_swap_num()
 {
     std::sort(_ops.begin(), _ops.end(), op_order);
     unsigned ret = 0;
-    for (unsigned i = 0; i < _ops.size(); ++i) {
+    for (unsigned i = 0; i < _ops.size(); ++i)
+    {
         if (_ops[i].get_operator() == Operator::Swap)
         {
             ret += 1;

@@ -54,5 +54,6 @@ int main(int argc, char *argv[])
         device.write_assembly(std::cout);
     }
     std::cout << "final cost: " << device.get_final_cost() << "\n";
+    std::cout << "total time: " << device.get_total_time() << "\n";
     return 0;
 }
