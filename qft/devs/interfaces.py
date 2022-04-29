@@ -4,8 +4,6 @@ from typing import List, Protocol
 
 from networkx import Graph
 
-from qft.common import TwoWayDict
-
 
 class Device(Protocol):
     @property

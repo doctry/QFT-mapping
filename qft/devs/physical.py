@@ -8,7 +8,7 @@ from networkx import Graph
 from typing_extensions import Self
 
 from qft import common
-from qft.common import Json, JsonSerDe, TwoWayDict
+from qft.common import Json, JsonSerDe
 
 from .interfaces import Device
 
