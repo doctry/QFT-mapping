@@ -1,5 +1,3 @@
-import numpy as np
-
 MAX_NUM_QUBIT = 1280
 
 from ..decision_transformer import *
