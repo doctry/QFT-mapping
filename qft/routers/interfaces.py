@@ -12,14 +12,10 @@ class Router(Protocol):
     device: Device | duostra.DeviceCpp
 
     def route(
-        self, source: int, target: int, physical: bool = False
+        self, source: int, target: int, already_physical: bool = False
     ) -> Tuple[List[int], List[int]]:
-        projector = self.device.state
-
-        if not physical:
-            source = projector[source]
-            target = projector[target]
-
+        source = self.device.to_physical(source, already_physical=already_physical)
+        target = self.device.to_physical(target, already_physical=already_physical)
         return self.route_physical(source, target)
 
     @abstractmethod

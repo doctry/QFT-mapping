@@ -28,7 +28,7 @@ class Controller(Protocol):
         for _ in range(total_dependencies):
             operation = next(self.scheduler)
             route = self.router.route(
-                operation.source, operation.target, physical=False
+                operation.source, operation.target, already_physical=False
             )
             compiled_route = self.exec_route(route)
             ops.extend(compiled_route)
@@ -37,12 +37,16 @@ class Controller(Protocol):
 
         return CompiledProgram.from_ops(ops)
 
-    def exec_route(self, route: Tuple[List[int], List[int]]) -> List[CompiledOp]:
-        compiled = self.compile_route(route)
-        self.device.rotate(route[0], right=False)
-        self.device.rotate(route[1], right=False)
+    def exec_route(
+        self, route: Tuple[List[int], List[int]], already_physical: bool
+    ) -> List[CompiledOp]:
+        compiled = self.compile_route(route, already_physical=already_physical)
+        self.device.rotate(route[0], right=False, already_physical=already_physical)
+        self.device.rotate(route[1], right=False, already_physical=already_physical)
         return compiled
 
     @abstractmethod
-    def compile_route(self, route: Tuple[List[int], List[int]]) -> List[CompiledOp]:
+    def compile_route(
+        self, route: Tuple[List[int], List[int]], already_physical: bool
+    ) -> List[CompiledOp]:
         ...
