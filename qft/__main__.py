@@ -1,18 +1,19 @@
 # pyright: reportGeneralTypeIssues=false
 from __future__ import annotations
-import random
 
+import random
 import sys
 from typing import Any, Mapping
 
+import networkx as nx
 from black import json
 from hydra import main, utils
 from loguru import logger
-import networkx as nx
 
 from qft.controllers.apsp import APSPController
 
 from . import (
+    APSPRouter,
     Dependency,
     Device,
     DuostraController,
@@ -23,7 +24,6 @@ from . import (
     Timing,
     duostra,
     write_json,
-    APSPRouter,
 )
 
 

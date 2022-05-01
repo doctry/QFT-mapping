@@ -1,5 +1,4 @@
 from __future__ import annotations
-from lib2to3.pytree import convert
 
 from typing import List, Tuple
 
