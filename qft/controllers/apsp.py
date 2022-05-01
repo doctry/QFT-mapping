@@ -1,4 +1,5 @@
 from __future__ import annotations
+from lib2to3.pytree import convert
 
 from typing import List, Tuple
 
@@ -14,9 +15,14 @@ from .interfaces import Controller, Timing
 class APSPMixin:
     timing: Timing
     available: List[int]
+    device: Device
 
-    def compile_route(self, route: Tuple[List[int], List[int]]) -> List[CompiledOp]:
+    def compile_route(
+        self, route: Tuple[List[int], List[int]], already_physical: bool
+    ) -> List[CompiledOp]:
         (r0, r1) = route
+        self.device.to_physical(r0, convert_to_physical=already_physical)
+        self.device.to_physical(r1, convert_to_physical=already_physical)
         return self._swap_path(r0) + self._swap_path(r1) + [self._op(r0[-1], r1[-1])]
 
     def _swap_path(self, route: List[int]) -> List[CompiledOp]:

@@ -8,6 +8,7 @@ from typing import Any, Mapping
 from black import json
 from hydra import main, utils
 from loguru import logger
+import networkx as nx
 
 from qft.controllers.apsp import APSPController
 
@@ -22,8 +23,9 @@ from . import (
     Timing,
     duostra,
     write_json,
-    APSPRouter
+    APSPRouter,
 )
+
 
 @main(config_path="conf", config_name="qft")
 def run(cfg: Mapping[str, Any]) -> None:
@@ -60,7 +62,14 @@ def run(cfg: Mapping[str, Any]) -> None:
         with open(cfg["device"], "r") as f:
             device_file = json.load(f)
         device = PhysicalDevice(device_file)
-        random.shuffle(device.mapping())
+        random.shuffle(device.qubits)
+        zero = device.qubits.index(0)
+        path_from_0 = tuple(nx.shortest_path(device.g)[zero])
+        assert len(path_from_0) == len(device.g.ndoes)
+        path_idx_from_0 = tuple((p, i) for (i, p) in enumerate(path_from_0))
+        shortest_path_idx = sorted(path_idx_from_0)
+        shortest_idx = tuple(x[1] for x in shortest_path_idx)
+        device.qubits[:] = shortest_idx
     else:
         raise ValueError
 
