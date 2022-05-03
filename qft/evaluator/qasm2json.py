@@ -1,3 +1,7 @@
+# pyright: reportMissingImports=false
+# pyright: reportUndefinedVariable=false
+# pyright: reportInvalidStringEscapeSequence=false
+# pyright: reportUnboundVariable=false
 #!/usr/bin/env python
 # coding: utf-8
 

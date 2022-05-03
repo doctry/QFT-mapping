@@ -30,7 +30,7 @@ class Controller(Protocol):
             route = self.router.route(
                 operation.source, operation.target, already_physical=False
             )
-            compiled_route = self.exec_route(route)
+            compiled_route = self.exec_route(route, already_physical=False)
             ops.extend(compiled_route)
 
         assert self.scheduler.done, self.scheduler

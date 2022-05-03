@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Mapping
 
 import networkx as nx
 from networkx import Graph
 from typing_extensions import Self
 
 from qft import common
-from qft.common import Json, JsonSerDe
+from qft.common import Json, JsonSerDe, TwoWayDict
 
 from .interfaces import Device
 
@@ -17,7 +17,10 @@ class PhysicalDevice(Graph, Device, JsonSerDe):
     def __init__(self, data: List[Dict[str, Any]]) -> None:
         super().__init__()
 
-        self._mapping = [d["id"] for d in data]
+        mp: List[int] = [d["id"] for d in data]
+        mp_dict = dict(enumerate(mp))
+
+        self._mapping = TwoWayDict(mp_dict)
         self.add_nodes_from(self._mapping)
 
         for d in data:
@@ -31,8 +34,12 @@ class PhysicalDevice(Graph, Device, JsonSerDe):
 
         nx.freeze(self)
 
-    def mapping(self) -> List[int]:
-        return self._mapping
+    def mapping(self) -> Dict[int, int]:
+        return self._mapping.forward
+
+    @property
+    def reverse(self) -> Dict[int, int]:
+        return self._mapping.reverse
 
     @property
     def g(self) -> Graph:

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Generic, Iterator, Mapping, TypeVar
+from typing import Any, Callable, Dict, Generic, Iterable, Iterator, Mapping, TypeVar
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -35,43 +35,43 @@ class CallbackDict(Dict[K, V]):
 
 class TwoWayDict(Generic[K, V]):
     def __init__(self, mapping: Mapping[K, V]) -> None:
-        self._reverse = dict[V, K]()
+        self._reverse = {}
 
         def _mapping_setitem_callback(k: K, v: V) -> None:
             self._reverse[v] = k
 
-        self._mapping = CallbackDict[K, V](setitem=_mapping_setitem_callback)
+        self._forward = CallbackDict(setitem=_mapping_setitem_callback)
 
         for (key, val) in mapping.items():
-            self._mapping[key] = val
+            self._forward[key] = val
 
-            assert self.mapping[key] == val
-            assert self.reverse[val] == key
+            assert self._forward[key] == val
+            assert self._reverse[val] == key
 
     def __iter__(self) -> Iterator[K]:
-        return iter(self.mapping)
+        return iter(self._forward)
 
-    def keys(self) -> Iterator[K]:
-        return self.mapping.keys()
+    def keys(self) -> Iterable[K]:
+        return self._forward.keys()
 
-    def values(self) -> Iterator[V]:
-        return self.mapping.values()
+    def values(self) -> Iterable[V]:
+        return self._forward.values()
 
     def items(self, reverse: bool = False):
         if reverse:
             return self.reverse.items()
         else:
-            return self.mapping.items()
+            return self._forward.items()
 
     def __getitem__(self, key: K) -> V:
-        return self.mapping[key]
+        return self._forward[key]
 
     def __setitem__(self, key: K, val: V) -> None:
-        self.mapping[key] = val
+        self._forward[key] = val
 
     @property
-    def mapping(self) -> Dict[K, V]:
-        return self._mapping
+    def forward(self) -> Dict[K, V]:
+        return self._forward
 
     @property
     def reverse(self) -> Dict[V, K]:
