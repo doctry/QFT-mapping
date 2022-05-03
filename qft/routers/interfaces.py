@@ -14,8 +14,8 @@ class Router(Protocol):
     def route(
         self, source: int, target: int, already_physical: bool = False
     ) -> Tuple[List[int], List[int]]:
-        source = self.device.to_physical(source, already_physical=already_physical)
-        target = self.device.to_physical(target, already_physical=already_physical)
+        source = self.device.to_physical(source, convert_to_physical=already_physical)
+        target = self.device.to_physical(target, convert_to_physical=already_physical)
         return self.route_physical(source, target)
 
     @abstractmethod

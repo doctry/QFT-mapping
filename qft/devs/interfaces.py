@@ -1,17 +1,22 @@
 import copy
 from abc import abstractmethod
-from typing import List, Protocol
+from typing import Dict, List, Mapping, Protocol
 
 from networkx import Graph
 
 
 class Device(Protocol):
     @property
-    def qubits(self) -> List[int]:
+    def qubits(self) -> Dict[int, int]:
         return self.mapping()
 
     @abstractmethod
-    def mapping(self) -> List[int]:
+    def mapping(self) -> Dict[int, int]:
+        ...
+
+    @property
+    @abstractmethod
+    def reverse(self) -> Dict[int, int]:
         ...
 
     @property
@@ -33,18 +38,17 @@ class Device(Protocol):
     def _rotate(
         self, indices: List[int], *, right: bool, convert_to_physical: bool
     ) -> List[int]:
-        indices = self.to_physical(indices, convert_to_physical=convert_to_physical)
+        indices = [
+            self.to_physical(i, convert_to_physical=convert_to_physical)
+            for i in indices
+        ]
 
         if right:
             return indices[-1:] + indices[:-1]
         else:
             return indices[1:] + indices[:1]
 
-    def to_physical(self, route: List[int], convert_to_physical: bool) -> List[int]:
+    def to_physical(self, qubit: int, convert_to_physical: bool) -> int:
         if not convert_to_physical:
-            return route
-
-        projector = self.device.qubits
-        reverse = {q: idx for (idx, q) in enumerate(projector)}
-
-        return [reverse[i] for i in route]
+            return qubit
+        return self.reverse[qubit]

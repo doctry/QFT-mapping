@@ -1,3 +1,6 @@
+# pyright: reportUndefinedVariable=false
+# pyright: reportMissingImports=false
+# pyright: reportUnboundVariable=false
 MAX_NUM_QUBIT = 1280
 
 from ..decision_transformer import *

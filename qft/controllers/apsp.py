@@ -20,8 +20,12 @@ class APSPMixin:
         self, route: Tuple[List[int], List[int]], already_physical: bool
     ) -> List[CompiledOp]:
         (r0, r1) = route
-        self.device.to_physical(r0, convert_to_physical=already_physical)
-        self.device.to_physical(r1, convert_to_physical=already_physical)
+        r0 = [
+            self.device.to_physical(r, convert_to_physical=already_physical) for r in r0
+        ]
+        r1 = [
+            self.device.to_physical(r, convert_to_physical=already_physical) for r in r1
+        ]
         return self._swap_path(r0) + self._swap_path(r1) + [self._op(r0[-1], r1[-1])]
 
     def _swap_path(self, route: List[int]) -> List[CompiledOp]:
@@ -68,8 +72,8 @@ class WorkStealingController(APSPMixin, Scheduler):
         self, device: Device, dependency: Dependency, router: Router, timing: Timing
     ) -> None:
         self.device = device
-        self.dependency = dependency
-        self.consumer = self.dependency.consumer()
+        self.dep = dependency
+        self.consumer = dependency.consumer()
         self.router = router
         self.timing = timing
         self.available = [0] * len(self.device.g.nodes)
