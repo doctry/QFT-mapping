@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import random
 import sys
 from typing import Any, Mapping
 
