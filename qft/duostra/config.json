@@ -1,9 +1,9 @@
 {
-    "num_qubits": 127,
+    "num_qubits": 65,
     "R_CYCLE": 2,
     "SWAP_CYCLE": 3,
-    "device": "../../device/washington_127.txt",
-    "output": "../../output/temp.qasm",
+    "device": "../../device/brooklyn_65.txt",
+    "output": "../../output/brooklyn_65.qasm",
     "stdio": false,
     "random_place": true,
     "gen_data": 1,
