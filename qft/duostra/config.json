@@ -1,11 +1,11 @@
 {
-    "num_qubits": 127,
-    "R_CYCLE": 2,
-    "SWAP_CYCLE": 3,
-    "device": "../../device/washington_127.txt",
-    "output": "../../output/temp.qasm",
-    "stdio": false,
-    "random_place": true,
-    "gen_data": 1,
-    "h5": "../../data/guadalupe_16_1.hdf5"
+  "num_qubits": 127,
+  "R_CYCLE": 2,
+  "SWAP_CYCLE": 3,
+  "device": "../../device/washington_127.txt",
+  "output": "../../output/temp.qasm",
+  "stdio": false,
+  "random_place": true,
+  "gen_data": 1,
+  "h5": "../../data/guadalupe_16_1.hdf5"
 }
