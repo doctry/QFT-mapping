@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Dict, List, Mapping, Protocol
+from typing import Dict, List, Protocol
 
 from networkx import Graph
 

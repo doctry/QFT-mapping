@@ -1,7 +1,7 @@
 defaults:
   - init: init.yaml 
 
-device: /home/doctry/桌面/QFT-mapping/device/washington_127.json
+device: /home/doctry/桌面/QFT-mapping/device/brooklyn_65.json
 result: 
 level: INFO
 time:
@@ -9,8 +9,8 @@ time:
   op: 2
 scheduler: baseline
 components:
-  device: apsp
+  device: duostra
   dependency: qft
   scheduler: random
-  router: apsp
-  controller: apsp
+  router: duostra
+  controller: duostra

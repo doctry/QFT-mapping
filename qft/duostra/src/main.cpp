@@ -4,6 +4,7 @@
 #include "qft_mapper.h"
 #include "string"
 #include "json.hpp"
+#include "util.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -38,7 +39,8 @@ int main(int argc, char *argv[])
     }
 
     QFTPlacer placer;
-    placer.place(device, conf["random_place"].get<bool>());
+    std::vector<unsigned> assign = placer.dfs_place(device);
+    device.place(assign);
 
     QFTScheduler scheduler(qft_topo);
     QFTRouter router(device);
@@ -46,6 +48,7 @@ int main(int argc, char *argv[])
 
     std::fstream out_file;
     out_file.open(conf["output"], std::fstream::out);
+    out_file << assign;
     device.write_assembly(out_file);
     out_file << "final_cost: " << device.get_final_cost() << "\n";
 

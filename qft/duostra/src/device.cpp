@@ -285,7 +285,11 @@ std::vector<unsigned> device::Device::routing(std::tuple<unsigned, unsigned> qs)
     unsigned q0_idx = std::get<0>(qs); // source 0
     unsigned q1_idx = std::get<1>(qs); // source 1
 
-    if (get_qubit(q0_idx).get_avail_time() > get_qubit(q1_idx).get_avail_time())
+    if (get_qubit(q0_idx).get_avail_time() - get_qubit(q1_idx).get_avail_time() > _SWAP_CYCLE)
+    {
+        std::swap(q0_idx, q1_idx);
+    }
+    else if (get_qubit(q1_idx).get_avail_time() - get_qubit(q0_idx).get_avail_time() < _SWAP_CYCLE && get_qubit(q0_idx).get_topo_qubit() > get_qubit(q1_idx).get_topo_qubit())
     {
         std::swap(q0_idx, q1_idx);
     }

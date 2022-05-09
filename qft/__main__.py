@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import random
 import sys
 from typing import Any, Mapping
 
@@ -52,22 +51,32 @@ def run(cfg: Mapping[str, Any]) -> None:
     if cfg["components"]["device"] == "duostra":
         placer = duostra.QFTPlacerCpp()
 
-        # device2topo
         with open(cfg["device"], "r") as f:
             device_file = json.load(f)
+        device = PhysicalDevice(device_file)
+        zero = device.qubits[0]
+        path_from_0 = tuple(nx.shortest_path(device.g)[zero])
+        assert len(path_from_0) == len(device.g.nodes)
+        path_idx_from_0 = tuple((p, i) for (i, p) in enumerate(path_from_0))
+        shortest_path_idx = sorted(path_idx_from_0)
+        print(shortest_path_idx)
+        shortest_idx = tuple(x[1] for x in shortest_path_idx)
+
+        # topo2device
         device_file = [i["adj_list"] for i in device_file]
         device = duostra.DeviceCpp(device_file, cfg["time"]["op"], cfg["time"]["swap"])
-        placer.place(device, False)
+        device.place(shortest_idx)
     elif cfg["components"]["device"] == "apsp":
         with open(cfg["device"], "r") as f:
             device_file = json.load(f)
         device = PhysicalDevice(device_file)
-        random.shuffle(device.qubits)
+        # random.shuffle(device.qubits)
         zero = device.qubits.index(0)
         path_from_0 = tuple(nx.shortest_path(device.g)[zero])
-        assert len(path_from_0) == len(device.g.ndoes)
+        assert len(path_from_0) == len(device.g.nodes)
         path_idx_from_0 = tuple((p, i) for (i, p) in enumerate(path_from_0))
         shortest_path_idx = sorted(path_idx_from_0)
+        print(shortest_path_idx)
         shortest_idx = tuple(x[1] for x in shortest_path_idx)
         device.qubits[:] = shortest_idx
     else:
