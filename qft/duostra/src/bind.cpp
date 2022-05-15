@@ -3,7 +3,7 @@
 
 namespace py = pybind11;
 
-#include "device.h"
+#include "q_device.h"
 #include "qft_mapper.h"
 
 PYBIND11_MODULE(duostra, m)

@@ -1,11 +1,17 @@
 {
-    "num_qubits": 16,
+    "algo": 7,
     "R_CYCLE": 2,
     "SWAP_CYCLE": 3,
-    "device": "../../device/guadalupe_16.json",
-    "output": "../../output/gudaalupe_16.qasm",
+    "device": "/home/doctry/桌面/QFT-mapping/device/perth_7.txt",
+    "output": "/home/doctry/桌面/QFT-mapping/output/perth_7.json",
+    "mapper": {
+        "placer": "dfs",
+        "scheduler": "random",
+        "router": "orientation"
+    },
     "stdio": false,
-    "random_place": true,
-    "gen_data": 10000000,
-    "h5": "../../data/guadalupe_16_1.hdf5"
+    "python": {
+        "gen_data": 10000000,
+        "h5": "/home/doctry/桌面/QFT-mapping/data/guadalupe_16_1.hdf5"
+    }
 }

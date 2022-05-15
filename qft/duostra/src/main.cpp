@@ -1,10 +1,11 @@
 #include <iostream>
-#include "device.h"
+#include "q_device.h"
 #include "qft_topo.h"
+#include "topo.h"
 #include "qft_mapper.h"
-#include "string"
 #include "json.hpp"
 #include "util.hpp"
+#include "algo.h"
 
 int main(int argc, char *argv[])
 {
@@ -14,14 +15,33 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    // config file
     std::ifstream ifs(argv[1]);
     json conf = json::parse(ifs);
 
-    unsigned num_qubit = conf["num_qubits"].get<unsigned>();
+    // create topology
+    std::unique_ptr<topo::Topology> topo;
+    if(conf["algo"].type() == json::value_t::number_unsigned)
+    {
+    unsigned num_qubit = conf["algo"].get<unsigned>();
+        topo = std::unique_ptr<topo::Topology>(new topo::QFTTopology(num_qubit));
+    }
+    else
+    {
+        std::fstream algo_file;
+        std::cout << conf["algo"] << std::endl;
+        algo_file.open(conf["algo"], std::fstream::in);
+        if (!algo_file.is_open())
+        {
+            std::cerr << "There is no file" << conf["algo"] << std::endl;
+            return 1;
+        }
+        topo = std::unique_ptr<topo::Topology>(new topo::AlgoTopology(algo_file));
+    }
+
+    // create device
     unsigned R_CYCLE = conf["R_CYCLE"].get<unsigned>();
     unsigned SWAP_CYCLE = conf["SWAP_CYCLE"].get<unsigned>();
-    topo::QFTTopology qft_topo(num_qubit);
-
     std::fstream device_file;
     device_file.open(conf["device"], std::fstream::in);
     if (!device_file.is_open())
@@ -29,28 +49,47 @@ int main(int argc, char *argv[])
         std::cerr << "There is no file" << conf["device"] << std::endl;
         return 1;
     }
-
     device::Device device(device_file, R_CYCLE, SWAP_CYCLE);
-
-    if (num_qubit > device.get_num_qubits())
+    
+    if (topo->get_num_qubits() > device.get_num_qubits())
     {
         std::cerr << "You cannot assign more QFT qubits than the device." << std::endl;
         return 1;
     }
 
+    // create mapper
+    json conf_mapper = conf["mapper"].get<json>();
+
+    // place
+    std::cout << "creating placer..." << std::endl;
     QFTPlacer placer;
-    std::vector<unsigned> assign = placer.dfs_place(device);
+    std::string placer_typ = conf_mapper["placer"].get<std::string>();
+    std::vector<unsigned> assign = placer.place(device, placer_typ);
     device.place(assign);
 
-    QFTScheduler scheduler(qft_topo);
-    QFTRouter router(device);
-    scheduler.assign_gates(device, router);
+    // scheduler 
+    std::cout << "creating scheduler..." << std::endl;
+    QFTScheduler scheduler(*topo);
+    std::string scheduler_typ = conf_mapper["scheduler"].get<std::string>();
+
+    // router
+    std::cout << "creating router..." << std::endl;
+    std::string router_typ = conf_mapper["router"].get<std::string>();
+    QFTRouter router(device, router_typ);
+
+    // routing
+    std::cout << "routing..." << std::endl;
+    scheduler.assign_gates(device, router, scheduler_typ);
 
     std::fstream out_file;
     out_file.open(conf["output"], std::fstream::out);
-    out_file << assign;
-    device.write_assembly(out_file);
-    out_file << "final_cost: " << device.get_final_cost() << "\n";
+    // out_file << assign << "\n";
+    // device.write_assembly(out_file);
+    json jj;
+    device.to_json(jj);
+    jj["final_cost"] = device.get_final_cost();
+    out_file << jj;
+    // out_file << "final_cost: " << device.get_final_cost() << "\n";
 
     if (conf["stdio"].get<bool>())
     {

@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <limits.h>
 #include "json.hpp"
+#include "util.hpp"
 #include <string>
 using nlohmann::json;
 
@@ -22,6 +23,7 @@ class Operation
 {
 public:
     friend std::ostream &operator<<(std::ostream &, Operation &);
+    friend std::ostream &operator<<(std::ostream &, const Operation &);
     friend void to_json(json &j, const Operation &op);
     Operation(Operator oper, std::tuple<unsigned, unsigned> qs, std::tuple<unsigned, unsigned> du) : _oper(oper), _qubits(qs), _duration(du)
     {
@@ -151,7 +153,7 @@ namespace device
 
         const unsigned get_num_qubits() const;
         Qubit &get_qubit(const unsigned i);
-        std::vector<unsigned> routing(std::tuple<unsigned, unsigned> qs); // standalone
+        std::vector<unsigned> routing(std::tuple<unsigned, unsigned> qs, bool orient); // standalone
         std::tuple<std::vector<unsigned>, std::vector<unsigned>> route(unsigned source, unsigned target); // python integration
 
         void write_assembly(std::ostream &out);
