@@ -5,7 +5,7 @@ import sys
 import h5py
 import numpy as np
 
-from . import duostra
+import duostra
 
 
 def main():
