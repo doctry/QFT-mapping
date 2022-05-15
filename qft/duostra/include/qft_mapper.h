@@ -1,9 +1,10 @@
 #pragma once
 
-#include "qft_topo.h"
-#include "device.h"
+#include "topo.h"
+#include "q_device.h"
 #include <tuple>
 #include <iostream>
+#include <string>
 #include <algorithm>
 #include <vector>
 #include <random> // std::default_random_engine
@@ -15,6 +16,27 @@ public:
     QFTPlacer() {}
     QFTPlacer(const QFTPlacer &other) = delete;
     QFTPlacer(QFTPlacer &&other) {}
+
+    std::vector<unsigned> place(device::Device &device, std::string &typ)
+    {
+        if (typ == "static")
+        {
+            return static_place(device);
+        }
+        else if (typ == "random")
+        {
+            return random_place(device);
+        }
+        else if (typ == "dfs")
+        {
+            return dfs_place(device);
+        }
+        else
+        {
+            std::cerr << typ << " is not a placer type." << std::endl;
+            abort();
+        }
+    }
 
     std::vector<unsigned> random_place(device::Device &device)
     {
@@ -29,7 +51,7 @@ public:
         return assign;
     }
 
-    std::vector<unsigned> static_place(device::Device &device, bool rand = false)
+    std::vector<unsigned> static_place(device::Device &device)
     {
         std::vector<unsigned> assign;
         for (unsigned i = 0; i < device.get_num_qubits(); ++i)
@@ -44,35 +66,35 @@ public:
         std::vector<unsigned> assign;
         std::vector<bool> qubit_mark(device.get_num_qubits(), false);
         dfs_device(0, device, assign, qubit_mark);
-        assert (assign.size() == device.get_num_qubits());
+        assert(assign.size() == device.get_num_qubits());
         return assign;
     }
 
 private:
     inline void dfs_device(unsigned current, device::Device &device, std::vector<unsigned> &assign, std::vector<bool> &qubit_mark)
     {
-        if(qubit_mark[current] == true)
+        if (qubit_mark[current] == true)
         {
             std::cout << current << std::endl;
         }
-        assert (qubit_mark[current] == false);
+        assert(qubit_mark[current] == false);
         qubit_mark[current] = true;
         assign.push_back(current);
 
         device::Qubit &q = device.get_qubit(current);
         std::vector<unsigned> adj_waitlist;
 
-        for(unsigned i = 0; i < q.get_adj_list().size(); ++i)
+        for (unsigned i = 0; i < q.get_adj_list().size(); ++i)
         {
             unsigned adj = q.get_adj_list()[i];
 
-            // already marked 
-            if(qubit_mark[adj])
+            // already marked
+            if (qubit_mark[adj])
             {
                 continue;
             }
 
-            device::Qubit& adj_q = device.get_qubit(adj);
+            device::Qubit &adj_q = device.get_qubit(adj);
             assert(adj_q.get_adj_list().size() > 0);
 
             // corner
@@ -88,7 +110,7 @@ private:
         for (unsigned i = 0; i < adj_waitlist.size(); ++i)
         {
             unsigned adj = adj_waitlist[i];
-            if(qubit_mark[adj])
+            if (qubit_mark[adj])
             {
                 continue;
             }
@@ -96,13 +118,28 @@ private:
         }
         return;
     }
+
+    std::vector<std::string> _placer_types;
 };
 
 class QFTRouter
 {
 public:
-    QFTRouter(device::Device &device) : _device(device)
+    QFTRouter(device::Device &device, std::string & typ) : _device(device)
     {
+        if (typ == "naive")
+        {
+            _orient = false;
+        }
+        else if (typ == "orientation")
+        {
+            _orient = true;
+        }
+        else
+        {
+            std::cerr << typ << " is not a router type" << std::endl;
+            abort();
+        }
         _topo2device.resize(device.get_num_qubits());
         for (unsigned i = 0; i < device.get_num_qubits(); ++i)
         {
@@ -110,7 +147,7 @@ public:
         }
     }
     QFTRouter(const QFTRouter &other) = delete;
-    QFTRouter(QFTRouter &&other) : _device(other._device), _topo2device(std::move(other._topo2device)) {}
+    QFTRouter(QFTRouter &&other) : _orient(other._orient), _device(other._device), _topo2device(std::move(other._topo2device)) {}
 
     unsigned get_gate_cost(topo::Gate &gate) const
     {
@@ -122,7 +159,7 @@ public:
     void assign_gate(topo::Gate &gate)
     {
         std::tuple<unsigned, unsigned> device_qubits_idx = get_device_qubits_idx(gate);
-        std::vector<unsigned> change_list = std::move(_device.routing(device_qubits_idx));
+        std::vector<unsigned> change_list = std::move(_device.routing(device_qubits_idx, _orient));
         for (unsigned i = 0; i < change_list.size(); ++i) // i is the idx of device qubit
         {
             unsigned topo_qubit_id = change_list[i];
@@ -146,6 +183,7 @@ private:
         return std::make_tuple(device_idx_q0, device_idx_q1);
     }
 
+    bool _orient;
     device::Device &_device;
     std::vector<unsigned> _topo2device;
 };
@@ -153,19 +191,55 @@ private:
 class QFTScheduler
 {
 public:
-    QFTScheduler(topo::QFTTopology &qft_topo) : _qft_topo(qft_topo) {}
+    QFTScheduler(topo::Topology &topo) : _topo(topo) {}
     QFTScheduler(const QFTScheduler &other) = delete;
-    QFTScheduler(QFTScheduler &&other) : _qft_topo(other._qft_topo) {}
+    QFTScheduler(QFTScheduler &&other) : _topo(other._topo) {}
 
-    void assign_gates(device::Device &device, QFTRouter &router)
+    void assign_gates(device::Device &device, QFTRouter &router, std::string &typ)
     {
-        for (unsigned i = 0; i < _qft_topo.get_num_gates(); ++i)
+        if (typ == "random")
         {
-            topo::Gate &gate = _qft_topo.pop_next_gate();
-            router.assign_gate(gate);
+            return assign_gates_random(device, router);
+        }
+        else if (typ == "greedy")
+        {
+            return assign_gates_greedy(device, router);
+        }
+        else
+        {
+            std::cerr << typ << " is not a scheduler type" << std::endl;
+            abort();
         }
     }
 
+    void assign_gates_random(device::Device &device, QFTRouter &router)
+    {
+#ifdef DEBUG
+        unsigned count = 0;
+#endif
+        while (!_topo.get_avail_gates().empty())
+        {
+            std::vector<unsigned> &wait_list = _topo.get_avail_gates();
+            assert(wait_list.size() > 0);
+            srand(std::chrono::system_clock::now().time_since_epoch().count());
+            unsigned choose = rand() % wait_list.size();
+            topo::Gate &gate = _topo.get_gate(wait_list[choose]);
+            router.assign_gate(gate);
+#ifdef DEBUG
+            std::cout << wait_list << " " << wait_list[choose] << "\n\n";
+            count++;
+#endif
+            _topo.update_avail_gates(wait_list[choose]);
+        }
+#ifdef DEBUG
+        assert(count == _topo.get_num_gates());
+#endif
+    }
+
+    void assign_gates_greedy(device::Device &device, QFTRouter &router)
+    {
+    }
+
 private:
-    topo::QFTTopology &_qft_topo;
+    topo::Topology &_topo;
 };

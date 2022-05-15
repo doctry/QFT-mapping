@@ -1,4 +1,4 @@
-#include "device.h"
+#include "q_device.h"
 #include <assert.h>
 #include <algorithm>
 #include <assert.h>
@@ -280,18 +280,28 @@ void device::Device::reset()
     }
 }
 
-std::vector<unsigned> device::Device::routing(std::tuple<unsigned, unsigned> qs)
+std::vector<unsigned> device::Device::routing(std::tuple<unsigned, unsigned> qs, bool orient)
 {
     unsigned q0_idx = std::get<0>(qs); // source 0
     unsigned q1_idx = std::get<1>(qs); // source 1
 
-    if (get_qubit(q0_idx).get_avail_time() - get_qubit(q1_idx).get_avail_time() > _SWAP_CYCLE)
+    if (orient)
     {
-        std::swap(q0_idx, q1_idx);
+        if (get_qubit(q0_idx).get_avail_time() - get_qubit(q1_idx).get_avail_time() > _SWAP_CYCLE)
+        {
+            std::swap(q0_idx, q1_idx);
+        }
+        else if (get_qubit(q1_idx).get_avail_time() - get_qubit(q0_idx).get_avail_time() < _SWAP_CYCLE && get_qubit(q0_idx).get_topo_qubit() > get_qubit(q1_idx).get_topo_qubit())
+        {
+            std::swap(q0_idx, q1_idx);
+        }
     }
-    else if (get_qubit(q1_idx).get_avail_time() - get_qubit(q0_idx).get_avail_time() < _SWAP_CYCLE && get_qubit(q0_idx).get_topo_qubit() > get_qubit(q1_idx).get_topo_qubit())
+    else
     {
-        std::swap(q0_idx, q1_idx);
+        if (get_qubit(q0_idx).get_avail_time() > get_qubit(q1_idx).get_avail_time())
+        {
+            std::swap(q0_idx, q1_idx);
+        }
     }
 
     device::Qubit &t0 = get_qubit(q0_idx); // target 0
@@ -486,12 +496,14 @@ std::vector<Operation> device::Device::compile_route(const std::tuple<std::vecto
 {
     const std::vector<unsigned> &route_0 = std::get<0>(routes);
     const std::vector<unsigned> &route_1 = std::get<1>(routes);
-    device::Qubit &t0 = get_qubit(route_0[0]);
-    device::Qubit &t1 = get_qubit(route_1[0]);
     device::Qubit &q0 = get_qubit(route_0.back());
     device::Qubit &q1 = get_qubit(route_1.back());
+#ifdef DEBUG
+    device::Qubit &t0 = get_qubit(route_0[0]);
+    device::Qubit &t1 = get_qubit(route_1[0]);
     assert(t0.get_id() == t0.get_pred());
     assert(t1.get_id() == t1.get_pred());
+#endif
 
     assert(q0.is_adj(q1));
     std::vector<Operation> ops;

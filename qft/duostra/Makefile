@@ -8,11 +8,11 @@ DBGFLAGS  = -g -Wall -DDEBUG
 CFLAGS = -Wall -O3 -DNDEBUG
 
 # the build target executable:
-DEPS = include/device.h include/qft_mapper.h include/qft_topo.h
 INC = -Iinclude/
+DEPS = include/q_device.h include/qft_mapper.h include/qft_topo.h include/algo.h include/topo.h
 TARGET = bin/qft_mapping
 DBG = bin/qft_mapping_dbg
-SRC = src/device.cpp src/main.cpp src/qft_topo.cpp
+SRC = src/q_device.cpp src/main.cpp src/algo.cpp
 
 all: $(TARGET)
 
