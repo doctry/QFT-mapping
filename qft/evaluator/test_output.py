@@ -84,6 +84,7 @@ class Checker:
                     print("Failed Operation", op)
                     raise RuntimeError("Operation cannot match device.")
 
+        assert len(finished_gates) == len(self.qft_topo.gates)
         return self.operations[-1].duration[1]
 
 
@@ -98,6 +99,8 @@ if __name__ == "__main__":
     output_filename = sys.argv[3]
     output_file = open(output_filename, "r")
     output = json.load(output_file)
+    assign: List[int] = output["initial"]
+    device.place(assign)
 
     R_cycle = int(sys.argv[4])
     Swap_cycle = int(sys.argv[5])

@@ -41,6 +41,10 @@ class Device:
             ret.append(q.to_json())
         return ret
 
+    def place(self, assign: list[int]):
+        for (i, d) in enumerate(assign):
+            self.qubits[d].topo = i
+
     def __str__(self):
         ret = ""
         for q in self.qubits:
