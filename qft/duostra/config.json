@@ -1,12 +1,12 @@
 {
-    "algo": 7,
+    "algo": 127,
     "R_CYCLE": 2,
     "SWAP_CYCLE": 3,
-    "device": "/home/doctry/桌面/QFT-mapping/device/perth_7.txt",
-    "output": "/home/doctry/桌面/QFT-mapping/output/perth_7.json",
+    "device": "/home/doctry/桌面/QFT-mapping/device/washington_127.txt",
+    "output": "/home/doctry/桌面/QFT-mapping/output/washington_127.json",
     "mapper": {
         "placer": "dfs",
-        "scheduler": "random",
+        "scheduler": "static",
         "router": "orientation"
     },
     "stdio": false,

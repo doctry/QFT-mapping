@@ -201,6 +201,10 @@ public:
         {
             return assign_gates_random(device, router);
         }
+        else if (typ == "static")
+        {
+            return assign_gates_static(device, router);
+        }
         else if (typ == "greedy")
         {
             return assign_gates_greedy(device, router);
@@ -232,6 +236,28 @@ public:
             count++;
 #endif
             _topo.update_avail_gates(wait_list[choose]);
+        }
+#ifdef DEBUG
+        assert(count == _topo.get_num_gates());
+#endif
+    }
+
+    void assign_gates_static(device::Device &device, QFTRouter &router)
+    {
+#ifdef DEBUG
+        unsigned count = 0;
+#endif
+        while (!_topo.get_avail_gates().empty())
+        {
+            std::vector<unsigned> &wait_list = _topo.get_avail_gates();
+            assert(wait_list.size() > 0);
+            topo::Gate &gate = _topo.get_gate(wait_list[0]);
+            router.assign_gate(gate);
+#ifdef DEBUG
+            std::cout << wait_list << " " << wait_list[choose] << "\n\n";
+            count++;
+#endif
+            _topo.update_avail_gates(wait_list[0]);
         }
 #ifdef DEBUG
         assert(count == _topo.get_num_gates());
