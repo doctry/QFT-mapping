@@ -209,6 +209,10 @@ public:
         {
             return assign_gates_greedy(device, router);
         }
+        else if (typ == "old")
+        {
+            return assign_gates_old(device, router);
+        }
         else
         {
             std::cerr << typ << " is not a scheduler type" << std::endl;
@@ -262,6 +266,16 @@ public:
 #ifdef DEBUG
         assert(count == _topo.get_num_gates());
 #endif
+    }
+
+    void assign_gates_old(device::Device &device, QFTRouter &router)
+    {
+        for (unsigned i = 0; i < _topo.get_num_gates(); ++i)
+        {
+            topo::Gate &gate = _topo.get_gate(i);
+            router.assign_gate(gate);
+            _topo.update_avail_gates(i);
+        }
     }
 
     void assign_gates_greedy(device::Device &device, QFTRouter &router)
