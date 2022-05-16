@@ -125,7 +125,7 @@ private:
 class QFTRouter
 {
 public:
-    QFTRouter(device::Device &device, std::string & typ) : _device(device)
+    QFTRouter(device::Device &device, std::string &typ) : _device(device)
     {
         if (typ == "naive")
         {
@@ -221,7 +221,9 @@ public:
         {
             std::vector<unsigned> &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
+#ifndef DEBUG
             srand(std::chrono::system_clock::now().time_since_epoch().count());
+#endif
             unsigned choose = rand() % wait_list.size();
             topo::Gate &gate = _topo.get_gate(wait_list[choose]);
             router.assign_gate(gate);

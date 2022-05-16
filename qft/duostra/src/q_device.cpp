@@ -352,6 +352,14 @@ std::vector<unsigned> device::Device::routing(std::tuple<unsigned, unsigned> qs,
         }
     }
     std::vector<Operation> ops = traceback(get_qubit(q0_idx), get_qubit(q1_idx), t0, t1);
+
+#ifdef DEBUG
+    for (unsigned i = 0; i < ops.size(); ++i)
+    {
+        std::cout << ops[i] << "\n";
+    }
+#endif
+
     _ops.insert(_ops.end(), ops.begin(), ops.end()); // append operations to the back
 
     // reset and record change

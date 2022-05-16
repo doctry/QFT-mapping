@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
     // out_file << assign << "\n";
     // device.write_assembly(out_file);
     json jj;
+    jj["initial"] = assign;
     device.to_json(jj);
     jj["final_cost"] = device.get_final_cost();
     out_file << jj;
