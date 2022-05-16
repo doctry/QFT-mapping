@@ -84,6 +84,8 @@ class Checker:
                     print("Failed Operation", op)
                     raise RuntimeError("Operation cannot match device.")
 
+        print("num gates:", len(finished_gates))
+        print("num operations:", len(self.operations))
         assert len(finished_gates) == len(self.qft_topo.gates)
         return self.operations[-1].duration[1]
 

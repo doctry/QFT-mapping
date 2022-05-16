@@ -5,9 +5,9 @@
     "device": "/home/doctry/桌面/QFT-mapping/device/washington_127.txt",
     "output": "/home/doctry/桌面/QFT-mapping/output/washington_127.json",
     "mapper": {
-        "placer": "dfs",
-        "scheduler": "static",
-        "router": "orientation"
+        "placer": "static",
+        "scheduler": "old",
+        "router": "naive"
     },
     "stdio": false,
     "python": {
