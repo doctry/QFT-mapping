@@ -86,7 +86,7 @@ void topo::AlgoTopology::parse(fstream &qasmFile)
             unsigned q2 = stoul(qubitId);
             tuple<unsigned, unsigned> temp(q1, q2);
 
-            topo::Gate tempGate(cnotId, temp);
+            topo::Gate tempGate(cnotId, Operator::R, temp);
             tempGate.set_prev(_lastGate[q1], _lastGate[q2]);
 
             if (_lastGate[q1] != unsigned(-1))

@@ -1,12 +1,15 @@
 {
-    "algo": 127,
-    "R_CYCLE": 2,
-    "SWAP_CYCLE": 3,
+    "algo": 65,
+    "cycle": {
+        "R_CYCLE": 2,
+        "SWAP_CYCLE": 3,
+        "CX_CYCLE": 1
+    },
     "device": "/home/doctry/桌面/QFT-mapping/device/washington_127.txt",
     "output": "/home/doctry/桌面/QFT-mapping/output/washington_127.json",
     "mapper": {
-        "placer": "static",
-        "scheduler": "old",
+        "placer": "dfs",
+        "scheduler": "static",
         "router": "naive"
     },
     "stdio": false,
