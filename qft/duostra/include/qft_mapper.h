@@ -156,16 +156,32 @@ public:
         device::Qubit &q1 = _device.get_qubit(std::get<1>(device_qubits_idx));
         return std::max(q0.get_avail_time(), q1.get_avail_time());
     }
+
     void assign_gate(topo::Gate &gate)
     {
         std::tuple<unsigned, unsigned> device_qubits_idx = get_device_qubits_idx(gate);
-        std::vector<unsigned> change_list = std::move(_device.routing(device_qubits_idx, _orient));
+        std::vector<unsigned> change_list = std::move(_device.routing(gate.get_type(), device_qubits_idx, _orient));
+#ifdef DEBUG
+        std::vector<bool> checker(_topo2device.size(), false);      
+#endif
         for (unsigned i = 0; i < change_list.size(); ++i) // i is the idx of device qubit
         {
             unsigned topo_qubit_id = change_list[i];
+            if (topo_qubit_id == UINT_MAX)
+            {
+                continue;
+            }
+#ifdef DEBUG
+            assert(checker[i] == false);
+            checker[i] = true;
+#endif
             _topo2device[topo_qubit_id] = i;
         }
 #ifdef DEBUG
+        for (unsigned i = 0; i < checker.size(); ++i)
+        {
+            assert(checker[i]);
+        }
         std::cout << "Gate: Q" << std::get<0>(gate.get_qubits()) << " Q" << std::get<1>(gate.get_qubits()) << "\n";
         _device.print_device_state(std::cout);
 #endif
@@ -258,7 +274,6 @@ public:
             topo::Gate &gate = _topo.get_gate(wait_list[0]);
             router.assign_gate(gate);
 #ifdef DEBUG
-            std::cout << wait_list << " " << wait_list[choose] << "\n\n";
             count++;
 #endif
             _topo.update_avail_gates(wait_list[0]);
