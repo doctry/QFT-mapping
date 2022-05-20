@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import json
 import sys
 from typing import Dict, List
@@ -6,7 +7,7 @@ from typing import Dict, List
 from rich import traceback
 
 from qft.evaluator.physical import Device, Operation, Qubit
-from qft.evaluator.topological import Gate, QFTTopo, AlgoTopo, Topo
+from qft.evaluator.topological import AlgoTopo, Gate, QFTTopo, Topo
 
 traceback.install()
 
@@ -87,18 +88,21 @@ class Checker:
 
         print("num gates:", len(finished_gates))
         print("num operations:", len(self.operations))
-        assert len(finished_gates) == len(self.topo.gates), [len(finished_gates), len(self.topo.gates)]
+        assert len(finished_gates) == len(self.topo.gates), [
+            len(finished_gates),
+            len(self.topo.gates),
+        ]
         return self.operations[-1].duration[1]
 
 
 if __name__ == "__main__":
     with open(sys.argv[1], "r") as f:
         cfg = json.load(f)
-    
+
     # init topo
     algo: int | str = cfg["algo"]
     if isinstance(algo, int):
-        assert (algo > 0)
+        assert algo > 0
         topo = QFTTopo(algo)
     elif isinstance(algo, str):
         topo = AlgoTopo(algo)
@@ -121,7 +125,7 @@ if __name__ == "__main__":
     final_cost: int = output["final_cost"]
 
     operations: list[Operation] = [
-        Operation(o["Operator"], tuple(o["Qubits"]), tuple(o["duration"])) for o in ops # type: ignore
+        Operation(o["Operator"], tuple(o["Qubits"]), tuple(o["duration"])) for o in ops  # type: ignore
     ]
     checker = Checker(device, topo, operations, cycle)
 

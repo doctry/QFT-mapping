@@ -1,9 +1,13 @@
 from __future__ import annotations
+
 from abc import ABC
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
+
 
 class Gate:
-    def __init__(self, id: int, typ: str, qubits: List[int], prev: List[Dict[str, Any]]):
+    def __init__(
+        self, id: int, typ: str, qubits: List[int], prev: List[Dict[str, Any]]
+    ):
         self.id = id
         self.typ = typ
         self.qubits = qubits
@@ -34,6 +38,7 @@ class Gate:
 
     def get_next(self):
         return self.next
+
 
 class Topo(ABC):
     avail_gates: List[int]
