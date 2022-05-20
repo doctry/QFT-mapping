@@ -20,6 +20,7 @@ namespace topo
         unsigned get_id() const { return _id; }
         std::tuple<unsigned, unsigned> get_qubits() const { return _qubits; }
 
+        void set_type(Operator t) { _type = t; }
         void set_prev(unsigned a, unsigned b)
         {
             std::pair<unsigned, bool> first(a, false);
