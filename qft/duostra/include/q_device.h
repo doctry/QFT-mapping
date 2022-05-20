@@ -10,14 +10,9 @@
 #include <limits.h>
 #include "json.hpp"
 #include "util.hpp"
+#include "operator.h"
 #include <string>
 using nlohmann::json;
-
-enum Operator
-{
-    Swap,
-    R
-};
 
 class Operation
 {
@@ -58,6 +53,8 @@ public:
                 return "R";
             case Operator::Swap:
                 return "Swap";
+            case Operator::CX:
+                return "CX";
             default:
                 return "Error";
         }
@@ -146,14 +143,14 @@ namespace device
     class Device
     {
     public:
-        Device(std::fstream &file, unsigned r, unsigned s);
-        Device(std::vector<std::vector<unsigned>> &, unsigned r, unsigned s);
+        Device(std::fstream &file, unsigned r, unsigned s, unsigned cx);
+        Device(std::vector<std::vector<unsigned>> &, unsigned r, unsigned s, unsigned cx);
         Device(const Qubit &other) = delete;
         Device(Device &&other);
 
         const unsigned get_num_qubits() const;
         Qubit &get_qubit(const unsigned i);
-        std::vector<unsigned> routing(std::tuple<unsigned, unsigned> qs, bool orient); // standalone
+        std::vector<unsigned> routing(Operator op, std::tuple<unsigned, unsigned> qs, bool orient); // standalone
         std::tuple<std::vector<unsigned>, std::vector<unsigned>> route(unsigned source, unsigned target); // python integration
 
         void write_assembly(std::ostream &out);
@@ -172,13 +169,12 @@ namespace device
     private:
         // A*
         std::tuple<bool, unsigned> touch_adj(device::Qubit &qubit, std::priority_queue<device::AStarNode, std::vector<device::AStarNode>, device::AStarComp> &pq, bool swtch); // return <if touch target, target id>, swtch: false q0 propagate, true q1 propagate
-        std::vector<Operation> traceback(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1); // standalone
+        std::vector<Operation> traceback(Operator op,device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1); // standalone
         void apply_gate(const Operation &op); 
         std::tuple<std::vector<unsigned>, std::vector<unsigned>> trace(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0, device::Qubit &t1); // python integration
 
         std::vector<Qubit> _qubits;
-        unsigned _R_CYCLE;
-        unsigned _SWAP_CYCLE;
+        unsigned _R_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
         // std::vector<std::vector<unsigned>> _apsp;
         std::vector<Operation> _ops;
     };

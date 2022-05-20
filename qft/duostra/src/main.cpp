@@ -40,8 +40,10 @@ int main(int argc, char *argv[])
     }
 
     // create device
-    unsigned R_CYCLE = conf["R_CYCLE"].get<unsigned>();
-    unsigned SWAP_CYCLE = conf["SWAP_CYCLE"].get<unsigned>();
+    json cycle_conf = conf["cycle"].get<json>();
+    unsigned R_CYCLE = cycle_conf["R_CYCLE"].get<unsigned>();
+    unsigned SWAP_CYCLE = cycle_conf["SWAP_CYCLE"].get<unsigned>();
+    unsigned CX_CYCLE = cycle_conf["CX_CYCLE"].get<unsigned>();
     std::fstream device_file;
     device_file.open(conf["device"], std::fstream::in);
     if (!device_file.is_open())
@@ -49,7 +51,7 @@ int main(int argc, char *argv[])
         std::cerr << "There is no file" << conf["device"] << std::endl;
         return 1;
     }
-    device::Device device(device_file, R_CYCLE, SWAP_CYCLE);
+    device::Device device(device_file, R_CYCLE, SWAP_CYCLE, CX_CYCLE);
     
     if (topo->get_num_qubits() > device.get_num_qubits())
     {
