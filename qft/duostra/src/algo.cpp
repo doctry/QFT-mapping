@@ -62,9 +62,13 @@ void topo::AlgoTopology::parse(fstream &qasmFile)
     for (int i = 0; i < 6; i++)
         qasmFile >> str;
     _num = stoi(str.substr(str.find("[") + 1, str.size() - str.find("[") - 3));
+    vector<pair<unsigned,unsigned>> lastCnotWith;
+    pair<unsigned,unsigned> init(-1,0);
     for (size_t i = 0; i < _num; i++)
+    {
         _lastGate.push_back(-1);
-
+        lastCnotWith.push_back(init);
+    }
     unsigned cnotId = 0;
 
     while (qasmFile >> str)
@@ -84,24 +88,41 @@ void topo::AlgoTopology::parse(fstream &qasmFile)
             token = str.substr(str.find(delimiter) + 1, str.size() - str.find(delimiter) - 2);
             qubitId = token.substr(2, token.size() - 3);
             unsigned q2 = stoul(qubitId);
-            tuple<unsigned, unsigned> temp(q1, q2);
+            
+            
+            if(lastCnotWith[q1].first==q2 && lastCnotWith[q2].first==q1){
+                // Assert when Three Consecutive CNOTs
+                assert(lastCnotWith[q1].second>2 || lastCnotWith[q2].second>2);
 
-            topo::Gate tempGate(cnotId, Operator::R, temp);
-            tempGate.set_prev(_lastGate[q1], _lastGate[q2]);
-
-            if (_lastGate[q1] != unsigned(-1))
-                _gates[_lastGate[q1]].add_next(cnotId);
-            if (_lastGate[q1] != _lastGate[q2])
-            {
-                if (_lastGate[q2] != unsigned(-1))
-                    _gates[_lastGate[q2]].add_next(cnotId);
+                lastCnotWith[q1].second ++;
+                lastCnotWith[q2].second ++;
+                _gates[cnotId-1].set_type(Operator::R);
             }
+            else{
+                lastCnotWith[q1].first = q2;
+                lastCnotWith[q2].first = q1;
+                lastCnotWith[q1].second = 1;
+                lastCnotWith[q2].second = 1;
 
-            // update Id
-            _lastGate[q1] = cnotId;
-            _lastGate[q2] = cnotId;
-            _gates.push_back(move(tempGate));
-            cnotId++;
+                tuple<unsigned, unsigned> temp(q1, q2);
+                topo::Gate tempGate(cnotId, Operator::CX, temp);
+                tempGate.set_prev(_lastGate[q1], _lastGate[q2]);
+                
+                if (_lastGate[q1] != unsigned(-1))
+                    _gates[_lastGate[q1]].add_next(cnotId);
+                if (_lastGate[q1] != _lastGate[q2])
+                {
+                    if (_lastGate[q2] != unsigned(-1))
+                        _gates[_lastGate[q2]].add_next(cnotId);
+                }
+
+                // update Id
+                _lastGate[q1] = cnotId;
+                _lastGate[q2] = cnotId;
+                _gates.push_back(move(tempGate));
+                cnotId++;
+            }
+            
         }
     }
     for (size_t i = 0; i < _gates.size(); i++)
@@ -121,7 +142,7 @@ void topo::AlgoTopology::print_gates_with_next()
     for (size_t i = 0; i < _gates.size(); i++)
     {
         vector<unsigned> temp = _gates[i].get_nexts();
-        cout << _gates[i].get_id() << " || ";
+        cout << _gates[i].get_id()<<"(" << _gates[i].get_type() << ") || ";
         for (size_t j = 0; j < temp.size(); j++)
         {
             cout << temp[j] << " ";
@@ -136,7 +157,7 @@ void topo::AlgoTopology::print_gates_with_prev()
     for (size_t i = 0; i < _gates.size(); i++)
     {
         vector<pair<unsigned, bool>> temp = _gates[i].get_prevs();
-        cout << _gates[i].get_id() << " || ";
+        cout << _gates[i].get_id()<<"(" << _gates[i].get_type() << ") || ";
         for (size_t j = 0; j < temp.size(); j++)
         {
             cout << temp[j].first << "(" << temp[j].second << ") ";
