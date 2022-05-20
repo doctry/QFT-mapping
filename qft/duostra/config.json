@@ -1,5 +1,5 @@
 {
-    "algo": 65,
+    "algo": "/home/doctry/桌面/QFT-mapping/qft_synthesis/q_127.qasm",
     "cycle": {
         "R_CYCLE": 2,
         "SWAP_CYCLE": 3,
@@ -10,11 +10,7 @@
     "mapper": {
         "placer": "dfs",
         "scheduler": "static",
-        "router": "naive"
+        "router": "orientation"
     },
-    "stdio": false,
-    "python": {
-        "gen_data": 10000000,
-        "h5": "/home/doctry/桌面/QFT-mapping/data/guadalupe_16_1.hdf5"
-    }
+    "stdio": false
 }

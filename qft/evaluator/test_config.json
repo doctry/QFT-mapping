@@ -1,0 +1,10 @@
+{
+    "algo": "/home/doctry/桌面/QFT-mapping/qft_synthesis/q_127.qasm",
+    "cycle": {
+        "R": 2,
+        "Swap": 3,
+        "Cx": 1
+    },
+    "device": "/home/doctry/桌面/QFT-mapping/device/washington_127.txt",
+    "output": "/home/doctry/桌面/QFT-mapping/output/washington_127.json"
+}

@@ -295,6 +295,28 @@ public:
 
     void assign_gates_greedy(device::Device &device, QFTRouter &router)
     {
+#ifdef DEBUG
+        unsigned count = 0;
+#endif
+        while (!_topo.get_avail_gates().empty())
+        {
+            std::vector<unsigned> &wait_list = _topo.get_avail_gates();
+            assert(wait_list.size() > 0);
+#ifndef DEBUG
+            srand(std::chrono::system_clock::now().time_since_epoch().count());
+#endif
+            unsigned choose = rand() % wait_list.size();
+            topo::Gate &gate = _topo.get_gate(wait_list[choose]);
+            router.assign_gate(gate);
+#ifdef DEBUG
+            std::cout << wait_list << " " << wait_list[choose] << "\n\n";
+            count++;
+#endif
+            _topo.update_avail_gates(wait_list[choose]);
+        }
+#ifdef DEBUG
+        assert(count == _topo.get_num_gates());
+#endif
     }
 
 private:
