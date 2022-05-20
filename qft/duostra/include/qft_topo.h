@@ -26,7 +26,7 @@ namespace topo
                     unsigned prev_left = (j == 0) ? UINT_MAX : count - 1;
                     unsigned next_down = (i == num - 1) ? UINT_MAX : count + i;
                     unsigned next_right = (j == i - 1) ? UINT_MAX : count + 1;
-                    Gate gate(count, std::make_tuple(j, i));
+                    Gate gate(count, Operator::R, std::make_tuple(j, i));
                     gate.set_prev(prev_up, prev_left);
                     gate.add_next(next_down);
                     gate.add_next(next_right);
