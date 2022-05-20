@@ -1,5 +1,6 @@
 from .topo import Gate, Topo
 
+
 class AlgoTopo(Topo):
     def __init__(self, file: str):
         self.qubit2gate = dict()
@@ -20,11 +21,11 @@ class AlgoTopo(Topo):
         with open(file, "r") as f:
             for i in range(3):
                 line: str = f.readline()
-            qubit_num = int(line.split()[1].split("[")[1].split("]")[0]) # type: ignore
+            qubit_num = int(line.split()[1].split("[")[1].split("]")[0])  # type: ignore
             for i in range(qubit_num):
                 self.qubit2gate[i] = -1
             id = 0
-            while line != "": # type: ignore
+            while line != "":  # type: ignore
                 line = f.readline()
                 li = line.split(" ")
                 gtype = li[0]
