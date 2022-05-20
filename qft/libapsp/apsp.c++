@@ -42,7 +42,7 @@ static ShortestPath floyd_warshall(torch::Tensor adj_mat) {
         auto new_cost = torch::minimum(cost_mat, alt_path);
 
         pointer = torch::where(cost_mat < alt_path, pointer,
-                               torch::full_like(adj_mat, i, intOpts));
+                               pointer.index({None, i, Slice()}));
         cost_mat = new_cost;
     }
 
