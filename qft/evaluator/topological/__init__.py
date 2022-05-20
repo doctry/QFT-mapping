@@ -1,2 +1,3 @@
-from .gates import Gate
-from .qft import QFTTopo
+from .topo import Gate, Topo
+from .qft_topo import QFTTopo
+from .algo_topo import AlgoTopo

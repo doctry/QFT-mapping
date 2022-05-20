@@ -7,7 +7,7 @@ class Qubit:
         self.id = id
         self.adj_list = adj_list
         self.occupied_until: int = 0
-        self.topo = id
+        self.topo = -1
 
         for i in self.adj_list:
             assert i > -1, self.adj_list
