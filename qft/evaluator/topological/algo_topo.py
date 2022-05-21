@@ -35,18 +35,23 @@ class AlgoTopo(Topo):
                     [q1, q2] = li[1].split(",")
                     q1 = int(q1[2:-1])
                     q2 = int(q2[2:-3])
-                    if (lastCnotWith[q1]["id"] == q2) and (lastCnotWith[q2]["id"] == q1):
-                        assert lastCnotWith[q1]["count"] < 2 and lastCnotWith[q2]["count"] < 2
+                    if (lastCnotWith[q1]["id"] == q2) and (
+                        lastCnotWith[q2]["id"] == q1
+                    ):
+                        assert (
+                            lastCnotWith[q1]["count"] < 2
+                            and lastCnotWith[q2]["count"] < 2
+                        )
 
                         lastCnotWith[q1]["count"] += 1
                         lastCnotWith[q2]["count"] += 1
-                        self.gates[id-1].typ = "R"
+                        self.gates[id - 1].typ = "R"
                     else:
                         lastCnotWith[q1]["id"] = q2
                         lastCnotWith[q2]["id"] = q1
                         lastCnotWith[q1]["count"] = 1
                         lastCnotWith[q2]["count"] = 1
-                        
+
                         temp = Gate(
                             id,
                             "Cx",
