@@ -40,7 +40,7 @@ Tensor _view_as_real_physical(const Tensor& self) {
   new_sizes.back() = 2;
   auto new_strides = computeStrideForViewAsReal(self.strides());
   auto new_storage_offset = 2 * self.storage_offset();
-  const auto float_type = c10::toValueType(self.scalar_type());
+  const auto float_type = c10::toRealValueType(self.scalar_type());
   auto real_tensor = view_tensor(self, float_type, new_storage_offset, new_sizes, new_strides);
   return real_tensor;
 }
@@ -69,8 +69,8 @@ inline DimVector computeStrideForViewAsComplex(IntArrayRef oldstride) {
 // and returns back a tensor with corresponding complex dtype
 Tensor view_as_complex(const Tensor& self) {
   TORCH_CHECK(
-    self.scalar_type() == kFloat || self.scalar_type() == kDouble,
-    "view_as_complex is only supported for float and double tensors, but got a tensor of scalar type: ", self.scalar_type());
+    self.scalar_type() == kFloat || self.scalar_type() == kDouble || self.scalar_type() == kHalf,
+    "view_as_complex is only supported for half, float and double tensors, but got a tensor of scalar type: ", self.scalar_type());
 
   auto old_sizes = self.sizes();
   TORCH_CHECK(old_sizes.size() != 0, "Input tensor must have one or more dimensions");

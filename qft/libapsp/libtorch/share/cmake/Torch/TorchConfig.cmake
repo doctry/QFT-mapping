@@ -127,10 +127,6 @@ if(ON)
   append_torchlib_if_found(kineto)
 endif()
 
-if(OFF)
-  append_torchlib_if_found(torch_deploy)
-endif()
-
 if(0)
   if(MSVC)
     if(NOT NVTOOLEXT_HOME)
@@ -168,7 +164,7 @@ endif()
 
 # When we build libtorch with the old libstdc++ ABI, dependent libraries must too.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  set(TORCH_CXX_FLAGS "-D_GLIBCXX_USE_CXX11_ABI=1")
+  set(TORCH_CXX_FLAGS "-D_GLIBCXX_USE_CXX11_ABI=0")
 endif()
 
 find_library(TORCH_LIBRARY torch PATHS "${TORCH_INSTALL_PREFIX}/lib")
