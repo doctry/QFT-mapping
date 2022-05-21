@@ -92,7 +92,7 @@ void topo::AlgoTopology::parse(fstream &qasmFile)
             
             if(lastCnotWith[q1].first==q2 && lastCnotWith[q2].first==q1){
                 // Assert when Three Consecutive CNOTs
-                assert(lastCnotWith[q1].second>2 || lastCnotWith[q2].second>2);
+                assert(lastCnotWith[q1].second < 2 && lastCnotWith[q2].second < 2);
 
                 lastCnotWith[q1].second ++;
                 lastCnotWith[q2].second ++;

@@ -25,7 +25,7 @@ class AlgoTopo(Topo):
             qubit_num = int(line.split()[1].split("[")[1].split("]")[0])  # type: ignore
             for i in range(qubit_num):
                 self.qubit2gate[i] = -1
-                lastCnotWith[i] = {"id": -1, "count": 1}
+                lastCnotWith.append({"id": -1, "count": 1})
             id = 0
             while line != "":  # type: ignore
                 line = f.readline()
@@ -36,11 +36,11 @@ class AlgoTopo(Topo):
                     q1 = int(q1[2:-1])
                     q2 = int(q2[2:-3])
                     if (lastCnotWith[q1]["id"] == q2) and (lastCnotWith[q2]["id"] == q1):
-                        assert(lastCnotWith[q1]["count"] > 2 or lastCnotWith[q2]["count"] > 2)
+                        assert lastCnotWith[q1]["count"] < 2 and lastCnotWith[q2]["count"] < 2
 
                         lastCnotWith[q1]["count"] += 1
                         lastCnotWith[q2]["count"] += 1
-                        _gates[id-1].typ = "R"
+                        self.gates[id-1].typ = "R"
                     else:
                         lastCnotWith[q1]["id"] = q2
                         lastCnotWith[q2]["id"] = q1
