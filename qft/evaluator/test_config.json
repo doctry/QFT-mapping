@@ -1,10 +1,10 @@
 {
-    "algo": "/home/doctry/桌面/QFT-mapping/qft_synthesis/q_127.qasm",
+    "algo": 1121,
     "cycle": {
         "R": 2,
         "Swap": 3,
         "Cx": 1
     },
-    "device": "/home/doctry/桌面/QFT-mapping/device/washington_127.txt",
-    "output": "/home/doctry/桌面/QFT-mapping/output/washington_127.json"
+    "device": "/home/doctry/桌面/QFT-mapping/device/topo_1121.txt",
+    "output": "/home/doctry/桌面/QFT-mapping/output/topo_1121.json"
 }
