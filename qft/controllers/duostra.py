@@ -2,8 +2,6 @@
 from typing import List, Tuple
 
 from qft.common import CompiledOp
-from qft.duostra import duostra
-from qft.routers import DuostraRouter
 from qft.schedulers import Scheduler
 
 from .interfaces import Controller
