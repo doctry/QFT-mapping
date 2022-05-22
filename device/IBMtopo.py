@@ -9,9 +9,9 @@ def calculate(w, h):
     ## row end  :   4w-1-2  2(4w-1)+1w-2    3(4w-1)+2w-2
     id = 0
     for i in range(h):
+        base = i * (4 * w - 1) + (i - 1) * w - 2
+        end = (i + 1) * (4 * w - 1) + (i) * w - 2
         for j in range(4 * w - 1):
-            base = i * (4 * w - 1) + (i - 1) * w - 2
-            end = (i + 1) * (4 * w - 1) + (i) * w - 2
             if i == 0:
                 if j == 4 * w - 2:
                     break
@@ -22,7 +22,6 @@ def calculate(w, h):
                     neighbor[id].append(id + 1)
                 if j % 4 == 0:
                     neighbor[id].append(int(4 * w - 2 + j / 4))
-
             elif i == h - 1:
                 if j == 4 * w - 2:
                     break
@@ -49,7 +48,6 @@ def calculate(w, h):
                     neighbor[id].append(id - 1)
                 if j < 4 * w - 2:
                     neighbor[id].append(id + 1)
-
             id += 1
         for j in range(w):
             if i == 0:
