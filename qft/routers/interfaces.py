@@ -5,11 +5,10 @@ from abc import abstractmethod
 from typing import List, Protocol, Tuple
 
 from qft.devs import Device
-from qft.duostra import duostra
 
 
 class Router(Protocol):
-    device: Device | duostra.DeviceCpp
+    device: Device
 
     def route(
         self, source: int, target: int, already_physical: bool = False
