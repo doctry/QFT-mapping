@@ -73,7 +73,8 @@ int main(int argc, char *argv[]) {
     // router
     std::cout << "creating router..." << std::endl;
     std::string router_typ = conf_mapper["router"].get<std::string>();
-    QFTRouter router(device, router_typ);
+    std::string cost = conf_mapper["cost"].get<std::string>();
+    QFTRouter router(device, router_typ, cost);
 
     // routing
     std::cout << "routing..." << std::endl;
