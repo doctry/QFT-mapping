@@ -324,4 +324,5 @@ outputs/
 *.pyc
 *.so
 data/
-qft/duostra/config.json
+qft/duostra/config.
+qft/duostra/build
