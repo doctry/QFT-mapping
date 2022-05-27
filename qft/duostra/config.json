@@ -1,17 +1,18 @@
 {
-    "algo": "/home/doctry/桌面/QFT-mapping/qft_synthesis/q_127.qasm",
+    "algo": 5105,
     "cycle": {
         "R_CYCLE": 2,
         "SWAP_CYCLE": 3,
         "CX_CYCLE": 1
     },
-    "device": "/home/doctry/桌面/QFT-mapping/device/washington_127.txt",
-    "output": "/home/doctry/桌面/QFT-mapping/output/washington_127.json",
+    "device": "/home/doctry/桌面/QFT-mapping/device/topo_5105.txt",
+    "output": "/home/doctry/桌面/QFT-mapping/output/topo_5105.json",
     "mapper": {
         "placer": "dfs",
-        "scheduler": "greedy",
+        "scheduler": "static",
         "router": "orientation",
-        "cost": "start"
+        "cost": "end"
     },
-    "stdio": false
+    "stdio": false,
+    "dump": false
 }
