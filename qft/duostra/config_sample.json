@@ -5,8 +5,8 @@
         "SWAP_CYCLE": 3,
         "CX_CYCLE": 1
     },
-    "device": "/home/doctry/桌面/QFT-mapping/device/topo_5105.txt",
-    "output": "/home/doctry/桌面/QFT-mapping/output/topo_5105.json",
+    "device": "/home/QFT-mapping/device/topo_5105.txt",
+    "output": "/home/QFT-mapping/output/topo_5105.json",
     "mapper": {
         "placer": "dfs",
         "scheduler": "static",
