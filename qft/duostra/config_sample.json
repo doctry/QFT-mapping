@@ -1,0 +1,18 @@
+{
+    "algo": 5105,
+    "cycle": {
+        "R_CYCLE": 2,
+        "SWAP_CYCLE": 3,
+        "CX_CYCLE": 1
+    },
+    "device": "/home/doctry/桌面/QFT-mapping/device/topo_5105.txt",
+    "output": "/home/doctry/桌面/QFT-mapping/output/topo_5105.json",
+    "mapper": {
+        "placer": "dfs",
+        "scheduler": "static",
+        "router": "orientation",
+        "cost": "end"
+    },
+    "stdio": false,
+    "dump": false
+}
