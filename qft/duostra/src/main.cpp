@@ -80,16 +80,21 @@ int main(int argc, char *argv[]) {
     std::cout << "routing..." << std::endl;
     scheduler.assign_gates(device, router, scheduler_typ);
 
-    std::fstream out_file;
-    out_file.open(conf["output"], std::fstream::out);
-    // out_file << assign << "\n";
-    // device.write_assembly(out_file);
-    json jj;
-    jj["initial"] = assign;
-    device.to_json(jj);
-    jj["final_cost"] = device.get_final_cost();
-    out_file << jj;
-    // out_file << "final_cost: " << device.get_final_cost() << "\n";
+    // dump
+    std::cout << "dumping..." << std::endl;
+    bool dump = conf["dump"].get<bool>();
+    if (dump) {
+        std::fstream out_file;
+        out_file.open(conf["output"], std::fstream::out);
+        // out_file << assign << "\n";
+        // device.write_assembly(out_file);
+        json jj;
+        jj["initial"] = assign;
+        device.to_json(jj);
+        jj["final_cost"] = device.get_final_cost();
+        out_file << jj;
+        // out_file << "final_cost: " << device.get_final_cost() << "\n";
+    }
 
     if (conf["stdio"].get<bool>()) {
         device.write_assembly(std::cout);
