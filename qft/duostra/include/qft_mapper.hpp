@@ -104,7 +104,7 @@ class QFTPlacer {
 
 class QFTRouter {
   public:
-    QFTRouter(device::Device &device, std::string &typ) : _device(device) {
+    QFTRouter(device::Device &device, std::string &typ, std::string &cost) : _device(device) {
         if (typ == "naive") {
             _orient = false;
         } else if (typ == "orientation") {
@@ -113,6 +113,16 @@ class QFTRouter {
             std::cerr << typ << " is not a router type" << std::endl;
             abort();
         }
+
+        if (cost == "end") {
+            _end = true;
+        } else if (cost == "start") {
+            _end = false;
+        } else {
+            std::cerr << cost << " is not a cost type" << std::endl;
+            abort();
+        }
+
         _topo2device.resize(device.get_num_qubits());
         for (unsigned i = 0; i < device.get_num_qubits(); ++i) {
             _topo2device[device.get_qubit(i).get_topo_qubit()] = i;
@@ -120,7 +130,7 @@ class QFTRouter {
     }
     QFTRouter(const QFTRouter &other) = delete;
     QFTRouter(QFTRouter &&other)
-        : _orient(other._orient), _device(other._device),
+        : _end(other._end), _orient(other._orient), _device(other._device),
           _topo2device(std::move(other._topo2device)) {}
 
     unsigned get_gate_cost(topo::Gate &gate) const {
@@ -132,7 +142,7 @@ class QFTRouter {
         device::Qubit &q1 = _device.get_qubit(q1_id);
         unsigned apsp_cost = _device.get_apsp_cost(q0_id, q1_id);
         assert(apsp_cost == _device.get_apsp_cost(q1_id, q0_id));
-        return std::max(q0.get_avail_time(), q1.get_avail_time()) + apsp_cost;
+        return std::max(q0.get_avail_time(), q1.get_avail_time()) + _end * apsp_cost;
     }
 
     void assign_gate(topo::Gate &gate) {
@@ -182,6 +192,7 @@ class QFTRouter {
         return std::make_tuple(device_idx_q0, device_idx_q1);
     }
 
+    bool _end;
     bool _orient;
     device::Device &_device;
     std::vector<unsigned> _topo2device;

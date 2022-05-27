@@ -10,7 +10,8 @@
     "mapper": {
         "placer": "dfs",
         "scheduler": "greedy",
-        "router": "orientation"
+        "router": "orientation",
+        "cost": "start"
     },
     "stdio": false
 }
