@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
     json conf = json::parse(ifs);
 
     // create topology
+    std::cout << "creating topology..." << std::endl;
     std::unique_ptr<topo::Topology> topo;
     if (conf["algo"].type() == json::value_t::number_unsigned) {
         unsigned num_qubit = conf["algo"].get<unsigned>();
@@ -73,7 +74,9 @@ int main(int argc, char *argv[]) {
     // router
     std::cout << "creating router..." << std::endl;
     std::string router_typ = conf_mapper["router"].get<std::string>();
-    std::string cost = conf_mapper["cost"].get<std::string>();
+    std::string cost = (scheduler_typ == "greedy")
+                           ? conf_mapper["cost"].get<std::string>()
+                           : "start";
     QFTRouter router(device, router_typ, cost);
 
     // routing
@@ -81,9 +84,9 @@ int main(int argc, char *argv[]) {
     scheduler.assign_gates(device, router, scheduler_typ);
 
     // dump
-    std::cout << "dumping..." << std::endl;
     bool dump = conf["dump"].get<bool>();
     if (dump) {
+        std::cout << "dumping..." << std::endl;
         std::fstream out_file;
         out_file.open(conf["output"], std::fstream::out);
         // out_file << assign << "\n";
