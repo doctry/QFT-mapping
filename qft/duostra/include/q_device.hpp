@@ -161,6 +161,7 @@ class Device {
     unsigned get_swap_num();
     void print_device_state(std::ostream &out);
     std::vector<Operation> &get_operations();
+    void init_apsp();
 
     void place(std::vector<unsigned> &assign); // topo2device
     std::vector<Operation>
@@ -188,6 +189,7 @@ class Device {
     // data member
     std::vector<Qubit> _qubits;
     unsigned _R_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
+    bool _apsp;
     ShortestPath _shortest_path;
     // std::vector<std::vector<unsigned>> _apsp;
     std::vector<Operation> _ops;
