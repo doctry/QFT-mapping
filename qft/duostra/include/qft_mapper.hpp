@@ -118,6 +118,7 @@ class QFTRouter {
 
         if (cost == "end") {
             _end = true;
+            _device.init_apsp();
         } else if (cost == "start") {
             _end = false;
         } else {

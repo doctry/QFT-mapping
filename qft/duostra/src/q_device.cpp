@@ -116,7 +116,7 @@ bool op_order(const Operation &a, const Operation &b) {
 }
 
 device::Device::Device(std::fstream &file, unsigned r, unsigned s, unsigned cx)
-    : _R_CYCLE(r), _SWAP_CYCLE(s), _CX_CYCLE(cx) {
+    : _R_CYCLE(r), _SWAP_CYCLE(s), _CX_CYCLE(cx), _apsp(false) {
     unsigned num;
     file >> num;
 
@@ -156,7 +156,7 @@ device::Device::Device(std::fstream &file, unsigned r, unsigned s, unsigned cx)
 
 device::Device::Device(std::vector<std::vector<unsigned>> &adj_lists,
                        unsigned r, unsigned s, unsigned cx)
-    : _R_CYCLE(r), _SWAP_CYCLE(s), _CX_CYCLE(cx) {
+    : _R_CYCLE(r), _SWAP_CYCLE(s), _CX_CYCLE(cx), _apsp(false) {
     for (unsigned i = 0; i < adj_lists.size(); ++i) {
         std::vector<unsigned> &adj_list = adj_lists[i];
 
@@ -171,12 +171,36 @@ device::Device::Device(std::vector<std::vector<unsigned>> &adj_lists,
 
 device::Device::Device(Device &&other)
     : _qubits(std::move(other._qubits)), _R_CYCLE(other._R_CYCLE),
-      _SWAP_CYCLE(other._SWAP_CYCLE), _ops(std::move(other._ops)) {}
+      _SWAP_CYCLE(other._SWAP_CYCLE), _apsp(other._apsp),
+      _shortest_path(std::move(other._shortest_path)),
+          _ops(std::move(other._ops)) {}
 
 const unsigned device::Device::get_num_qubits() const { return _qubits.size(); }
+
+void device::Device::init_apsp() {
+    assert(_apsp == false);
+    _apsp = true;
+
+    // apsp
+    std::cout << "calculating apsp..." << std::endl;
+    torch::Tensor adj_mat =
+        torch::zeros({int(_qubits.size()), int(_qubits.size())});
+    for (unsigned i = 0; i < _qubits.size(); ++i) {
+        const std::vector<unsigned> &adj_list = _qubits[i].get_adj_list();
+        for (unsigned j = 0; j < adj_list.size(); ++j) {
+            adj_mat.index_put_({int(i), int(adj_list[j])}, 1);
+        }
+    }
+    _shortest_path = apsp(adj_mat); 
+}
+
 unsigned device::Device::get_apsp_cost(unsigned i, unsigned j) const {
-    return unsigned(_shortest_path.cost.index({int(i), int(j)}).item<int>()) *
-           _SWAP_CYCLE;
+    if (_apsp) {
+        return unsigned(
+                   _shortest_path.cost.index({int(i), int(j)}).item<int>()) *
+               _SWAP_CYCLE;
+    } else
+        return 0;
 }
 
 device::Qubit &device::Device::get_qubit(const unsigned i) {
@@ -242,10 +266,11 @@ device::Device::route(unsigned source, unsigned target) {
     return trace(get_qubit(q0_idx), get_qubit(q1_idx), t0, t1);
 }
 
+void reset_qubit(device::Qubit &q) { q.reset(); }
+
 void device::Device::reset() {
-    for (unsigned i = 0; i < _qubits.size(); ++i) {
-        device::Qubit &qubit = _qubits[i];
-        qubit.reset();
+    for (unsigned i = 0; i < _qubits.size(); ++i){
+        _qubits[i].reset();
     }
 }
 
