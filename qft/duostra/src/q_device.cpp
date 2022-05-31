@@ -135,23 +135,6 @@ device::Device::Device(std::fstream &file, unsigned r, unsigned s, unsigned cx)
 
         _qubits.push_back(std::move(qubit));
     }
-
-    // apsp
-    std::cout << "calculating apsp..." << std::endl;
-    torch::Tensor adj_mat =
-        torch::zeros({int(_qubits.size()), int(_qubits.size())});
-    for (unsigned i = 0; i < _qubits.size(); ++i) {
-        const std::vector<unsigned> &adj_list = _qubits[i].get_adj_list();
-        for (unsigned j = 0; j < adj_list.size(); ++j) {
-            adj_mat.index_put_({int(i), int(adj_list[j])}, 1);
-        }
-    }
-    _shortest_path = apsp(adj_mat);
-#ifdef DEBUG
-    std::cout << adj_mat << std::endl;
-    std::cout << _shortest_path.cost << std::endl;
-    std::cout << _shortest_path.pointer << std::endl;
-#endif
 }
 
 device::Device::Device(std::vector<std::vector<unsigned>> &adj_lists,
