@@ -1,5 +1,6 @@
 #include "apsp.hpp"
 
+#include "tqdm.hpp"
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -42,7 +43,9 @@ static ShortestPath floyd_warshall(torch::Tensor adj_mat) {
         torch::where(adj_mat != 0, adj_mat.clone().to(torch::kFloat32),
                      torch::full_like(adj_mat, INFINITY, floatOpts));
 
+    Tqdm bar(dimensions);
     for (int i = 0; i < dimensions; ++i) {
+        bar.add();
         auto alt_path = cost_mat.index({None, i, Slice()}) +
                         cost_mat.index({Slice(), i, None});
 

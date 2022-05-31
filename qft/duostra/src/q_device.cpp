@@ -138,7 +138,8 @@ device::Device::Device(std::fstream &file, unsigned r, unsigned s, unsigned cx)
 
     // apsp
     std::cout << "calculating apsp..." << std::endl;
-    torch::Tensor adj_mat = torch::zeros({int(_qubits.size()), int(_qubits.size())});
+    torch::Tensor adj_mat =
+        torch::zeros({int(_qubits.size()), int(_qubits.size())});
     for (unsigned i = 0; i < _qubits.size(); ++i) {
         const std::vector<unsigned> &adj_list = _qubits[i].get_adj_list();
         for (unsigned j = 0; j < adj_list.size(); ++j) {
