@@ -1,0 +1,14 @@
+{
+  "algo": 1121,
+  "cycle": { "R_CYCLE": 2, "SWAP_CYCLE": 3, "CX_CYCLE": 1 },
+  "device": "/home/qft-mapping/device/topo_1121.txt",
+  "output": "/home/qft-mapping/output/topo_1121.json",
+  "mapper": {
+    "placer": "dfs",
+    "scheduler": "static",
+    "router": "orientation",
+    "cost": "end"
+  },
+  "stdio": false,
+  "dump": false
+}
