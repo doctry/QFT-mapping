@@ -2,6 +2,7 @@
 
 #include "q_device.hpp"
 #include "topo.hpp"
+#include "tqdm.hpp"
 #include <algorithm>
 #include <chrono> // std::chrono::system_clock
 #include <iostream>
@@ -104,7 +105,8 @@ class QFTPlacer {
 
 class QFTRouter {
   public:
-    QFTRouter(device::Device &device, std::string &typ, std::string &cost) : _device(device) {
+    QFTRouter(device::Device &device, std::string &typ, std::string &cost)
+        : _device(device) {
         if (typ == "naive") {
             _orient = false;
         } else if (typ == "orientation") {
@@ -142,7 +144,8 @@ class QFTRouter {
         device::Qubit &q1 = _device.get_qubit(q1_id);
         unsigned apsp_cost = _device.get_apsp_cost(q0_id, q1_id);
         assert(apsp_cost == _device.get_apsp_cost(q1_id, q0_id));
-        return std::max(q0.get_avail_time(), q1.get_avail_time()) + _end * apsp_cost;
+        return std::max(q0.get_avail_time(), q1.get_avail_time()) +
+               _end * apsp_cost;
     }
 
     void assign_gate(topo::Gate &gate) {
@@ -224,7 +227,9 @@ class QFTScheduler {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
+        Tqdm bar(_topo.get_num_gates());
         while (!_topo.get_avail_gates().empty()) {
+            bar.add();
             std::vector<unsigned> &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
 #ifndef DEBUG
@@ -248,7 +253,9 @@ class QFTScheduler {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
+        Tqdm bar(_topo.get_num_gates());
         while (!_topo.get_avail_gates().empty()) {
+            bar.add();
             std::vector<unsigned> &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
             topo::Gate &gate = _topo.get_gate(wait_list[0]);
@@ -264,7 +271,9 @@ class QFTScheduler {
     }
 
     void assign_gates_old(device::Device &device, QFTRouter &router) {
+        Tqdm bar(_topo.get_num_gates());
         for (unsigned i = 0; i < _topo.get_num_gates(); ++i) {
+            bar.add();
             topo::Gate &gate = _topo.get_gate(i);
             router.assign_gate(gate);
             _topo.update_avail_gates(i);
@@ -275,7 +284,9 @@ class QFTScheduler {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
+        Tqdm bar(_topo.get_num_gates());
         while (!_topo.get_avail_gates().empty()) {
+            bar.add();
             std::vector<unsigned> &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
 
@@ -291,7 +302,8 @@ class QFTScheduler {
             topo::Gate &gate = _topo.get_gate(wait_list[choose]);
             router.assign_gate(gate);
 #ifdef DEBUG
-            std::cout << "costlist: " << cost_list << "\n" << "waitlist: " << wait_list << " " << wait_list[choose]
+            std::cout << "costlist: " << cost_list << "\n"
+                      << "waitlist: " << wait_list << " " << wait_list[choose]
                       << "\n\n";
             count++;
 #endif
