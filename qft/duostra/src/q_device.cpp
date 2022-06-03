@@ -13,6 +13,9 @@ std::ostream &operator<<(std::ostream &os, Operation &op) {
     case Operator::R:
         os << std::setw(20) << "Operation: R";
         break;
+    case Operator::CX:
+        os << std::setw(20) << "Operation: CX";
+        break;
     default:
         assert(0);
         break;
@@ -584,6 +587,14 @@ void device::Device::apply_gate(const Operation &op) {
 
         q0.set_occupied_time(t + _R_CYCLE);
         q1.set_occupied_time(t + _R_CYCLE);
+        break;
+    }
+
+    case Operator::CX: {
+        assert(t + _CX_CYCLE == op.get_cost());
+
+        q0.set_occupied_time(t + _CX_CYCLE);
+        q1.set_occupied_time(t + _CX_CYCLE);
         break;
     }
 
