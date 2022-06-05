@@ -159,7 +159,7 @@ device::Device::Device(Device &&other)
     : _qubits(std::move(other._qubits)), _R_CYCLE(other._R_CYCLE),
       _SWAP_CYCLE(other._SWAP_CYCLE), _apsp(other._apsp),
       _shortest_path(std::move(other._shortest_path)),
-          _ops(std::move(other._ops)) {}
+      _ops(std::move(other._ops)) {}
 
 const unsigned device::Device::get_num_qubits() const { return _qubits.size(); }
 
@@ -177,7 +177,7 @@ void device::Device::init_apsp() {
             adj_mat.index_put_({int(i), int(adj_list[j])}, 1);
         }
     }
-    _shortest_path = apsp(adj_mat); 
+    _shortest_path = apsp(adj_mat);
 }
 
 unsigned device::Device::get_apsp_cost(unsigned i, unsigned j) const {
@@ -255,7 +255,7 @@ device::Device::route(unsigned source, unsigned target) {
 void reset_qubit(device::Qubit &q) { q.reset(); }
 
 void device::Device::reset() {
-    for (unsigned i = 0; i < _qubits.size(); ++i){
+    for (unsigned i = 0; i < _qubits.size(); ++i) {
         _qubits[i].reset();
     }
 }
@@ -267,21 +267,13 @@ std::vector<unsigned> device::Device::routing(Operator op,
     unsigned q0_idx = std::get<0>(qs); // source 0
     unsigned q1_idx = std::get<1>(qs); // source 1
 
-    if (orient) {
-        if (get_qubit(q0_idx).get_avail_time() -
-                get_qubit(q1_idx).get_avail_time() >
-            _SWAP_CYCLE) {
-            std::swap(q0_idx, q1_idx);
-        } else if (get_qubit(q1_idx).get_avail_time() -
-                           get_qubit(q0_idx).get_avail_time() <
-                       _SWAP_CYCLE &&
-                   get_qubit(q0_idx).get_topo_qubit() >
-                       get_qubit(q1_idx).get_topo_qubit()) {
-            std::swap(q0_idx, q1_idx);
-        }
-    } else {
-        if (get_qubit(q0_idx).get_avail_time() >
-            get_qubit(q1_idx).get_avail_time()) {
+    if (get_qubit(q0_idx).get_avail_time() >
+        get_qubit(q1_idx).get_avail_time()) {
+        std::swap(q0_idx, q1_idx);
+    } else if (get_qubit(q0_idx).get_avail_time() ==
+               get_qubit(q1_idx).get_avail_time()) {
+        if (orient && get_qubit(q0_idx).get_topo_qubit() >
+                          get_qubit(q1_idx).get_topo_qubit()) {
             std::swap(q0_idx, q1_idx);
         }
     }
