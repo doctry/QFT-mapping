@@ -1,9 +1,9 @@
 #pragma once
 
+#include "apsp.hpp"
 #include "json.hpp"
 #include "operator.hpp"
 #include "util.hpp"
-#include "apsp.hpp"
 #include <assert.h>
 #include <fstream>
 #include <iomanip>
@@ -15,6 +15,7 @@
 #include <vector>
 using nlohmann::json;
 
+namespace device {
 class Operation {
   public:
     friend std::ostream &operator<<(std::ostream &, Operation &);
@@ -48,8 +49,8 @@ class Operation {
     Operator get_operator() const { return _oper; }
     std::string get_operator_name() const {
         switch (_oper) {
-        case Operator::R:
-            return "R";
+        case Operator::Single:
+            return "Single";
         case Operator::Swap:
             return "Swap";
         case Operator::CX:
@@ -66,9 +67,11 @@ class Operation {
     std::tuple<unsigned, unsigned> _duration; // <from, to>
 };
 
-bool op_order(const Operation &a, const Operation &b);
+std::ostream &operator<<(std::ostream &, Operation &);
+std::ostream &operator<<(std::ostream &, const Operation &);
+void to_json(json &j, const Operation &op);
 
-namespace device {
+bool op_order(const Operation &a, const Operation &b);
 class AStarNode {
   public:
     friend class AStarComp;
@@ -78,9 +81,9 @@ class AStarNode {
         : _estimated_cost(other._estimated_cost), _id(other._id),
           _swtch(other._swtch) {}
 
-    const bool get_swtch() const { return _swtch; }
-    const unsigned get_id() const { return _id; }
-    const unsigned get_cost() const { return _estimated_cost; }
+    bool get_swtch() const { return _swtch; }
+    unsigned get_id() const { return _id; }
+    unsigned get_cost() const { return _estimated_cost; }
 
   private:
     unsigned _estimated_cost;
@@ -97,14 +100,15 @@ class AStarComp {
 
 class Qubit {
   public:
+    friend std::ostream &operator<<(std::ostream &os, const device::Qubit &q);
     Qubit(const unsigned i);
     Qubit(const Qubit &other) = delete;
     Qubit(Qubit &&other);
 
-    const unsigned get_id() const;
-    const unsigned get_avail_time() const;
-    const bool is_adj(Qubit &other) const;
-    const unsigned get_topo_qubit() const;
+    unsigned get_id() const;
+    unsigned get_avail_time() const;
+    bool is_adj(Qubit &other) const;
+    unsigned get_topo_qubit() const;
 
     void add_adj(unsigned i);
     void set_topo_qubit(const unsigned i);
@@ -112,12 +116,12 @@ class Qubit {
     const std::vector<unsigned> &get_adj_list() const;
 
     // A*
-    const unsigned get_cost() const;
-    const bool is_marked() const;
-    const bool is_taken() const;
-    const bool get_swtch() const;
-    const unsigned get_pred() const;
-    const unsigned get_swap_time() const;
+    unsigned get_cost() const;
+    bool is_marked() const;
+    bool is_taken() const;
+    bool get_swtch() const;
+    unsigned get_pred() const;
+    unsigned get_swap_time() const;
     void mark(bool swtch, unsigned pred);
     void reset();
     void take_route(unsigned cost, unsigned swap_time);
@@ -137,6 +141,8 @@ class Qubit {
     bool _taken;
 };
 
+std::ostream &operator<<(std::ostream &os, const device::Qubit &q);
+
 class Device {
   public:
     Device(std::fstream &file, unsigned r, unsigned s, unsigned cx);
@@ -145,14 +151,12 @@ class Device {
     Device(const Qubit &other) = delete;
     Device(Device &&other);
 
-    const unsigned get_num_qubits() const;
+    unsigned get_num_qubits() const;
     unsigned get_apsp_cost(unsigned i, unsigned j) const;
     Qubit &get_qubit(const unsigned i);
-    std::vector<unsigned> routing(Operator op,
-                                  std::tuple<unsigned, unsigned> qs,
-                                  bool orient); // standalone
-    std::tuple<std::vector<unsigned>, std::vector<unsigned>>
-    route(unsigned source, unsigned target); // python integration
+    void execute_single(Operator op, unsigned q);
+    std::vector<unsigned>
+    routing(Operator op, std::tuple<unsigned, unsigned> qs, bool orient);
 
     void write_assembly(std::ostream &out);
     void to_json(json &j);
@@ -160,15 +164,10 @@ class Device {
     unsigned get_total_time();
     unsigned get_swap_num();
     void print_device_state(std::ostream &out);
+    void place(std::vector<unsigned> &assign);
     std::vector<Operation> &get_operations();
     void init_apsp();
-
-    void place(std::vector<unsigned> &assign); // topo2device
-    std::vector<Operation>
-    compile_route(const std::tuple<std::vector<unsigned>, std::vector<unsigned>>
-                      &routes);            // python integration
-    std::vector<unsigned> mapping() const; // python integration
-    void reset();                          // python integration
+    void reset();
 
   private:
     // A*
@@ -182,16 +181,13 @@ class Device {
                                      device::Qubit &q1, device::Qubit &t0,
                                      device::Qubit &t1); // standalone
     void apply_gate(const Operation &op);
-    std::tuple<std::vector<unsigned>, std::vector<unsigned>>
-    trace(device::Qubit &q0, device::Qubit &q1, device::Qubit &t0,
-          device::Qubit &t1); // python integration
+    std::vector<unsigned> mapping() const;
 
     // data member
     std::vector<Qubit> _qubits;
-    unsigned _R_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
+    unsigned _SINGLE_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
     bool _apsp;
     ShortestPath _shortest_path;
-    // std::vector<std::vector<unsigned>> _apsp;
     std::vector<Operation> _ops;
 };
 } // namespace device

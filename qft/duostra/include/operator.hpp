@@ -1,3 +1,3 @@
 #pragma once
 
-enum Operator { Swap, R, CX };
+enum Operator { Swap, CX, Single};

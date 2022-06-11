@@ -18,8 +18,8 @@ class AlgoTopology : public Topology {
 
     void parse(std::fstream &);
 
-    const unsigned get_num_qubits() const override { return _num; }
-    const unsigned get_num_gates() const override { return _gates.size(); }
+    unsigned get_num_qubits() const override { return _num; }
+    unsigned get_num_gates() const override { return _gates.size(); }
     Gate &get_gate(const unsigned i) override { return _gates[i]; }
 
     std::vector<unsigned> &get_avail_gates() override { return _avail_gates; }

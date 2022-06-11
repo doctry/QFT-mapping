@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     // create device
     std::cout << "creating device..." << std::endl;
     json cycle_conf = conf["cycle"].get<json>();
-    unsigned R_CYCLE = cycle_conf["R_CYCLE"].get<unsigned>();
+    unsigned SINGLE_CYCLE = cycle_conf["SINGLE_CYCLE"].get<unsigned>();
     unsigned SWAP_CYCLE = cycle_conf["SWAP_CYCLE"].get<unsigned>();
     unsigned CX_CYCLE = cycle_conf["CX_CYCLE"].get<unsigned>();
     std::fstream device_file;
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "There is no file" << conf["device"] << std::endl;
         return 1;
     }
-    device::Device device(device_file, R_CYCLE, SWAP_CYCLE, CX_CYCLE);
+    device::Device device(device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE);
 
     if (topo->get_num_qubits() > device.get_num_qubits()) {
         std::cerr << "You cannot assign more QFT qubits than the device."
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
     // routing
     std::cout << "routing..." << std::endl;
-    scheduler.assign_gates(device, router, scheduler_typ);
+    scheduler.assign_gates(router, scheduler_typ);
 
     // dump
     bool dump = conf["dump"].get<bool>();

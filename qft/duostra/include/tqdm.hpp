@@ -236,7 +236,7 @@ class tqdm {
 
 class Tqdm {
   public:
-    Tqdm(int total) : total_(total), counter_(0), tqdm_(tqdm()) {}
+    Tqdm(int total) : counter_(0), total_(total), tqdm_(tqdm()) {}
     ~Tqdm() { tqdm_.finish(); }
 
     void add() { tqdm_.progress(counter_++, total_); }
