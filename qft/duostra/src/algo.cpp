@@ -88,7 +88,6 @@ void topo::AlgoTopology::parse(fstream &qasmFile) {
 
                 lastCnotWith[q1].second++;
                 lastCnotWith[q2].second++;
-                _gates[cnotId - 1].set_type(Operator::R);
             } else {
                 lastCnotWith[q1].first = q2;
                 lastCnotWith[q2].first = q1;

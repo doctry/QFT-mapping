@@ -15,7 +15,7 @@ class QFTPlacer {
   public:
     QFTPlacer() {}
     QFTPlacer(const QFTPlacer &other) = delete;
-    QFTPlacer(QFTPlacer &&other) {}
+    QFTPlacer(QFTPlacer &&other) = delete;
 
     std::vector<unsigned> place(device::Device &device, std::string &typ) {
         if (typ == "static") {
@@ -99,8 +99,6 @@ class QFTPlacer {
         }
         return;
     }
-
-    std::vector<std::string> _placer_types;
 };
 
 class QFTRouter {
@@ -139,6 +137,13 @@ class QFTRouter {
     unsigned get_gate_cost(topo::Gate &gate) const {
         std::tuple<unsigned, unsigned> device_qubits_idx =
             get_device_qubits_idx(gate);
+
+        if (gate.get_type() == Operator::Single) {
+            assert(std::get<1>(device_qubits_idx) == UINT_MAX);
+            return _device.get_qubit(std::get<0>(device_qubits_idx))
+                .get_avail_time();
+        }
+
         unsigned q0_id = std::get<0>(device_qubits_idx);
         unsigned q1_id = std::get<1>(device_qubits_idx);
         device::Qubit &q0 = _device.get_qubit(q0_id);
@@ -152,32 +157,39 @@ class QFTRouter {
     void assign_gate(topo::Gate &gate) {
         std::tuple<unsigned, unsigned> device_qubits_idx =
             get_device_qubits_idx(gate);
-        std::vector<unsigned> change_list = std::move(
-            _device.routing(gate.get_type(), device_qubits_idx, _orient));
+
+        if (gate.get_type() == Operator::Single) {
+            assert(std::get<1>(device_qubits_idx) == UINT_MAX);
+            _device.execute_single(gate.get_type(),
+                                   std::get<0>(device_qubits_idx));
+        } else {
+            std::vector<unsigned> change_list =
+                _device.routing(gate.get_type(), device_qubits_idx, _orient);
 #ifdef DEBUG
-        std::vector<bool> checker(_topo2device.size(), false);
+            std::vector<bool> checker(_topo2device.size(), false);
 #endif
-        for (unsigned i = 0; i < change_list.size();
-             ++i) // i is the idx of device qubit
-        {
-            unsigned topo_qubit_id = change_list[i];
-            if (topo_qubit_id == UINT_MAX) {
-                continue;
+            for (unsigned i = 0; i < change_list.size();
+                 ++i) // i is the idx of device qubit
+            {
+                unsigned topo_qubit_id = change_list[i];
+                if (topo_qubit_id == UINT_MAX) {
+                    continue;
+                }
+#ifdef DEBUG
+                assert(checker[i] == false);
+                checker[i] = true;
+#endif
+                _topo2device[topo_qubit_id] = i;
             }
 #ifdef DEBUG
-            assert(checker[i] == false);
-            checker[i] = true;
+            for (unsigned i = 0; i < checker.size(); ++i) {
+                assert(checker[i]);
+            }
+            std::cout << "Gate: Q" << std::get<0>(gate.get_qubits()) << " Q"
+                      << std::get<1>(gate.get_qubits()) << "\n";
+            _device.print_device_state(std::cout);
 #endif
-            _topo2device[topo_qubit_id] = i;
         }
-#ifdef DEBUG
-        for (unsigned i = 0; i < checker.size(); ++i) {
-            assert(checker[i]);
-        }
-        std::cout << "Gate: Q" << std::get<0>(gate.get_qubits()) << " Q"
-                  << std::get<1>(gate.get_qubits()) << "\n";
-        _device.print_device_state(std::cout);
-#endif
     }
 
   private:
@@ -188,11 +200,16 @@ class QFTRouter {
         unsigned device_idx_q0 =
             _topo2device[topo_idx_q0]; // get device qubit index of the gate
 
-        unsigned topo_idx_q1 = std::get<1>(
-            gate.get_qubits()); // get operation qubit index of gate in topology
-        unsigned device_idx_q1 =
-            _topo2device[topo_idx_q1]; // get device qubit index of the gate
+        unsigned device_idx_q1 = UINT_MAX;
 
+        if (gate.get_type() != Operator::Single) {
+            unsigned topo_idx_q1 =
+                std::get<1>(gate.get_qubits()); // get operation qubit index of
+                                                // gate in topology
+            assert(topo_idx_q1 != UINT_MAX);
+            device_idx_q1 =
+                _topo2device[topo_idx_q1]; // get device qubit index of the gate
+        }
         return std::make_tuple(device_idx_q0, device_idx_q1);
     }
 
@@ -208,23 +225,22 @@ class QFTScheduler {
     QFTScheduler(const QFTScheduler &other) = delete;
     QFTScheduler(QFTScheduler &&other) : _topo(other._topo) {}
 
-    void assign_gates(device::Device &device, QFTRouter &router,
-                      std::string &typ) {
+    void assign_gates(QFTRouter &router, std::string &typ) {
         if (typ == "random") {
-            return assign_gates_random(device, router);
+            return assign_gates_random(router);
         } else if (typ == "static") {
-            return assign_gates_static(device, router);
+            return assign_gates_static(router);
         } else if (typ == "greedy") {
-            return assign_gates_greedy(device, router);
+            return assign_gates_greedy(router);
         } else if (typ == "old") {
-            return assign_gates_old(device, router);
+            return assign_gates_old(router);
         } else {
             std::cerr << typ << " is not a scheduler type" << std::endl;
             abort();
         }
     }
 
-    void assign_gates_random(device::Device &device, QFTRouter &router) {
+    void assign_gates_random(QFTRouter &router) {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
@@ -250,7 +266,7 @@ class QFTScheduler {
 #endif
     }
 
-    void assign_gates_static(device::Device &device, QFTRouter &router) {
+    void assign_gates_static(QFTRouter &router) {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
@@ -271,7 +287,7 @@ class QFTScheduler {
 #endif
     }
 
-    void assign_gates_old(device::Device &device, QFTRouter &router) {
+    void assign_gates_old(QFTRouter &router) {
         Tqdm bar(_topo.get_num_gates());
         for (unsigned i = 0; i < _topo.get_num_gates(); ++i) {
             bar.add();
@@ -281,7 +297,7 @@ class QFTScheduler {
         }
     }
 
-    void assign_gates_greedy(device::Device &device, QFTRouter &router) {
+    void assign_gates_greedy(QFTRouter &router) {
 #ifdef DEBUG
         unsigned count = 0;
 #endif

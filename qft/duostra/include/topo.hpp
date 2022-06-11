@@ -43,7 +43,7 @@ class Gate {
         return _prevs;
     }
     const std::vector<unsigned> &get_nexts() const { return _nexts; }
-    const Operator get_type() const { return _type; }
+    Operator get_type() const { return _type; }
 
   private:
     unsigned _id;
@@ -55,8 +55,8 @@ class Gate {
 
 class Topology {
   public:
-    virtual const unsigned get_num_qubits() const = 0;
-    virtual const unsigned get_num_gates() const = 0;
+    virtual unsigned get_num_qubits() const = 0;
+    virtual unsigned get_num_gates() const = 0;
     virtual Gate &get_gate(const unsigned i) = 0;
     virtual std::vector<unsigned> &get_avail_gates() = 0;
     virtual void update_avail_gates(unsigned executed) = 0;

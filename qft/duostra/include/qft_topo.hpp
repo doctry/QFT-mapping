@@ -21,7 +21,7 @@ class QFTTopology : public Topology {
                 unsigned prev_left = (j == 0) ? UINT_MAX : count - 1;
                 unsigned next_down = (i == num - 1) ? UINT_MAX : count + i;
                 unsigned next_right = (j == i - 1) ? UINT_MAX : count + 1;
-                Gate gate(count, Operator::R, std::make_tuple(j, i));
+                Gate gate(count, Operator::CX, std::make_tuple(j, i));
                 gate.set_prev(prev_up, prev_left);
                 gate.add_next(next_down);
                 gate.add_next(next_right);
@@ -35,8 +35,8 @@ class QFTTopology : public Topology {
     QFTTopology(QFTTopology &&other)
         : _gates(std::move(other._gates)), _avail_gates(other._avail_gates) {}
 
-    const unsigned get_num_qubits() const override { return _num; }
-    const unsigned get_num_gates() const override { return _gates.size(); }
+    unsigned get_num_qubits() const override { return _num; }
+    unsigned get_num_gates() const override { return _gates.size(); }
     Gate &get_gate(const unsigned i) override { return _gates[i]; }
     std::vector<unsigned> &get_avail_gates() override { return _avail_gates; }
 
