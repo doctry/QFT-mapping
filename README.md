@@ -1,5 +1,5 @@
-# QFT-mapping
-This project want to map QFT with more than 1000 qubits on real-world device.
+# Provable good and Scalable Qubit Mapping
+This project want to map quantum circuit with more than 1000 qubits on real-world device. Current providing Quantum Fourier Transform scalable mapping.
 
 ## Compile and Run
 ```bash=
@@ -18,9 +18,10 @@ cmake --build . --config Release
 ```
 
 ## Settings
+The following settings needs to be given in qft/duostra/config.json
+Please construct the config.json by the provided config_sample.json
 ### Scheduler
 * Static:  The first item in the wait list (longest time in wait list).
-* Old: Follow the sequence.
 * Random:  Random from wait list.
 * Greedy:  Find minimum cost (APSP+max(sup(Gate)))
 ### Placer
@@ -30,7 +31,12 @@ cmake --build . --config Release
 ### Router
 * Orientation: Small topology first.
 * Naive: Without considering any orientation.
-
+### Algo
+* Directly give a number, e.g. 127 would provide a 127 qubit QFT.
+* Give the path of logical circuit.
+* The provided benchmark of logical circuit is given in  ``` benchmark/ ```
+### Device
+* The device are provided in  ``` device/ ```, please give the path of txt file.
 ## Result
 
 ### Experiment 1: Without Synthesis
@@ -42,6 +48,10 @@ cmake --build . --config Release
 
 |  Machine   | #Qubit | Static | Greedy |
 | ---------- | ------ | ------ | ------ |
+| IBM-????   |  11969 | 2514327 | 5713536 |
+| IBM-????   |   5105 |  878169 | 1659527 |
+| IBM-????   |   3457 |  541048 |  869439 |
+| IBM-????   |   2129 |  304439 |  422602 |
 | IBM-2023   |   1121 | 139918 | 178256 |
 | IBM-2022   |    433 |  41326 |  43592 |
 | Washington |    127 |   8369 |   8020 |
