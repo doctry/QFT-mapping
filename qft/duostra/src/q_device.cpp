@@ -451,6 +451,9 @@ void device::Device::write_assembly(std::ostream &out) {
         case Operator::Swap:
             out << "Swap ";
             break;
+        case Operator::Single:
+            out << "Single ";
+            break;
         default:
             assert(false);
         }

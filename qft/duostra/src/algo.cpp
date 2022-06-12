@@ -4,6 +4,7 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
+#include "limits.h"
 using namespace std;
 
 bool topo::Gate::is_avail() {
@@ -79,7 +80,7 @@ void topo::AlgoTopology::parse(fstream &qasmFile) {
                 
                 unsigned q = stoul(singleQubitId);
 
-                tuple<unsigned, unsigned> temp(q, q);
+                tuple<unsigned, unsigned> temp(q, UINT_MAX);
                 topo::Gate tempGate(gateId, Operator::Single, temp);
                 tempGate.set_prev(_lastGate[q], _lastGate[q]);
 
@@ -150,8 +151,8 @@ void topo::AlgoTopology::parse(fstream &qasmFile) {
             _avail_gates.push_back(i);
     }
 #ifdef DEBUG
-    // print_gates_with_next();
-    // print_gates_with_prev();
+    print_gates_with_next();
+    print_gates_with_prev();
 #endif
 }
 

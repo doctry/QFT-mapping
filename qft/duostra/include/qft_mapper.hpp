@@ -192,6 +192,20 @@ class QFTRouter {
         }
     }
 
+    bool is_executable(topo::Gate &gate) const {
+        if (gate.get_type() == Operator::Single) {
+            assert(std::get<1>(gate.get_qubits()) == UINT_MAX);
+            return true;
+        }
+
+        std::tuple<unsigned, unsigned> device_qubits_idx =
+            get_device_qubits_idx(gate);
+        assert(std::get<1>(device_qubits_idx) != UINT_MAX);
+        device::Qubit &q0 = _device.get_qubit(std::get<0>(device_qubits_idx));
+        device::Qubit &q1 = _device.get_qubit(std::get<1>(device_qubits_idx));
+        return q0.is_adj(q1);
+    }
+
   private:
     std::tuple<unsigned, unsigned>
     get_device_qubits_idx(topo::Gate &gate) const {
@@ -275,7 +289,11 @@ class QFTScheduler {
             bar.add();
             std::vector<unsigned> &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
-            topo::Gate &gate = _topo.get_gate(wait_list[0]);
+            unsigned gate_idx = get_executable(router, wait_list);
+            if (gate_idx == UINT_MAX) {
+                gate_idx = wait_list[0];
+            }
+            topo::Gate &gate = _topo.get_gate(gate_idx);
             router.assign_gate(gate);
 #ifdef DEBUG
             count++;
@@ -307,24 +325,26 @@ class QFTScheduler {
             std::vector<unsigned> &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
 
-            std::vector<unsigned> cost_list(wait_list.size(), 0);
-            for (unsigned i = 0; i < wait_list.size(); ++i) {
-                topo::Gate &gate = _topo.get_gate(wait_list[i]);
-                unsigned cost = router.get_gate_cost(gate);
-                cost_list[i] = cost;
+            unsigned gate_idx = get_executable(router, wait_list);
+            if (gate_idx == UINT_MAX) {
+                std::vector<unsigned> cost_list(wait_list.size(), 0);
+                for (unsigned i = 0; i < wait_list.size(); ++i) {
+                    topo::Gate &gate = _topo.get_gate(wait_list[i]);
+                    unsigned cost = router.get_gate_cost(gate);
+                    cost_list[i] = cost;
+                }
+                gate_idx =
+                    std::min_element(cost_list.begin(), cost_list.end()) -
+                    cost_list.begin();
             }
-            unsigned choose =
-                std::min_element(cost_list.begin(), cost_list.end()) -
-                cost_list.begin();
-            topo::Gate &gate = _topo.get_gate(wait_list[choose]);
+            topo::Gate &gate = _topo.get_gate(wait_list[gate_idx]);
             router.assign_gate(gate);
 #ifdef DEBUG
-            std::cout << "costlist: " << cost_list << "\n"
-                      << "waitlist: " << wait_list << " " << wait_list[choose]
+            std::cout << "waitlist: " << wait_list << " " << wait_list[gate_idx]
                       << "\n\n";
             count++;
 #endif
-            _topo.update_avail_gates(wait_list[choose]);
+            _topo.update_avail_gates(wait_list[gate_idx]);
         }
 #ifdef DEBUG
         assert(count == _topo.get_num_gates());
@@ -333,4 +353,13 @@ class QFTScheduler {
 
   private:
     topo::Topology &_topo;
+
+    unsigned get_executable(QFTRouter &router, std::vector<unsigned> waitlist) {
+        for (unsigned gate_idx : waitlist) {
+            if (router.is_executable(_topo.get_gate(gate_idx))) {
+                return gate_idx;
+            }
+        }
+        return UINT_MAX;
+    }
 };
