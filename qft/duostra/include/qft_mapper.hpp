@@ -298,7 +298,7 @@ class QFTScheduler {
 #ifdef DEBUG
             count++;
 #endif
-            _topo.update_avail_gates(wait_list[0]);
+            _topo.update_avail_gates(gate_idx);
         }
 #ifdef DEBUG
         assert(count == _topo.get_num_gates());
@@ -333,18 +333,17 @@ class QFTScheduler {
                     unsigned cost = router.get_gate_cost(gate);
                     cost_list[i] = cost;
                 }
-                gate_idx =
-                    std::min_element(cost_list.begin(), cost_list.end()) -
-                    cost_list.begin();
+                gate_idx = wait_list[std::min_element(cost_list.begin(),
+                                                      cost_list.end()) -
+                                     cost_list.begin()];
             }
-            topo::Gate &gate = _topo.get_gate(wait_list[gate_idx]);
+            topo::Gate &gate = _topo.get_gate(gate_idx);
             router.assign_gate(gate);
 #ifdef DEBUG
-            std::cout << "waitlist: " << wait_list << " " << wait_list[gate_idx]
-                      << "\n\n";
+            std::cout << "waitlist: " << wait_list << " " << gate_idx << "\n\n";
             count++;
 #endif
-            _topo.update_avail_gates(wait_list[gate_idx]);
+            _topo.update_avail_gates(gate_idx);
         }
 #ifdef DEBUG
         assert(count == _topo.get_num_gates());
