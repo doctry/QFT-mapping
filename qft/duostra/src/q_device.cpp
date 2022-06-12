@@ -199,10 +199,15 @@ void device::Device::reset() {
 void device::Device::execute_single(Operator oper, unsigned q) {
     assert(oper == Operator::Single);
     Qubit& qubit = _qubits[q];
-    unsigned endtime = qubit.get_avail_time() + _SINGLE_CYCLE;
+    unsigned starttime = qubit.get_avail_time();
+    unsigned endtime = starttime + _SINGLE_CYCLE;
     qubit.set_occupied_time(endtime);
-    Operation op(oper, std::make_tuple(q, UINT_MAX), std::make_tuple(qubit.get_avail_time(), endtime));
+    qubit.reset();
+    Operation op(oper, std::make_tuple(q, UINT_MAX), std::make_tuple(starttime, endtime));
     _ops.push_back(op);
+#ifdef DEBUG
+    std::cout << op << "\n";
+#endif
 }
 
 std::vector<unsigned> device::Device::routing(Operator op,
