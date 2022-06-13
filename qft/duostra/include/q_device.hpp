@@ -187,7 +187,7 @@ class Device {
     std::vector<Qubit> _qubits;
     unsigned _SINGLE_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
     bool _apsp;
-    ShortestPath _shortest_path;
+    std::vector<std::vector<unsigned>> _shortest_path;
     std::vector<Operation> _ops;
 };
 } // namespace device
