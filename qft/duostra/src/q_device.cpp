@@ -172,14 +172,19 @@ void device::Device::init_apsp() {
             adj_mat.index_put_({int(i), int(adj_list[j])}, 1);
         }
     }
-    _shortest_path = apsp(adj_mat);
+    ShortestPath shortest_path = apsp(adj_mat);
+    for(unsigned i = 0; i < _qubits.size(); ++i) {
+        std::vector<unsigned> arr(_qubits.size(), 0);
+        for (unsigned j = 0; j < _qubits.size(); ++j) {
+            arr[j] = unsigned(shortest_path.cost.index({int(i), int(j)}).item<int>());
+        }
+        _shortest_path.push_back(std::move(arr));
+    }
 }
 
 unsigned device::Device::get_apsp_cost(unsigned i, unsigned j) const {
     if (_apsp) {
-        return unsigned(
-                   _shortest_path.cost.index({int(i), int(j)}).item<int>()) *
-               _SWAP_CYCLE;
+        return _shortest_path[i][j] * _SWAP_CYCLE;
     } else
         return 0;
 }
