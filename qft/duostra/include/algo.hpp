@@ -22,7 +22,9 @@ class AlgoTopology : public Topology {
     unsigned get_num_gates() const override { return _gates.size(); }
     Gate &get_gate(const unsigned i) override { return _gates[i]; }
 
-    std::vector<unsigned> &get_avail_gates() override { return _avail_gates; }
+    const std::vector<unsigned> &get_avail_gates() const override {
+        return _avail_gates;
+    }
 
     void update_avail_gates(unsigned);
     void print_gates_with_next();

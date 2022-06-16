@@ -67,8 +67,9 @@ int main(int argc, char *argv[]) {
     device.place(assign);
 
     // scheduler
+    int candidates = conf_mapper["greedy_candidates"];
     std::cout << "creating scheduler..." << std::endl;
-    QFTScheduler scheduler(*topo);
+    QFTScheduler scheduler(*topo, candidates);
     std::string scheduler_typ = conf_mapper["scheduler"].get<std::string>();
 
     // router

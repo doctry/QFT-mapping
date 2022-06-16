@@ -58,7 +58,7 @@ class Topology {
     virtual unsigned get_num_qubits() const = 0;
     virtual unsigned get_num_gates() const = 0;
     virtual Gate &get_gate(const unsigned i) = 0;
-    virtual std::vector<unsigned> &get_avail_gates() = 0;
+    virtual const std::vector<unsigned> &get_avail_gates() const = 0;
     virtual void update_avail_gates(unsigned executed) = 0;
 };
 }; // namespace topo
