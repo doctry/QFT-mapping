@@ -42,15 +42,11 @@ class QFTTopology : public Topology {
         return _avail_gates;
     }
     std::vector<unsigned> get_avail_gates(int candidates) const {
-        if (candidates <= 0) {
-            return get_avail_gates();
+        if (_avail_gates.size() < candidates || candidates < 0) {
+            return _avail_gates;
         } else {
-            if (_avail_gates.size() < candidates) {
-                return _avail_gates;
-            } else {
-                auto begin = _avail_gates.begin();
-                return std::vector<unsigned>(begin, begin + candidates);
-            }
+            auto begin = _avail_gates.begin();
+            return std::vector<unsigned>(begin, begin + candidates);
         }
     }
 
