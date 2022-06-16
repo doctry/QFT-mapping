@@ -11,7 +11,7 @@
 namespace topo {
 class QFTTopology : public Topology {
   public:
-    QFTTopology(unsigned num) : _num(num) {
+    QFTTopology(unsigned num) : _num_qubits(num) {
         assert(num > 0);
 
         unsigned count = 0;
@@ -35,10 +35,24 @@ class QFTTopology : public Topology {
     QFTTopology(QFTTopology &&other)
         : _gates(std::move(other._gates)), _avail_gates(other._avail_gates) {}
 
-    unsigned get_num_qubits() const override { return _num; }
+    unsigned get_num_qubits() const override { return _num_qubits; }
     unsigned get_num_gates() const override { return _gates.size(); }
     Gate &get_gate(const unsigned i) override { return _gates[i]; }
-    std::vector<unsigned> &get_avail_gates() override { return _avail_gates; }
+    const std::vector<unsigned> &get_avail_gates() const override {
+        return _avail_gates;
+    }
+    std::vector<unsigned> get_avail_gates(int candidates) const {
+        if (candidates <= 0) {
+            return get_avail_gates();
+        } else {
+            if (_avail_gates.size() < candidates) {
+                return _avail_gates;
+            } else {
+                auto begin = _avail_gates.begin();
+                return std::vector<unsigned>(begin, begin + candidates);
+            }
+        }
+    }
 
     void update_avail_gates(unsigned executed) override {
         assert(std::find(_avail_gates.begin(), _avail_gates.end(), executed) !=
@@ -80,7 +94,7 @@ class QFTTopology : public Topology {
     }
 
   private:
-    unsigned _num;
+    unsigned _num_qubits;
     std::vector<Gate> _gates;
     std::vector<unsigned> _avail_gates;
 };

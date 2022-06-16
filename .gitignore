@@ -328,3 +328,6 @@ qft/duostra/config.json
 qft/duostra/build
 qft/duostra/debug
 qft/duostra/conf
+
+*.zip
+libtorch/

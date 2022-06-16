@@ -7,7 +7,8 @@
     "placer": "dfs",
     "scheduler": "static",
     "router": "orientation",
-    "cost": "end"
+    "cost": "end",
+    "greedy_candiates": 1
   },
   "stdio": false,
   "dump": false

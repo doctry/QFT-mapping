@@ -115,10 +115,10 @@ class QFTRouter {
         }
 
         if (cost == "end") {
-            _end = true;
+            _greedy_type = true;
             _device.init_apsp();
         } else if (cost == "start") {
-            _end = false;
+            _greedy_type = false;
         } else {
             std::cerr << cost << " is not a cost type" << std::endl;
             abort();
@@ -131,8 +131,8 @@ class QFTRouter {
     }
     QFTRouter(const QFTRouter &other) = delete;
     QFTRouter(QFTRouter &&other)
-        : _end(other._end), _orient(other._orient), _device(other._device),
-          _topo2device(std::move(other._topo2device)) {}
+        : _greedy_type(other._greedy_type), _orient(other._orient),
+          _device(other._device), _topo2device(std::move(other._topo2device)) {}
 
     unsigned get_gate_cost(topo::Gate &gate) const {
         std::tuple<unsigned, unsigned> device_qubits_idx =
@@ -151,7 +151,7 @@ class QFTRouter {
         unsigned apsp_cost = _device.get_apsp_cost(q0_id, q1_id);
         assert(apsp_cost == _device.get_apsp_cost(q1_id, q0_id));
         return std::max(q0.get_avail_time(), q1.get_avail_time()) +
-               _end * apsp_cost;
+               _greedy_type * apsp_cost;
     }
 
     void assign_gate(topo::Gate &gate) {
@@ -227,7 +227,7 @@ class QFTRouter {
         return std::make_tuple(device_idx_q0, device_idx_q1);
     }
 
-    bool _end;
+    bool _greedy_type;
     bool _orient;
     device::Device &_device;
     std::vector<unsigned> _topo2device;
@@ -235,9 +235,11 @@ class QFTRouter {
 
 class QFTScheduler {
   public:
-    QFTScheduler(topo::Topology &topo) : _topo(topo) {}
+    QFTScheduler(topo::Topology &topo, int candidates)
+        : _topo(topo), _cand(candidates) {}
     QFTScheduler(const QFTScheduler &other) = delete;
-    QFTScheduler(QFTScheduler &&other) : _topo(other._topo) {}
+    QFTScheduler(QFTScheduler &&other)
+        : _topo(other._topo), _cand(other._cand) {}
 
     void assign_gates(QFTRouter &router, std::string &typ) {
         if (typ == "random") {
@@ -245,7 +247,7 @@ class QFTScheduler {
         } else if (typ == "static") {
             return assign_gates_static(router);
         } else if (typ == "greedy") {
-            return assign_gates_greedy(router);
+            return assign_gates_greedy(router, _cand);
         } else if (typ == "old") {
             return assign_gates_old(router);
         } else {
@@ -261,7 +263,7 @@ class QFTScheduler {
         Tqdm bar(_topo.get_num_gates());
         while (!_topo.get_avail_gates().empty()) {
             bar.add();
-            std::vector<unsigned> &wait_list = _topo.get_avail_gates();
+            auto &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
 #ifndef DEBUG
             srand(std::chrono::system_clock::now().time_since_epoch().count());
@@ -287,7 +289,7 @@ class QFTScheduler {
         Tqdm bar(_topo.get_num_gates());
         while (!_topo.get_avail_gates().empty()) {
             bar.add();
-            std::vector<unsigned> &wait_list = _topo.get_avail_gates();
+            auto &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
             unsigned gate_idx = get_executable(router, wait_list);
             if (gate_idx == UINT_MAX) {
@@ -315,14 +317,14 @@ class QFTScheduler {
         }
     }
 
-    void assign_gates_greedy(QFTRouter &router) {
+    void assign_gates_greedy(QFTRouter &router, int candidates) {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
         Tqdm bar(_topo.get_num_gates());
         while (!_topo.get_avail_gates().empty()) {
             bar.add();
-            std::vector<unsigned> &wait_list = _topo.get_avail_gates();
+            auto &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
 
             unsigned gate_idx = get_executable(router, wait_list);
@@ -352,6 +354,7 @@ class QFTScheduler {
 
   private:
     topo::Topology &_topo;
+    int _cand;
 
     unsigned get_executable(QFTRouter &router, std::vector<unsigned> waitlist) {
         for (unsigned gate_idx : waitlist) {
