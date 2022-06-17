@@ -67,7 +67,11 @@ int main(int argc, char *argv[]) {
     device.place(assign);
 
     // scheduler
-    int candidates = conf_mapper["greedy_candidates"];
+    int candidates_conf = conf_mapper["greedy_candidates"];
+    unsigned candidates = UINT_MAX;
+    if (candidates_conf > 0) {
+        candidates = unsigned(candidates_conf);
+    }
     std::cout << "creating scheduler..." << std::endl;
     QFTScheduler scheduler(*topo, candidates);
     std::string scheduler_typ = conf_mapper["scheduler"].get<std::string>();

@@ -235,7 +235,7 @@ class QFTRouter {
 
 class QFTScheduler {
   public:
-    QFTScheduler(topo::Topology &topo, int candidates)
+    QFTScheduler(topo::Topology &topo, unsigned candidates)
         : _topo(topo), _cand(candidates) {}
     QFTScheduler(const QFTScheduler &other) = delete;
     QFTScheduler(QFTScheduler &&other)
@@ -317,7 +317,7 @@ class QFTScheduler {
         }
     }
 
-    void assign_gates_greedy(QFTRouter &router, int candidates) {
+    void assign_gates_greedy(QFTRouter &router, unsigned candidates) {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
@@ -354,7 +354,7 @@ class QFTScheduler {
 
   private:
     topo::Topology &_topo;
-    int _cand;
+    unsigned _cand;
 
     unsigned get_executable(QFTRouter &router, std::vector<unsigned> waitlist) {
         for (unsigned gate_idx : waitlist) {

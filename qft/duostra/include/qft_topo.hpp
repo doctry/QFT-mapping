@@ -41,8 +41,8 @@ class QFTTopology : public Topology {
     const std::vector<unsigned> &get_avail_gates() const override {
         return _avail_gates;
     }
-    std::vector<unsigned> get_avail_gates(int candidates) const {
-        if (_avail_gates.size() < candidates || candidates < 0) {
+    std::vector<unsigned> get_avail_gates(unsigned candidates) const {
+        if (_avail_gates.size() < candidates) {
             return _avail_gates;
         } else {
             auto begin = _avail_gates.begin();
