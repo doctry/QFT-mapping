@@ -37,6 +37,7 @@ class QFTTopology : public Topology {
 
     unsigned get_num_qubits() const override { return _num_qubits; }
     unsigned get_num_gates() const override { return _gates.size(); }
+    const Gate &get_gate(const unsigned i) const { return _gates[i]; }
     Gate &get_gate(const unsigned i) override { return _gates[i]; }
     const std::vector<unsigned> &get_avail_gates() const override {
         return _avail_gates;
