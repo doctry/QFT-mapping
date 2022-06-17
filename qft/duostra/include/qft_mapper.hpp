@@ -14,13 +14,13 @@
 
 class TopologyWrapperWithCandidate {
   public:
-    TopologyWrapperWithCandidate(topo::Topology *topo, int candidate)
+    TopologyWrapperWithCandidate(topo::Topology &topo, unsigned candidate)
         : topo_(topo), candidate_(candidate) {}
 
     std::vector<unsigned> get_avail_gates() const {
-        auto &gates = topo_->get_avail_gates();
+        auto &gates = topo_.get_avail_gates();
 
-        if (candidate_ <= 0 || gates.size() < candidate_) {
+        if (gates.size() < candidate_) {
             return gates;
         } else {
             return std::vector<unsigned>(gates.begin(),
@@ -31,8 +31,8 @@ class TopologyWrapperWithCandidate {
     }
 
   private:
-    topo::Topology *topo_;
-    int candidate_;
+    topo::Topology& topo_;
+    unsigned candidate_;
 };
 
 class QFTPlacer {
@@ -345,7 +345,7 @@ class QFTScheduler {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
-        auto topo_wrap = TopologyWrapperWithCandidate(&_topo, candidates);
+        auto topo_wrap = TopologyWrapperWithCandidate(_topo, candidates);
 
         Tqdm bar(_topo.get_num_gates());
         while (!topo_wrap.get_avail_gates().empty()) {
