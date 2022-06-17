@@ -7,9 +7,33 @@
 #include <chrono> // std::chrono::system_clock
 #include <iostream>
 #include <random> // std::default_random_engine
+#include <span>
 #include <string>
 #include <tuple>
 #include <vector>
+
+class TopologyWrapperWithCandidate {
+  public:
+    TopologyWrapperWithCandidate(topo::Topology *topo, int candidate)
+        : topo_(topo), candidate_(candidate) {}
+
+    std::vector<unsigned> get_avail_gates() const {
+        auto &gates = topo_->get_avail_gates();
+
+        if (candidate_ <= 0 || gates.size() < candidate_) {
+            return gates;
+        } else {
+            return std::vector<unsigned>(gates.begin(),
+                                         gates.begin() + candidate_);
+        }
+
+        return std::vector<unsigned>();
+    }
+
+  private:
+    topo::Topology *topo_;
+    int candidate_;
+};
 
 class QFTPlacer {
   public:
@@ -317,14 +341,16 @@ class QFTScheduler {
         }
     }
 
-    void assign_gates_greedy(QFTRouter &router, unsigned candidates) {
+    void assign_gates_greedy(QFTRouter &router, int candidates) {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
+        auto topo_wrap = TopologyWrapperWithCandidate(&_topo, candidates);
+
         Tqdm bar(_topo.get_num_gates());
-        while (!_topo.get_avail_gates().empty()) {
+        while (!topo_wrap.get_avail_gates().empty()) {
             bar.add();
-            auto &wait_list = _topo.get_avail_gates();
+            auto wait_list = topo_wrap.get_avail_gates();
             assert(wait_list.size() > 0);
 
             unsigned gate_idx = get_executable(router, wait_list);
