@@ -3,6 +3,11 @@ This project want to map quantum circuit with more than 1000 qubits on real-worl
 
 ## Compile and Run
 ```bash=
+# Clone the repository
+git clone https://github.com/doctry/qft-mapping
+cd qft-mapping
+git submodule update --init --recursive
+
 # Install pytorch
 wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
 unzip libtorch-shared-with-deps-latest.zip

@@ -1,5 +1,5 @@
 #include "algo.hpp"
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 #include "q_device.hpp"
 #include "qft_mapper.hpp"
 #include "qft_topo.hpp"

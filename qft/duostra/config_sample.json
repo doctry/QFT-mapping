@@ -8,7 +8,7 @@
     "scheduler": "static",
     "router": "orientation",
     "cost": "end",
-    "greedy_candiates": 1
+    "greedy_candidates": 1
   },
   "stdio": false,
   "dump": false

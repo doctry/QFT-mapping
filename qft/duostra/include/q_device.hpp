@@ -1,7 +1,7 @@
 #pragma once
 
 #include "apsp.hpp"
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 #include "operator.hpp"
 #include "util.hpp"
 #include <assert.h>
