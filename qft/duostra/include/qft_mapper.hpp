@@ -339,6 +339,7 @@ class QFTScheduler {
             bar.add();
         }
     }
+
     void assign_gates_old(QFTRouter &router) {
         Tqdm bar(_topo.get_num_gates());
         for (unsigned i = 0; i < _topo.get_num_gates(); ++i) {
