@@ -98,16 +98,16 @@ int main(int argc, char *argv[]) {
         // device.write_assembly(out_file);
         json jj;
         jj["initial"] = assign;
-        device.to_json(jj);
-        jj["final_cost"] = device.get_final_cost();
+        scheduler.to_json(jj);
+        jj["final_cost"] = scheduler.get_final_cost();
         out_file << jj;
         // out_file << "final_cost: " << device.get_final_cost() << "\n";
     }
 
     if (conf["stdio"].get<bool>()) {
-        device.write_assembly(std::cout);
+        scheduler.write_assembly(std::cout);
     }
-    std::cout << "final cost: " << device.get_final_cost() << "\n";
-    std::cout << "total time: " << device.get_total_time() << "\n";
+    std::cout << "final cost: " << scheduler.get_final_cost() << "\n";
+    std::cout << "total time: " << scheduler.get_total_time() << "\n";
     return 0;
 }

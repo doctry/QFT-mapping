@@ -39,6 +39,8 @@ class Gate:
     def get_next(self):
         return self.next
 
+    def __str__(self) -> str:
+        return f"Gate {self.id}: Q[{self.qubits[0]}], Q[{self.qubits[1]}]"
 
 class Topo(ABC):
     avail_gates: List[int]
