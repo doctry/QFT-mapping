@@ -179,7 +179,7 @@ class QFTRouter {
             apsp_cost = _shortest_path[q0_id][q1_id];
             assert(apsp_cost == _shortest_path[q1_id][q0_id]);
         }
-        return std::max(q0.get_avail_time(), q1.get_avail_time()) + apsp_cost;
+        return std::max(q0.get_avail_time(), q1.get_avail_time()) + apsp_cost/2;
     }
 
     std::vector<device::Operation> assign_gate(topo::Gate &gate) {
