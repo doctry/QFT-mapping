@@ -34,6 +34,7 @@ class QFTTopology : public Topology {
     QFTTopology(const QFTTopology &other) = delete;
     QFTTopology(QFTTopology &&other)
         : _gates(std::move(other._gates)), _avail_gates(other._avail_gates) {}
+    ~QFTTopology() {}
 
     unsigned get_num_qubits() const override { return _num_qubits; }
     unsigned get_num_gates() const override { return _gates.size(); }

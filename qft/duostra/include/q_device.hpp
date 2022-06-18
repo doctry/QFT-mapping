@@ -81,6 +81,13 @@ class AStarNode {
         : _estimated_cost(other._estimated_cost), _id(other._id),
           _swtch(other._swtch) {}
 
+    AStarNode &operator=(const AStarNode &other) {
+        _estimated_cost = other._estimated_cost;
+        _id = other._id;
+        _swtch = other._swtch;
+        return *this;
+    }
+
     bool get_swtch() const { return _swtch; }
     unsigned get_id() const { return _id; }
     unsigned get_cost() const { return _estimated_cost; }

@@ -16,6 +16,8 @@ class AlgoTopology : public Topology {
         : _gates(std::move(other._gates)),
           _avail_gates(std::move(other._avail_gates)) {}
 
+    ~AlgoTopology() {}
+
     void parse(std::fstream &);
 
     unsigned get_num_qubits() const override { return _num; }
@@ -26,7 +28,7 @@ class AlgoTopology : public Topology {
         return _avail_gates;
     }
 
-    void update_avail_gates(unsigned);
+    void update_avail_gates(unsigned) override;
     void print_gates_with_next();
     void print_gates_with_prev();
 

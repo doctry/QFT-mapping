@@ -338,8 +338,7 @@ std::tuple<bool, unsigned> device::Device::touch_adj(
         unsigned heuristic_cost = cost + estimated_cost;
         adj.mark(swtch, qubit.get_id());
 
-        pq.push(
-            std::move(device::AStarNode(heuristic_cost, adj.get_id(), swtch)));
+        pq.push(device::AStarNode(heuristic_cost, adj.get_id(), swtch));
     }
     return std::make_tuple(false, UINT_MAX);
 }

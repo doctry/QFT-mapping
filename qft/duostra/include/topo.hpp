@@ -58,6 +58,7 @@ class Gate {
 
 class Topology {
   public:
+    virtual ~Topology() {}
     virtual unsigned get_num_qubits() const = 0;
     virtual unsigned get_num_gates() const = 0;
     virtual Gate &get_gate(unsigned i) = 0;

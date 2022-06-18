@@ -21,7 +21,7 @@ static ShortestPath floyd_warshall(torch::Tensor adj_mat);
 ShortestPath apsp(torch::Tensor adj_mat) {
     torch::NoGradGuard no_grad;
 
-    return std::move(floyd_warshall(adj_mat));
+    return floyd_warshall(adj_mat);
 }
 
 static ShortestPath floyd_warshall(torch::Tensor adj_mat) {
