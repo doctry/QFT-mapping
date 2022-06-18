@@ -178,42 +178,44 @@ class QFTRouter {
                _greedy_type * apsp_cost;
     }
 
-    void assign_gate(topo::Gate &gate) {
+    std::vector<device::Operation> assign_gate(topo::Gate &gate) {
         std::tuple<unsigned, unsigned> device_qubits_idx =
             get_device_qubits_idx(gate);
 
         if (gate.get_type() == Operator::Single) {
             assert(std::get<1>(device_qubits_idx) == UINT_MAX);
-            _device.execute_single(gate.get_type(),
-                                   std::get<0>(device_qubits_idx));
-        } else {
-            std::vector<unsigned> change_list =
-                _device.routing(gate.get_type(), device_qubits_idx, _orient);
-#ifdef DEBUG
-            std::vector<bool> checker(_topo2device.size(), false);
-#endif
-            for (unsigned i = 0; i < change_list.size();
-                 ++i) // i is the idx of device qubit
-            {
-                unsigned topo_qubit_id = change_list[i];
-                if (topo_qubit_id == UINT_MAX) {
-                    continue;
-                }
-#ifdef DEBUG
-                assert(checker[i] == false);
-                checker[i] = true;
-#endif
-                _topo2device[topo_qubit_id] = i;
-            }
-#ifdef DEBUG
-            for (unsigned i = 0; i < checker.size(); ++i) {
-                assert(checker[i]);
-            }
-            std::cout << "Gate: Q" << std::get<0>(gate.get_qubits()) << " Q"
-                      << std::get<1>(gate.get_qubits()) << "\n";
-            _device.print_device_state(std::cout);
-#endif
+            device::Operation op = _device.execute_single(
+                gate.get_type(), std::get<0>(device_qubits_idx));
+            return std::vector<device::Operation>(1, op);
         }
+        std::vector<device::Operation> op_list =
+            _device.routing(gate.get_type(), device_qubits_idx, _orient);
+        std::vector<unsigned> change_list = _device.mapping();
+#ifdef DEBUG
+        std::vector<bool> checker(_topo2device.size(), false);
+#endif
+        for (unsigned i = 0; i < change_list.size();
+             ++i) // i is the idx of device qubit
+        {
+            unsigned topo_qubit_id = change_list[i];
+            if (topo_qubit_id == UINT_MAX) {
+                continue;
+            }
+#ifdef DEBUG
+            assert(checker[i] == false);
+            checker[i] = true;
+#endif
+            _topo2device[topo_qubit_id] = i;
+        }
+#ifdef DEBUG
+        for (unsigned i = 0; i < checker.size(); ++i) {
+            assert(checker[i]);
+        }
+        std::cout << "Gate: Q" << std::get<0>(gate.get_qubits()) << " Q"
+                  << std::get<1>(gate.get_qubits()) << "\n";
+        _device.print_device_state(std::cout);
+#endif
+        return op_list;
     }
 
     bool is_executable(topo::Gate &gate) const {
@@ -263,7 +265,7 @@ class QFTScheduler {
         : _topo(topo), _cand(candidates) {}
     QFTScheduler(const QFTScheduler &other) = delete;
     QFTScheduler(QFTScheduler &&other)
-        : _topo(other._topo), _cand(other._cand) {}
+        : _topo(other._topo), _cand(other._cand), _ops(std::move(other._ops)) {}
 
     void assign_gates(QFTRouter &router, std::string &typ) {
         if (typ == "random") {
@@ -296,7 +298,9 @@ class QFTScheduler {
 #endif
             unsigned choose = rand() % wait_list.size();
             topo::Gate &gate = _topo.get_gate(wait_list[choose]);
-            router.assign_gate(gate);
+            std::vector<device::Operation> ops = router.assign_gate(gate);
+            _ops.insert(_ops.end(), ops.begin(),
+                        ops.end()); // append operations to the back
 #ifdef DEBUG
             std::cout << wait_list << " " << wait_list[choose] << "\n\n";
             count++;
@@ -322,7 +326,9 @@ class QFTScheduler {
                 gate_idx = wait_list[0];
             }
             topo::Gate &gate = _topo.get_gate(gate_idx);
-            router.assign_gate(gate);
+            std::vector<device::Operation> ops = router.assign_gate(gate);
+            _ops.insert(_ops.end(), ops.begin(),
+                        ops.end()); // append operations to the back
 #ifdef DEBUG
             count++;
 #endif
@@ -339,13 +345,15 @@ class QFTScheduler {
             bar.add();
         }
     }
-
+    
     void assign_gates_old(QFTRouter &router) {
         Tqdm bar(_topo.get_num_gates());
         for (unsigned i = 0; i < _topo.get_num_gates(); ++i) {
             bar.add();
             topo::Gate &gate = _topo.get_gate(i);
-            router.assign_gate(gate);
+            std::vector<device::Operation> ops = router.assign_gate(gate);
+            _ops.insert(_ops.end(), ops.begin(),
+                        ops.end()); // append operations to the back
             _topo.update_avail_gates(i);
         }
     }
@@ -375,7 +383,9 @@ class QFTScheduler {
                                      cost_list.begin()];
             }
             topo::Gate &gate = _topo.get_gate(gate_idx);
-            router.assign_gate(gate);
+            std::vector<device::Operation> ops = router.assign_gate(gate);
+            _ops.insert(_ops.end(), ops.begin(),
+                        ops.end()); // append operations to the back
 #ifdef DEBUG
             std::cout << "waitlist: " << wait_list << " " << gate_idx << "\n\n";
             count++;
@@ -387,9 +397,77 @@ class QFTScheduler {
 #endif
     }
 
+    void write_assembly(std::ostream &out) {
+        std::sort(_ops.begin(), _ops.end(), device::op_order);
+
+        for (unsigned i = 0; i < _ops.size(); ++i) {
+            device::Operation &op = _ops[i];
+            switch (op.get_operator()) {
+            case Operator::CX:
+                out << "CX ";
+                break;
+            case Operator::Swap:
+                out << "Swap ";
+                break;
+            case Operator::Single:
+                out << "Single ";
+                break;
+            default:
+                assert(false);
+            }
+            std::tuple<unsigned, unsigned> qubits = op.get_qubits();
+            out << "Q[" << std::get<0>(qubits) << "] Q[" << std::get<1>(qubits)
+                << "]; ";
+            out << "(" << op.get_op_time() << "," << op.get_cost() << ")\n";
+        }
+    }
+
+    void to_json(json &j) {
+        std::sort(_ops.begin(), _ops.end(), device::op_order);
+
+        json o;
+        for (unsigned i = 0; i < _ops.size(); ++i) {
+            device::Operation &op = _ops[i];
+            json buf = op;
+            o.push_back(buf);
+        }
+        j["Operations"] = o;
+    }
+
+    unsigned get_final_cost() {
+        std::sort(_ops.begin(), _ops.end(), device::op_order);
+
+        return _ops[_ops.size() - 1].get_cost();
+    }
+
+    unsigned get_total_time() {
+        std::sort(_ops.begin(), _ops.end(), device::op_order);
+
+        unsigned ret = 0;
+        for (unsigned i = 0; i < _ops.size(); ++i) {
+            std::tuple<unsigned, unsigned> dur = _ops[i].get_duration();
+            ret += std::get<1>(dur) - std::get<0>(dur);
+        }
+        return ret;
+    }
+
+    unsigned get_swap_num() {
+        std::sort(_ops.begin(), _ops.end(), device::op_order);
+        unsigned ret = 0;
+        for (unsigned i = 0; i < _ops.size(); ++i) {
+            if (_ops[i].get_operator() == Operator::Swap) {
+                ret += 1;
+            }
+        }
+        return ret;
+    }
+
+    std::vector<device::Operation> &get_operations() { return _ops; }
+
   private:
     topo::Topology &_topo;
     unsigned _cand;
+    std::vector<device::Operation> _ops;
 
     unsigned get_executable(QFTRouter &router, std::vector<unsigned> waitlist) {
         for (unsigned gate_idx : waitlist) {

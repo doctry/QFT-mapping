@@ -3,7 +3,7 @@
     "cycle": {
         "R": 2,
         "Swap": 3,
-        "Cx": 1
+        "CX": 1
     },
     "device": "/home/doctry/桌面/QFT-mapping/device/topo_1121.txt",
     "output": "/home/doctry/桌面/QFT-mapping/output/topo_1121.json"

@@ -153,16 +153,12 @@ class Device {
 
     unsigned get_num_qubits() const;
     unsigned get_apsp_cost(unsigned i, unsigned j) const;
+    std::vector<unsigned> mapping() const;
     Qubit &get_qubit(const unsigned i);
-    void execute_single(Operator op, unsigned q);
-    std::vector<unsigned>
+    Operation execute_single(Operator op, unsigned q);
+    std::vector<Operation>
     routing(Operator op, std::tuple<unsigned, unsigned> qs, bool orient);
 
-    void write_assembly(std::ostream &out);
-    void to_json(json &j);
-    unsigned get_final_cost();
-    unsigned get_total_time();
-    unsigned get_swap_num();
     void print_device_state(std::ostream &out);
     void place(std::vector<unsigned> &assign);
     std::vector<Operation> &get_operations();
@@ -181,13 +177,11 @@ class Device {
                                      device::Qubit &q1, device::Qubit &t0,
                                      device::Qubit &t1); // standalone
     void apply_gate(const Operation &op);
-    std::vector<unsigned> mapping() const;
 
     // data member
     std::vector<Qubit> _qubits;
     unsigned _SINGLE_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
     bool _apsp;
     std::vector<std::vector<unsigned>> _shortest_path;
-    std::vector<Operation> _ops;
 };
 } // namespace device

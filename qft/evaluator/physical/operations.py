@@ -5,7 +5,7 @@ class Operation:
     def __init__(
         self, operator: str, qubits: Tuple[int, int], duration: Tuple[int, int]
     ):
-        assert operator == "R" or operator == "Swap", operator
+        assert operator == "Single" or operator == "Swap" or operator == "CX", operator
         self.operator = operator
 
         assert qubits[0] > -1 and qubits[1] > -1

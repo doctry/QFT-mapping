@@ -46,7 +46,7 @@ class Checker:
         d_q0.topo, d_q1.topo = d_q1.topo, d_q0.topo
 
     def apply(self, op: Operation, gate: Gate) -> bool:
-        assert op.operator == "R" or op.operator == "Cx", op.operator
+        assert op.operator == "R" or op.operator == "CX", op.operator
         (d_q0_idx, d_q1_idx) = op.qubits
         d_q0 = self.device.qubits[d_q0_idx]
         d_q1 = self.device.qubits[d_q1_idx]
@@ -65,7 +65,7 @@ class Checker:
         for op in self.operations:
             if op.operator == "Swap":
                 self.apply_Swap(op)
-            elif op.operator == "R":
+            elif op.operator == "CX":
                 avail_gates = self.topo.avail_gates
                 pass_condition = False
                 for g in avail_gates:
