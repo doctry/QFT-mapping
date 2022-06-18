@@ -28,7 +28,6 @@ file (GLOB DUOSTRA_DEP
 add_executable(Duostra ${DUOSTRA_DEP})
 include_directories(include/)
 include_directories(externals/json/include/)
-include_directories(externals/json/include/nlohmann/)
 
 # pytorch
 find_package(Torch REQUIRED)
