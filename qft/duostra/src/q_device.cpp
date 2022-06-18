@@ -53,6 +53,12 @@ void device::to_json(json &j, const device::Operation &op) {
 device::Qubit::Qubit(const unsigned i)
     : _id(i), _topo_qubit(UINT_MAX), _occupied_until(0), _marked(false),
       _cost(0), _taken(false) {}
+
+device::Qubit::Qubit(const Qubit &other)
+    : _id(other._id), _adj_list(other._adj_list),
+      _topo_qubit(other._topo_qubit), _occupied_until(other._occupied_until),
+      _marked(other._marked), _cost(other._cost), _taken(other._taken) {}
+
 device::Qubit::Qubit(Qubit &&other)
     : _id(other._id), _adj_list(std::move(other._adj_list)),
       _topo_qubit(other._topo_qubit), _occupied_until(other._occupied_until),
@@ -118,7 +124,7 @@ bool device::op_order(const device::Operation &a, const device::Operation &b) {
 }
 
 device::Device::Device(std::fstream &file, unsigned u, unsigned s, unsigned cx)
-    : _SINGLE_CYCLE(u), _SWAP_CYCLE(s), _CX_CYCLE(cx), _apsp(false) {
+    : _SINGLE_CYCLE(u), _SWAP_CYCLE(s), _CX_CYCLE(cx) {
     unsigned num;
     file >> num;
 
@@ -141,7 +147,7 @@ device::Device::Device(std::fstream &file, unsigned u, unsigned s, unsigned cx)
 
 device::Device::Device(std::vector<std::vector<unsigned>> &adj_lists,
                        unsigned u, unsigned s, unsigned cx)
-    : _SINGLE_CYCLE(u), _SWAP_CYCLE(s), _CX_CYCLE(cx), _apsp(false) {
+    : _SINGLE_CYCLE(u), _SWAP_CYCLE(s), _CX_CYCLE(cx) {
     for (unsigned i = 0; i < adj_lists.size(); ++i) {
         std::vector<unsigned> &adj_list = adj_lists[i];
 
@@ -154,18 +160,17 @@ device::Device::Device(std::vector<std::vector<unsigned>> &adj_lists,
     }
 }
 
+device::Device::Device(const Device &other)
+    : _qubits(other._qubits), _SINGLE_CYCLE(other._SINGLE_CYCLE),
+      _SWAP_CYCLE(other._SWAP_CYCLE) {}
+
 device::Device::Device(Device &&other)
     : _qubits(std::move(other._qubits)), _SINGLE_CYCLE(other._SINGLE_CYCLE),
-      _SWAP_CYCLE(other._SWAP_CYCLE), _apsp(other._apsp),
-      _shortest_path(std::move(other._shortest_path)) {}
+      _SWAP_CYCLE(other._SWAP_CYCLE) {}
 
 unsigned device::Device::get_num_qubits() const { return _qubits.size(); }
 
-void device::Device::init_apsp() {
-    assert(_apsp == false);
-    _apsp = true;
-
-    // apsp
+std::vector<std::vector<unsigned>> device::Device::init_apsp() {
     std::cout << "calculating apsp..." << std::endl;
     torch::Tensor adj_mat =
         torch::zeros({int(_qubits.size()), int(_qubits.size())});
@@ -175,21 +180,18 @@ void device::Device::init_apsp() {
             adj_mat.index_put_({int(i), int(adj_list[j])}, 1);
         }
     }
-    ShortestPath shortest_path = apsp(adj_mat);
-    for(unsigned i = 0; i < _qubits.size(); ++i) {
+    ShortestPath shortest_path_torch = apsp(adj_mat);
+    std::vector<std::vector<unsigned>> shortest_path;
+    shortest_path.reserve(_qubits.size());
+    for (unsigned i = 0; i < _qubits.size(); ++i) {
         std::vector<unsigned> arr(_qubits.size(), 0);
         for (unsigned j = 0; j < _qubits.size(); ++j) {
-            arr[j] = unsigned(shortest_path.cost.index({int(i), int(j)}).item<int>());
+            arr[j] = unsigned(
+                shortest_path_torch.cost.index({int(i), int(j)}).item<int>());
         }
-        _shortest_path.push_back(std::move(arr));
+        shortest_path.push_back(std::move(arr));
     }
-}
-
-unsigned device::Device::get_apsp_cost(unsigned i, unsigned j) const {
-    if (_apsp) {
-        return _shortest_path[i][j] * _SWAP_CYCLE;
-    } else
-        return 0;
+    return shortest_path;
 }
 
 device::Qubit &device::Device::get_qubit(const unsigned i) {
@@ -206,21 +208,22 @@ void device::Device::reset() {
 
 device::Operation device::Device::execute_single(Operator oper, unsigned q) {
     assert(oper == Operator::Single);
-    Qubit& qubit = _qubits[q];
+    Qubit &qubit = _qubits[q];
     unsigned starttime = qubit.get_avail_time();
     unsigned endtime = starttime + _SINGLE_CYCLE;
     qubit.set_occupied_time(endtime);
     qubit.reset();
-    Operation op(oper, std::make_tuple(q, UINT_MAX), std::make_tuple(starttime, endtime));
+    Operation op(oper, std::make_tuple(q, UINT_MAX),
+                 std::make_tuple(starttime, endtime));
 #ifdef DEBUG
     std::cout << op << "\n";
 #endif
     return op;
 }
 
-std::vector<device::Operation> device::Device::routing(Operator op,
-                                              std::tuple<unsigned, unsigned> qs,
-                                              bool orient) {
+std::vector<device::Operation>
+device::Device::routing(Operator op, std::tuple<unsigned, unsigned> qs,
+                        bool orient) {
     assert(op == Operator::CX || op == Operator::Single);
     unsigned q0_idx = std::get<0>(qs); // source 0
     unsigned q1_idx = std::get<1>(qs); // source 1
@@ -406,7 +409,7 @@ std::vector<unsigned> device::Device::mapping() const {
     std::vector<unsigned> ret;
     ret.reserve(_qubits.size());
 
-    for (const device::Qubit& qubit : _qubits) {
+    for (const device::Qubit &qubit : _qubits) {
         ret.push_back(qubit.get_topo_qubit());
     }
     return ret;

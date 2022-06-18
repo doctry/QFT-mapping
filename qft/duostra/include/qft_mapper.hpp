@@ -128,7 +128,7 @@ class QFTPlacer {
 class QFTRouter {
   public:
     QFTRouter(device::Device &device, std::string &typ, std::string &cost)
-        : _device(device) {
+        : _device(device), _apsp(false) {
         if (typ == "naive") {
             _orient = false;
         } else if (typ == "orientation") {
@@ -140,7 +140,8 @@ class QFTRouter {
 
         if (cost == "end") {
             _greedy_type = true;
-            _device.init_apsp();
+            _shortest_path = _device.init_apsp();
+            _apsp = true;
         } else if (cost == "start") {
             _greedy_type = false;
         } else {
@@ -156,7 +157,8 @@ class QFTRouter {
     QFTRouter(const QFTRouter &other) = delete;
     QFTRouter(QFTRouter &&other)
         : _greedy_type(other._greedy_type), _orient(other._orient),
-          _device(other._device), _topo2device(std::move(other._topo2device)) {}
+          _device(other._device), _topo2device(std::move(other._topo2device)),
+          _apsp(other._apsp), _shortest_path(std::move(other._shortest_path)) {}
 
     unsigned get_gate_cost(topo::Gate &gate) const {
         std::tuple<unsigned, unsigned> device_qubits_idx =
@@ -172,10 +174,12 @@ class QFTRouter {
         unsigned q1_id = std::get<1>(device_qubits_idx);
         device::Qubit &q0 = _device.get_qubit(q0_id);
         device::Qubit &q1 = _device.get_qubit(q1_id);
-        unsigned apsp_cost = _device.get_apsp_cost(q0_id, q1_id);
-        assert(apsp_cost == _device.get_apsp_cost(q1_id, q0_id));
-        return std::max(q0.get_avail_time(), q1.get_avail_time()) +
-               _greedy_type * apsp_cost;
+        unsigned apsp_cost = 0;
+        if (_apsp) {
+            apsp_cost = _shortest_path[q0_id][q1_id];
+            assert(apsp_cost == _shortest_path[q1_id][q0_id]);
+        }
+        return std::max(q0.get_avail_time(), q1.get_avail_time()) + apsp_cost;
     }
 
     std::vector<device::Operation> assign_gate(topo::Gate &gate) {
@@ -257,6 +261,8 @@ class QFTRouter {
     bool _orient;
     device::Device &_device;
     std::vector<unsigned> _topo2device;
+    bool _apsp;
+    std::vector<std::vector<unsigned>> _shortest_path;
 };
 
 class QFTScheduler {
@@ -345,7 +351,7 @@ class QFTScheduler {
             bar.add();
         }
     }
-    
+
     void assign_gates_old(QFTRouter &router) {
         Tqdm bar(_topo.get_num_gates());
         for (unsigned i = 0; i < _topo.get_num_gates(); ++i) {

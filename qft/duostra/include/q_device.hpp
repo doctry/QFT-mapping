@@ -102,7 +102,7 @@ class Qubit {
   public:
     friend std::ostream &operator<<(std::ostream &os, const device::Qubit &q);
     Qubit(const unsigned i);
-    Qubit(const Qubit &other) = delete;
+    Qubit(const Qubit &other);
     Qubit(Qubit &&other);
 
     unsigned get_id() const;
@@ -148,11 +148,10 @@ class Device {
     Device(std::fstream &file, unsigned r, unsigned s, unsigned cx);
     Device(std::vector<std::vector<unsigned>> &, unsigned r, unsigned s,
            unsigned cx);
-    Device(const Qubit &other) = delete;
+    Device(const Device &other);
     Device(Device &&other);
 
     unsigned get_num_qubits() const;
-    unsigned get_apsp_cost(unsigned i, unsigned j) const;
     std::vector<unsigned> mapping() const;
     Qubit &get_qubit(const unsigned i);
     Operation execute_single(Operator op, unsigned q);
@@ -162,7 +161,7 @@ class Device {
     void print_device_state(std::ostream &out);
     void place(std::vector<unsigned> &assign);
     std::vector<Operation> &get_operations();
-    void init_apsp();
+    std::vector<std::vector<unsigned>> init_apsp();
     void reset();
 
   private:
@@ -181,7 +180,5 @@ class Device {
     // data member
     std::vector<Qubit> _qubits;
     unsigned _SINGLE_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
-    bool _apsp;
-    std::vector<std::vector<unsigned>> _shortest_path;
 };
 } // namespace device
