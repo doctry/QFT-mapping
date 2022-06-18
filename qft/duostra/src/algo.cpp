@@ -1,10 +1,10 @@
 #include "algo.hpp"
+#include "limits.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <tuple>
 #include <vector>
-#include "limits.h"
 using namespace std;
 
 bool topo::Gate::is_avail() {
@@ -60,7 +60,7 @@ void topo::AlgoTopology::parse(fstream &qasmFile) {
     vector<pair<unsigned, unsigned>> lastCnotWith;
     pair<unsigned, unsigned> init(-1, 0);
     for (size_t i = 0; i < _num; i++) {
-        _lastGate.push_back(-1);
+        _last_gate.push_back(-1);
         lastCnotWith.push_back(init);
     }
     unsigned gateId = 0;
@@ -70,39 +70,38 @@ void topo::AlgoTopology::parse(fstream &qasmFile) {
         string type = str.substr(0, str.find(" "));
         type = str.substr(0, str.find("("));
         string isCX = type.substr(0, 2);
-        
+
         // cout << type<<endl;
-        
+
         if (isCX != "cx") {
-            if (find(begin(singleList), end(singleList), type) != end(singleList)){
+            if (find(begin(singleList), end(singleList), type) !=
+                end(singleList)) {
                 qasmFile >> str;
                 string singleQubitId = str.substr(2, str.size() - 4);
-                
+
                 unsigned q = stoul(singleQubitId);
 
                 tuple<unsigned, unsigned> temp(q, UINT_MAX);
                 topo::Gate tempGate(gateId, Operator::Single, temp);
-                tempGate.set_prev(_lastGate[q], _lastGate[q]);
+                tempGate.set_prev(_last_gate[q], _last_gate[q]);
 
-                if (_lastGate[q] != unsigned(-1))
-                    _gates[_lastGate[q]].add_next(gateId);
+                if (_last_gate[q] != (unsigned)-1)
+                    _gates[_last_gate[q]].add_next(gateId);
 
                 // update Id
-                _lastGate[q] = gateId;
+                _last_gate[q] = gateId;
                 _gates.push_back(move(tempGate));
                 gateId++;
-            }
-            else{
-                if (type != "creg" && type != "qreg"){
-                    cerr << "Unseen Gate "<<type<<endl; 
+            } else {
+                if (type != "creg" && type != "qreg") {
+                    cerr << "Unseen Gate " << type << endl;
                     assert(true);
-                    exit(0); 
-                }
-                else qasmFile >> str;
+                    exit(0);
+                } else
+                    qasmFile >> str;
             }
             // qasmFile >> str;
-        }
-        else {
+        } else {
             qasmFile >> str;
             // cout << str << endl;
             string delimiter = ",";
@@ -114,35 +113,37 @@ void topo::AlgoTopology::parse(fstream &qasmFile) {
             qubitId = token.substr(2, token.size() - 3);
             unsigned q2 = stoul(qubitId);
 
-            // if (lastCnotWith[q1].first == q2 && lastCnotWith[q2].first == q1) {
-                // Assert when Three Consecutive CNOTs
-                // assert(lastCnotWith[q1].second < 2 &&
-                //        lastCnotWith[q2].second < 2);
+            // if (lastCnotWith[q1].first == q2 && lastCnotWith[q2].first == q1)
+            // { Assert when Three Consecutive CNOTs
+            // assert(lastCnotWith[q1].second < 2 &&
+            //        lastCnotWith[q2].second < 2);
 
-                // lastCnotWith[q1].second++;
-                // lastCnotWith[q2].second++;
+            // lastCnotWith[q1].second++;
+            // lastCnotWith[q2].second++;
             // } else {
-                // lastCnotWith[q1].first = q2;
-                // lastCnotWith[q2].first = q1;
-                // lastCnotWith[q1].second = 1;
-                // lastCnotWith[q2].second = 1;
+            // lastCnotWith[q1].first = q2;
+            // lastCnotWith[q2].first = q1;
+            // lastCnotWith[q1].second = 1;
+            // lastCnotWith[q2].second = 1;
 
-                tuple<unsigned, unsigned> temp(q1, q2);
-                topo::Gate tempGate(gateId, Operator::CX, temp);
-                tempGate.set_prev(_lastGate[q1], _lastGate[q2]);
+            tuple<unsigned, unsigned> temp(q1, q2);
+            topo::Gate tempGate(gateId, Operator::CX, temp);
+            tempGate.set_prev(_last_gate[q1], _last_gate[q2]);
 
-                if (_lastGate[q1] != unsigned(-1))
-                    _gates[_lastGate[q1]].add_next(gateId);
-                if (_lastGate[q1] != _lastGate[q2]) {
-                    if (_lastGate[q2] != unsigned(-1))
-                        _gates[_lastGate[q2]].add_next(gateId);
-                }
+            if (_last_gate[q1] != (unsigned)-1) {
+                _gates[_last_gate[q1]].add_next(gateId);
+            }
 
-                // update Id
-                _lastGate[q1] = gateId;
-                _lastGate[q2] = gateId;
-                _gates.push_back(move(tempGate));
-                gateId++;
+            if (_last_gate[q1] != _last_gate[q2] &&
+                _last_gate[q2] != (unsigned)-1) {
+                _gates[_last_gate[q2]].add_next(gateId);
+            }
+
+            // update Id
+            _last_gate[q1] = gateId;
+            _last_gate[q2] = gateId;
+            _gates.push_back(move(tempGate));
+            gateId++;
             // }
         }
     }

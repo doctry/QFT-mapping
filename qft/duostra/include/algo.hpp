@@ -34,6 +34,6 @@ class AlgoTopology : public Topology {
     unsigned _num;
     std::vector<Gate> _gates;
     std::vector<unsigned> _avail_gates;
-    std::vector<unsigned> _lastGate;
+    std::vector<unsigned> _last_gate;
 };
 }; // namespace topo
