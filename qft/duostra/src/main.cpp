@@ -22,8 +22,7 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<topo::Topology> topo;
     if (conf["algo"].type() == json::value_t::number_unsigned) {
         unsigned num_qubit = conf["algo"].get<unsigned>();
-        topo =
-            std::unique_ptr<topo::Topology>(new topo::QFTTopology(num_qubit));
+        topo = std::make_unique<topo::QFTTopology>(num_qubit);
     } else {
         std::fstream algo_file;
         std::cout << conf["algo"] << std::endl;
@@ -32,8 +31,7 @@ int main(int argc, char *argv[]) {
             std::cerr << "There is no file" << conf["algo"] << std::endl;
             return 1;
         }
-        topo =
-            std::unique_ptr<topo::Topology>(new topo::AlgoTopology(algo_file));
+        topo = std::make_unique<topo::AlgoTopology>(algo_file);
     }
 
     // create device

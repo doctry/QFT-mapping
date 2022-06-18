@@ -24,17 +24,20 @@ class Gate {
     void set_prev(unsigned a, unsigned b) {
         std::pair<unsigned, bool> first(a, false);
         std::pair<unsigned, bool> second(b, false);
-        if (a != unsigned(-1))
+
+        if (a != (unsigned)-1) {
             _prevs.push_back(first);
-        if (a != b) {
-            if (b != unsigned(-1))
-                _prevs.push_back(second);
+        }
+
+        if (a != b && b != (unsigned)-1) {
+            _prevs.push_back(second);
         }
     }
 
     void add_next(unsigned n) {
-        if (n != unsigned(-1))
+        if (n != (unsigned)-1) {
             _nexts.push_back(n);
+        }
     }
     void finished(unsigned);
     bool is_avail();

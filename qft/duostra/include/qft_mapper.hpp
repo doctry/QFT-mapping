@@ -288,9 +288,9 @@ class QFTScheduler {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
-        Tqdm bar(_topo.get_num_gates());
-        while (!_topo.get_avail_gates().empty()) {
-            bar.add();
+
+        for (Tqdm bar{_topo.get_num_gates()}; !_topo.get_avail_gates().empty();
+             bar.add()) {
             auto &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
 #ifndef DEBUG
@@ -316,9 +316,9 @@ class QFTScheduler {
 #ifdef DEBUG
         unsigned count = 0;
 #endif
-        Tqdm bar(_topo.get_num_gates());
-        while (!_topo.get_avail_gates().empty()) {
-            bar.add();
+
+        for (Tqdm bar{_topo.get_num_gates()}; !_topo.get_avail_gates().empty();
+             bar.add()) {
             auto &wait_list = _topo.get_avail_gates();
             assert(wait_list.size() > 0);
             unsigned gate_idx = get_executable(router, wait_list);
@@ -340,14 +340,13 @@ class QFTScheduler {
     }
 
     void assign_gates_dp(QFTRouter &router) {
-        Tqdm bar{_topo.get_num_gates()};
-        while (!_topo.get_avail_gates().empty()) {
-            bar.add();
+        for (Tqdm bar{_topo.get_num_gates()}; !_topo.get_avail_gates().empty();
+             bar.add()) {
         }
     }
-    
+
     void assign_gates_old(QFTRouter &router) {
-        Tqdm bar(_topo.get_num_gates());
+        Tqdm bar{_topo.get_num_gates()};
         for (unsigned i = 0; i < _topo.get_num_gates(); ++i) {
             bar.add();
             topo::Gate &gate = _topo.get_gate(i);
@@ -364,9 +363,8 @@ class QFTScheduler {
 #endif
         auto topo_wrap = TopologyWrapperWithCandidate(_topo, candidates);
 
-        Tqdm bar(_topo.get_num_gates());
-        while (!topo_wrap.get_avail_gates().empty()) {
-            bar.add();
+        for (Tqdm bar{_topo.get_num_gates()};
+             !topo_wrap.get_avail_gates().empty(); bar.add()) {
             auto wait_list = topo_wrap.get_avail_gates();
             assert(wait_list.size() > 0);
 
