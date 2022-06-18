@@ -31,7 +31,7 @@ class TopologyWrapperWithCandidate {
     }
 
   private:
-    topo::Topology& topo_;
+    topo::Topology &topo_;
     unsigned candidate_;
 };
 
@@ -268,6 +268,8 @@ class QFTScheduler {
     void assign_gates(QFTRouter &router, std::string &typ) {
         if (typ == "random") {
             return assign_gates_random(router);
+        } else if (typ == "dp") {
+            return assign_gates_dp(router);
         } else if (typ == "static") {
             return assign_gates_static(router);
         } else if (typ == "greedy") {
@@ -331,6 +333,12 @@ class QFTScheduler {
 #endif
     }
 
+    void assign_gates_dp(QFTRouter &router) {
+        Tqdm bar{_topo.get_num_gates()};
+        while (!_topo.get_avail_gates().empty()) {
+            bar.add();
+        }
+    }
     void assign_gates_old(QFTRouter &router) {
         Tqdm bar(_topo.get_num_gates());
         for (unsigned i = 0; i < _topo.get_num_gates(); ++i) {

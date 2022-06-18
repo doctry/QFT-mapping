@@ -236,14 +236,14 @@ class tqdm {
 
 class Tqdm {
   public:
-    Tqdm(int total) : counter_(0), total_(total), tqdm_(tqdm()) {}
+    Tqdm(long total) : counter_(0), total_(total), tqdm_(tqdm()) {}
     ~Tqdm() { tqdm_.finish(); }
 
     void add() { tqdm_.progress(counter_++, total_); }
 
   private:
-    int counter_;
-    int total_;
+    long counter_;
+    long total_;
     tqdm tqdm_;
 };
 #endif
