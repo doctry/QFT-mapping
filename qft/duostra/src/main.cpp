@@ -7,6 +7,15 @@
 #include "util.hpp"
 #include <iostream>
 
+template <class T> T get_wrapper(json &j, const char* key) {
+    if (!j.contains(key)) {
+        std::cerr << "Necessary key \"" << key << "\" does not exist."
+                  << std::endl;
+        abort();
+    }
+    return j[key].get<T>();
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         std::cerr << "Usage: ./qft_mapping <config.json>";
@@ -20,15 +29,20 @@ int main(int argc, char *argv[]) {
     // create topology
     std::cout << "creating topology..." << std::endl;
     std::unique_ptr<topo::Topology> topo;
-    if (conf["algo"].type() == json::value_t::number_unsigned) {
-        unsigned num_qubit = conf["algo"].get<unsigned>();
+    if (conf["algo"].type() == json::value_t::null) {
+        std::cerr << "Necessary key \"algo\" does not exist." << std::endl;
+        abort();
+    }
+    else if (conf["algo"].type() == json::value_t::number_unsigned) {
+        unsigned num_qubit = get_wrapper<unsigned>(conf, "algo");
         topo = std::make_unique<topo::QFTTopology>(num_qubit);
     } else {
         std::fstream algo_file;
-        std::cout << conf["algo"] << std::endl;
-        algo_file.open(conf["algo"], std::fstream::in);
+        std::string algo_filename = get_wrapper<std::string>(conf, "algo");
+        std::cout << algo_filename << std::endl;
+        algo_file.open(algo_filename, std::fstream::in);
         if (!algo_file.is_open()) {
-            std::cerr << "There is no file" << conf["algo"] << std::endl;
+            std::cerr << "There is no file" << algo_filename << std::endl;
             return 1;
         }
         topo = std::make_unique<topo::AlgoTopology>(algo_file);
@@ -36,14 +50,15 @@ int main(int argc, char *argv[]) {
 
     // create device
     std::cout << "creating device..." << std::endl;
-    json cycle_conf = conf["cycle"].get<json>();
-    unsigned SINGLE_CYCLE = cycle_conf["SINGLE_CYCLE"].get<unsigned>();
-    unsigned SWAP_CYCLE = cycle_conf["SWAP_CYCLE"].get<unsigned>();
-    unsigned CX_CYCLE = cycle_conf["CX_CYCLE"].get<unsigned>();
+    json cycle_conf = get_wrapper<json>(conf, "cycle");
+    unsigned SINGLE_CYCLE = get_wrapper<unsigned>(cycle_conf, "SINGLE_CYCLE");
+    unsigned SWAP_CYCLE = get_wrapper<unsigned>(cycle_conf, "SWAP_CYCLE");
+    unsigned CX_CYCLE = get_wrapper<unsigned>(cycle_conf, "CX_CYCLE");
     std::fstream device_file;
-    device_file.open(conf["device"], std::fstream::in);
+    std::string device_filename = get_wrapper<std::string>(conf, "device");
+    device_file.open(device_filename, std::fstream::in);
     if (!device_file.is_open()) {
-        std::cerr << "There is no file" << conf["device"] << std::endl;
+        std::cerr << "There is no file" << device_filename << std::endl;
         return 1;
     }
     device::Device device(device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE);
@@ -55,30 +70,30 @@ int main(int argc, char *argv[]) {
     }
 
     // create mapper
-    json conf_mapper = conf["mapper"].get<json>();
+    json conf_mapper = get_wrapper<json>(conf, "mapper");
 
     // place
     std::cout << "creating placer..." << std::endl;
     QFTPlacer placer;
-    std::string placer_typ = conf_mapper["placer"].get<std::string>();
+    std::string placer_typ = get_wrapper<std::string>(conf_mapper, "placer");
     std::vector<unsigned> assign = placer.place(device, placer_typ);
     device.place(assign);
 
     // scheduler
-    int candidates_conf = conf_mapper["greedy_candidates"];
+    int candidates_conf = get_wrapper<int>(conf_mapper, "greedy_candidates");
     unsigned candidates = UINT_MAX;
     if (candidates_conf > 0) {
         candidates = unsigned(candidates_conf);
     }
     std::cout << "creating scheduler..." << std::endl;
     QFTScheduler scheduler(*topo, candidates);
-    std::string scheduler_typ = conf_mapper["scheduler"].get<std::string>();
+    std::string scheduler_typ = get_wrapper<std::string>(conf_mapper, "scheduler");
 
     // router
     std::cout << "creating router..." << std::endl;
-    std::string router_typ = conf_mapper["router"].get<std::string>();
+    std::string router_typ = get_wrapper<std::string>(conf_mapper, "router");
     std::string cost = (scheduler_typ == "greedy")
-                           ? conf_mapper["cost"].get<std::string>()
+                           ? get_wrapper<std::string>(conf_mapper, "cost")
                            : "start";
     QFTRouter router(device, router_typ, cost);
 
@@ -87,11 +102,12 @@ int main(int argc, char *argv[]) {
     scheduler.assign_gates(router, scheduler_typ);
 
     // dump
-    bool dump = conf["dump"].get<bool>();
+    bool dump = get_wrapper<bool>(conf, "dump");
     if (dump) {
         std::cout << "dumping..." << std::endl;
         std::fstream out_file;
-        out_file.open(conf["output"], std::fstream::out);
+        out_file.open(get_wrapper<std::string>(conf, "output"),
+                      std::fstream::out);
         // out_file << assign << "\n";
         // device.write_assembly(out_file);
         json jj;
@@ -102,7 +118,7 @@ int main(int argc, char *argv[]) {
         // out_file << "final_cost: " << device.get_final_cost() << "\n";
     }
 
-    if (conf["stdio"].get<bool>()) {
+    if (get_wrapper<bool>(conf, "stdio")) {
         scheduler.write_assembly(std::cout);
     }
     std::cout << "final cost: " << scheduler.get_final_cost() << "\n";
