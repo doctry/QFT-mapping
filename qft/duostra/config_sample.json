@@ -1,14 +1,22 @@
 {
   "algo": 1121,
-  "cycle": { "SINGLE_CYCLE": 1, "SWAP_CYCLE": 6, "CX_CYCLE": 2 },
-  "device": "/home/rentruewang/github/qft/device/topo_1121.txt",
-  "output": "/home/rentruewang/github/qft/output/topo_1121.json",
+  "cycle": {
+      "SINGLE_CYCLE": 0,
+      "SWAP_CYCLE": 3,
+      "CX_CYCLE": 2
+  },
+  "device": "/home/QFT-mapping/device/topo_1121.txt",
+  "output": "/home/QFT-mapping/output/topo_1121.json",
   "mapper": {
-    "placer": "dfs",
-    "scheduler": "static",
-    "router": "orientation",
-    "cost": "end",
-    "greedy_candidates": 1
+      "placer": "dfs",
+      "scheduler": "greedy",
+      "router": "orientation",
+      "cost": "end",
+      "greedy_conf": {
+          "candidates": -1,
+          "apsp_coef": 1,
+          "min_max": "max"
+      }
   },
   "stdio": false,
   "dump": false

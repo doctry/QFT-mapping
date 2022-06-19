@@ -1,20 +1,10 @@
 #include "algo.hpp"
-#include "nlohmann/json.hpp"
 #include "q_device.hpp"
 #include "qft_mapper.hpp"
 #include "qft_topo.hpp"
 #include "topo.hpp"
 #include "util.hpp"
 #include <iostream>
-
-template <class T> T json_get(json &j, const char *key) {
-    if (!j.contains(key)) {
-        std::cerr << "Necessary key \"" << key << "\" does not exist."
-                  << std::endl;
-        abort();
-    }
-    return j[key].get<T>();
-}
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -79,13 +69,9 @@ int main(int argc, char *argv[]) {
     device.place(assign);
 
     // scheduler
-    int candidates_conf = json_get<int>(conf_mapper, "greedy_candidates");
-    unsigned candidates = UINT_MAX;
-    if (candidates_conf > 0) {
-        candidates = unsigned(candidates_conf);
-    }
+    json greedy_conf = json_get<json>(conf_mapper, "greedy_conf");
     std::cout << "creating scheduler..." << std::endl;
-    QFTScheduler scheduler(*topo, candidates);
+    QFTScheduler scheduler(*topo, greedy_conf);
     std::string scheduler_typ =
         json_get<std::string>(conf_mapper, "scheduler");
 
