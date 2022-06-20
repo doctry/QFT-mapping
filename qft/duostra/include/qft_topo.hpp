@@ -1,16 +1,16 @@
 #pragma once
 
-#include "topo.hpp"
-#include "util.hpp"
-#include <algorithm>
 #include <assert.h>
 #include <limits.h>
+#include <algorithm>
 #include <tuple>
 #include <vector>
+#include "topo.hpp"
+#include "util.hpp"
 
 namespace topo {
 class QFTTopology : public Topology {
-  public:
+   public:
     QFTTopology(unsigned num) : _num_qubits(num) {
         assert(num > 0);
 
@@ -31,31 +31,23 @@ class QFTTopology : public Topology {
         }
         _avail_gates.push_back(0);
     }
-    QFTTopology(const QFTTopology &other) = delete;
-    QFTTopology(QFTTopology &&other)
+    QFTTopology(const QFTTopology& other) = delete;
+    QFTTopology(QFTTopology&& other)
         : _gates(std::move(other._gates)), _avail_gates(other._avail_gates) {}
     ~QFTTopology() {}
 
     unsigned get_num_qubits() const override { return _num_qubits; }
     unsigned get_num_gates() const override { return _gates.size(); }
-    const Gate &get_gate(unsigned i) const { return _gates[i]; }
-    Gate &get_gate(unsigned i) override { return _gates[i]; }
-    const std::vector<unsigned> &get_avail_gates() const override {
+    const Gate& get_gate(unsigned i) const { return _gates[i]; }
+    Gate& get_gate(unsigned i) override { return _gates[i]; }
+    const std::vector<unsigned>& get_avail_gates() const override {
         return _avail_gates;
-    }
-    std::vector<unsigned> get_avail_gates(unsigned candidates) const {
-        if (_avail_gates.size() < candidates) {
-            return _avail_gates;
-        } else {
-            auto begin = _avail_gates.begin();
-            return std::vector<unsigned>(begin, begin + candidates);
-        }
     }
 
     void update_avail_gates(unsigned executed) override {
         assert(std::find(_avail_gates.begin(), _avail_gates.end(), executed) !=
                _avail_gates.end());
-        Gate &g_exec = _gates[executed];
+        Gate& g_exec = _gates[executed];
         _avail_gates.erase(
             std::remove(_avail_gates.begin(), _avail_gates.end(), executed),
             _avail_gates.end());
@@ -65,7 +57,7 @@ class QFTTopology : public Topology {
 
         for (unsigned i = 0; i < nexts.size(); ++i) {
             unsigned n = nexts[i];
-            Gate &gate = _gates[n];
+            Gate& gate = _gates[n];
             gate.finished(executed);
             if (_gates[n].is_avail()) {
                 _avail_gates.push_back(n);
@@ -77,10 +69,10 @@ class QFTTopology : public Topology {
 #ifdef DEBUG
         std::vector<unsigned> prevs;
         for (unsigned i = 0; i < _gates.size(); ++i) {
-            const Gate &gate = _gates[i];
-            const std::vector<std::pair<unsigned, bool>> &g_prevs =
+            const Gate& gate = _gates[i];
+            const std::vector<std::pair<unsigned, bool>>& g_prevs =
                 gate.get_prevs();
-            const std::vector<unsigned> &nexts = gate.get_nexts();
+            const std::vector<unsigned>& nexts = gate.get_nexts();
             std::vector<unsigned> prev;
             for (unsigned j = 0; j < g_prevs.size(); ++j) {
                 prev.push_back(g_prevs[j].first);
@@ -91,9 +83,9 @@ class QFTTopology : public Topology {
 #endif
     }
 
-  private:
+   private:
     unsigned _num_qubits;
     std::vector<Gate> _gates;
     std::vector<unsigned> _avail_gates;
 };
-}; // namespace topo
+};  // namespace topo
