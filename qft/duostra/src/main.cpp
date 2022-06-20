@@ -71,9 +71,9 @@ int main(int argc, char *argv[]) {
     // scheduler
     json greedy_conf = json_get<json>(conf_mapper, "greedy_conf");
     std::cout << "creating scheduler..." << std::endl;
-    QFTScheduler scheduler(*topo, greedy_conf);
     std::string scheduler_typ =
         json_get<std::string>(conf_mapper, "scheduler");
+    std::unique_ptr<QFTScheduler> scheduler = get_scheduler(scheduler_typ, *topo, greedy_conf);
 
     // router
     std::cout << "creating router..." << std::endl;
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
     // routing
     std::cout << "routing..." << std::endl;
-    scheduler.assign_gates(router, scheduler_typ);
+    scheduler->assign_gates(router);
 
     // dump
     bool dump = json_get<bool>(conf, "dump");
@@ -98,16 +98,18 @@ int main(int argc, char *argv[]) {
         // device.write_assembly(out_file);
         json jj;
         jj["initial"] = assign;
-        scheduler.to_json(jj);
-        jj["final_cost"] = scheduler.get_final_cost();
+        scheduler->to_json(jj);
+        jj["final_cost"] = scheduler->get_final_cost();
         out_file << jj;
         // out_file << "final_cost: " << device.get_final_cost() << "\n";
     }
 
     if (json_get<bool>(conf, "stdio")) {
-        scheduler.write_assembly(std::cout);
+        scheduler->write_assembly(std::cout);
     }
-    std::cout << "final cost: " << scheduler.get_final_cost() << "\n";
-    std::cout << "total time: " << scheduler.get_total_time() << "\n";
+    
+    std::cout << "final cost:  " << scheduler->get_final_cost() << "\n";
+    std::cout << "total time:  " << scheduler->get_total_time() << "\n";
+    std::cout << "total swaps: " << scheduler->get_swap_num() << "\n";
     return 0;
 }

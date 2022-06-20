@@ -278,159 +278,12 @@ class QFTRouter {
 
 class QFTScheduler {
    public:
-    class SchedulerConf {
-       public:
-        SchedulerConf() : candidates(UINT_MAX), apsp_coef(1), min_max(true) {}
-        unsigned candidates, apsp_coef;
-        bool min_max;
-    };
-    QFTScheduler(topo::Topology& topo, json& conf) : _topo(topo) {
-        int candidates = json_get<int>(conf, "candidates");
-        if (candidates > 0) {
-            _conf.candidates = candidates;
-        }
-        _conf.apsp_coef = json_get<unsigned>(conf, "apsp_coef");
-        std::string min_max = json_get<std::string>(conf, "min_max");
-        if (min_max == "min") {
-            _conf.min_max = false;
-        } else if (min_max == "max") {
-            _conf.min_max = true;
-        } else {
-            std::cerr << "\"min_max\" can only be \"min\" or \"max\"." << std::endl;
-            abort();
-        }
-    }
+    QFTScheduler(topo::Topology& topo) : _topo(topo) {}
     QFTScheduler(const QFTScheduler& other) = delete;
-    QFTScheduler(QFTScheduler&& other)
-        : _topo(other._topo), _conf(other._conf), _ops(std::move(other._ops)) {}
+    QFTScheduler(QFTScheduler&& other) = delete;
+    virtual ~QFTScheduler() {}
 
-    void assign_gates(QFTRouter& router, std::string& typ) {
-        if (typ == "random") {
-            return assign_gates_random(router);
-        } else if (typ == "dp") {
-            return assign_gates_dp(router);
-        } else if (typ == "static") {
-            return assign_gates_static(router);
-        } else if (typ == "greedy") {
-            return assign_gates_greedy(router);
-        } else if (typ == "old") {
-            return assign_gates_old(router);
-        } else {
-            std::cerr << typ << " is not a scheduler type" << std::endl;
-            abort();
-        }
-    }
-
-    void assign_gates_random(QFTRouter& router) {
-#ifdef DEBUG
-        unsigned count = 0;
-#endif
-
-        for (Tqdm bar{_topo.get_num_gates()}; !_topo.get_avail_gates().empty();
-             bar.add()) {
-            auto& wait_list = _topo.get_avail_gates();
-            assert(wait_list.size() > 0);
-#ifndef DEBUG
-            srand(std::chrono::system_clock::now().time_since_epoch().count());
-#endif
-            unsigned choose = rand() % wait_list.size();
-            topo::Gate& gate = _topo.get_gate(wait_list[choose]);
-            std::vector<device::Operation> ops = router.assign_gate(gate);
-            _ops.insert(_ops.end(), ops.begin(),
-                        ops.end());  // append operations to the back
-#ifdef DEBUG
-            std::cout << wait_list << " " << wait_list[choose] << "\n\n";
-            count++;
-#endif
-            _topo.update_avail_gates(wait_list[choose]);
-        }
-#ifdef DEBUG
-        assert(count == _topo.get_num_gates());
-#endif
-    }
-
-    void assign_gates_static(QFTRouter& router) {
-#ifdef DEBUG
-        unsigned count = 0;
-#endif
-
-        for (Tqdm bar{_topo.get_num_gates()}; !_topo.get_avail_gates().empty();
-             bar.add()) {
-            auto& wait_list = _topo.get_avail_gates();
-            assert(wait_list.size() > 0);
-            unsigned gate_idx = get_executable(router, wait_list);
-            if (gate_idx == UINT_MAX) {
-                gate_idx = wait_list[0];
-            }
-            topo::Gate& gate = _topo.get_gate(gate_idx);
-            std::vector<device::Operation> ops = router.assign_gate(gate);
-            _ops.insert(_ops.end(), ops.begin(),
-                        ops.end());  // append operations to the back
-#ifdef DEBUG
-            count++;
-#endif
-            _topo.update_avail_gates(gate_idx);
-        }
-#ifdef DEBUG
-        assert(count == _topo.get_num_gates());
-#endif
-    }
-
-    void assign_gates_dp(QFTRouter& router) {
-        for (Tqdm bar{_topo.get_num_gates()}; !_topo.get_avail_gates().empty();
-             bar.add()) {
-        }
-    }
-
-    void assign_gates_old(QFTRouter& router) {
-        Tqdm bar{_topo.get_num_gates()};
-        for (unsigned i = 0; i < _topo.get_num_gates(); ++i) {
-            bar.add();
-            topo::Gate& gate = _topo.get_gate(i);
-            std::vector<device::Operation> ops = router.assign_gate(gate);
-            _ops.insert(_ops.end(), ops.begin(),
-                        ops.end());  // append operations to the back
-            _topo.update_avail_gates(i);
-        }
-    }
-
-    void assign_gates_greedy(QFTRouter& router) {
-#ifdef DEBUG
-        unsigned count = 0;
-#endif
-        auto topo_wrap = TopologyWrapperWithCandidate(_topo, _conf.candidates);
-
-        for (Tqdm bar{_topo.get_num_gates()};
-             !topo_wrap.get_avail_gates().empty(); bar.add()) {
-            auto wait_list = topo_wrap.get_avail_gates();
-            assert(wait_list.size() > 0);
-
-            unsigned gate_idx = get_executable(router, wait_list);
-            if (gate_idx == UINT_MAX) {
-                std::vector<unsigned> cost_list(wait_list.size(), 0);
-                for (unsigned i = 0; i < wait_list.size(); ++i) {
-                    topo::Gate& gate = _topo.get_gate(wait_list[i]);
-                    unsigned cost = router.get_gate_cost(gate, _conf.min_max, _conf.apsp_coef);
-                    cost_list[i] = cost;
-                }
-                gate_idx = wait_list[std::min_element(cost_list.begin(),
-                                                      cost_list.end()) -
-                                     cost_list.begin()];
-            }
-            topo::Gate& gate = _topo.get_gate(gate_idx);
-            std::vector<device::Operation> ops = router.assign_gate(gate);
-            _ops.insert(_ops.end(), ops.begin(),
-                        ops.end());  // append operations to the back
-#ifdef DEBUG
-            std::cout << "waitlist: " << wait_list << " " << gate_idx << "\n\n";
-            count++;
-#endif
-            _topo.update_avail_gates(gate_idx);
-        }
-#ifdef DEBUG
-        assert(count == _topo.get_num_gates());
-#endif
-    }
+    virtual void assign_gates(QFTRouter& router);
 
     void write_assembly(std::ostream& out) {
         std::sort(_ops.begin(), _ops.end(), device::op_order);
@@ -497,11 +350,10 @@ class QFTScheduler {
         return ret;
     }
 
-    std::vector<device::Operation>& get_operations() { return _ops; }
+    const std::vector<device::Operation>& get_operations() { return _ops; }
 
-   private:
+   protected:
     topo::Topology& _topo;
-    SchedulerConf _conf;
     std::vector<device::Operation> _ops;
 
     unsigned get_executable(QFTRouter& router, std::vector<unsigned> waitlist) {
@@ -513,3 +365,70 @@ class QFTScheduler {
         return UINT_MAX;
     }
 };
+
+class QFTSchedulerRandom : public QFTScheduler {
+   public:
+    QFTSchedulerRandom(topo::Topology& topo) : QFTScheduler(topo) {}
+    QFTSchedulerRandom(const QFTSchedulerRandom& other) = delete;
+    QFTSchedulerRandom(QFTSchedulerRandom&& other) = delete;
+    ~QFTSchedulerRandom() override {}
+
+    void assign_gates(QFTRouter& router) override;
+};
+
+class QFTSchedulerStatic : public QFTScheduler {
+   public:
+    QFTSchedulerStatic(topo::Topology& topo) : QFTScheduler(topo) {}
+    QFTSchedulerStatic(const QFTSchedulerStatic& other) = delete;
+    QFTSchedulerStatic(QFTSchedulerStatic&& other) = delete;
+    ~QFTSchedulerStatic() override {}
+
+    void assign_gates(QFTRouter& router) override;
+};
+
+class QFTSchedulerDP : public QFTScheduler {
+   public:
+    QFTSchedulerDP(topo::Topology& topo) : QFTScheduler(topo) {}
+    QFTSchedulerDP(const QFTSchedulerDP& other) = delete;
+    QFTSchedulerDP(QFTSchedulerDP&& other) = delete;
+    ~QFTSchedulerDP() override {}
+
+    void assign_gates(QFTRouter& router) override;
+};
+
+class QFTSchedulerGreedy : public QFTScheduler {
+   public:
+    class GreedyConf {
+       public:
+        GreedyConf() : min_max(true), candidates(UINT_MAX), apsp_coef(1) {}
+        bool min_max;  // true is max, false is min
+        unsigned candidates, apsp_coef;
+    };
+    QFTSchedulerGreedy(topo::Topology& topo, json& conf) : QFTScheduler(topo) {
+        int candidates = json_get<int>(conf, "candidates");
+        if (candidates > 0) {
+            _conf.candidates = candidates;
+        }
+        _conf.apsp_coef = json_get<unsigned>(conf, "apsp_coef");
+        std::string min_max = json_get<std::string>(conf, "min_max");
+        if (min_max == "min") {
+            _conf.min_max = false;
+        } else if (min_max == "max") {
+            _conf.min_max = true;
+        } else {
+            std::cerr << "\"min_max\" can only be \"min\" or \"max\"."
+                      << std::endl;
+            abort();
+        }
+    }
+    QFTSchedulerGreedy(const QFTSchedulerGreedy& other) = delete;
+    QFTSchedulerGreedy(QFTSchedulerGreedy&& other) = delete;
+    ~QFTSchedulerGreedy() override {}
+
+    void assign_gates(QFTRouter& router) override;
+
+   private:
+    GreedyConf _conf;
+};
+
+std::unique_ptr<QFTScheduler> get_scheduler(std::string& typ, topo::Topology& topo, json& conf);
