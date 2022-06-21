@@ -15,7 +15,7 @@ void QFTScheduler::assign_gates(QFTRouter& router) {
 }
 
 void QFTSchedulerRandom::assign_gates(QFTRouter& router) {
-std::cout << "Random scheduler running..." << std::endl;
+    std::cout << "Random scheduler running..." << std::endl;
 
 #ifdef DEBUG
     unsigned count = 0;
@@ -73,8 +73,15 @@ void QFTSchedulerStatic::assign_gates(QFTRouter& router) {
 #endif
 }
 
-void QFTSchedulerDP::assign_gates(QFTRouter& router) {
+void QFTSchedulerOnion::assign_gates(QFTRouter& router) {
     std::cout << "Dynamic scheduler running..." << std::endl;
+
+    auto generations = _topo.dist_to_last();
+    std::vector<std::pair<unsigned, unsigned>> gen{generations};
+    std::sort(gen.rbegin(), gen.rend(),
+              [&](std::pair < unsigned, unsigned >> a, std::pair < unsigned,
+                  unsigned >> b) -> bool { return a.second < b.second; });
+
     for (Tqdm bar{_topo.get_num_gates()}; !_topo.get_avail_gates().empty();
          bar.add()) {
     }
@@ -121,11 +128,13 @@ void QFTSchedulerGreedy::assign_gates(QFTRouter& router) {
 #endif
 }
 
-std::unique_ptr<QFTScheduler> get_scheduler(std::string& typ, topo::Topology& topo, json& conf) {
+std::unique_ptr<QFTScheduler> get_scheduler(std::string& typ,
+                                            topo::Topology& topo,
+                                            json& conf) {
     if (typ == "random") {
         return std::make_unique<QFTSchedulerRandom>(topo);
-    } else if (typ == "dp") {
-        return std::make_unique<QFTSchedulerDP>(topo);
+    } else if (typ == "onion") {
+        return std::make_unique<QFTSchedulerOnion>(topo);
     } else if (typ == "static") {
         return std::make_unique<QFTSchedulerStatic>(topo);
     } else if (typ == "greedy") {

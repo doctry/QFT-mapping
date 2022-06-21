@@ -386,14 +386,19 @@ class QFTSchedulerStatic : public QFTScheduler {
     void assign_gates(QFTRouter& router) override;
 };
 
-class QFTSchedulerDP : public QFTScheduler {
+class QFTSchedulerOnion : public QFTScheduler {
    public:
-    QFTSchedulerDP(topo::Topology& topo) : QFTScheduler(topo) {}
-    QFTSchedulerDP(const QFTSchedulerDP& other) = delete;
-    QFTSchedulerDP(QFTSchedulerDP&& other) = delete;
-    ~QFTSchedulerDP() override {}
+    QFTSchedulerOnion(topo::Topology& topo, json& conf)
+        : QFTScheduler(topo),
+          first_mode_(json_get<bool>(conf, "layer_from_first")) {}
+    QFTSchedulerOnion(const QFTSchedulerOnion& other) = delete;
+    QFTSchedulerOnion(QFTSchedulerOnion&& other) = delete;
+    ~QFTSchedulerOnion() override {}
 
     void assign_gates(QFTRouter& router) override;
+
+   private:
+    bool first_mode_;
 };
 
 class QFTSchedulerGreedy : public QFTScheduler {
@@ -431,4 +436,6 @@ class QFTSchedulerGreedy : public QFTScheduler {
     GreedyConf _conf;
 };
 
-std::unique_ptr<QFTScheduler> get_scheduler(std::string& typ, topo::Topology& topo, json& conf);
+std::unique_ptr<QFTScheduler> get_scheduler(std::string& typ,
+                                            topo::Topology& topo,
+                                            json& conf);
