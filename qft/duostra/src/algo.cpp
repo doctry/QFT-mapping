@@ -3,11 +3,14 @@
 #include <iomanip>
 #include <iostream>
 #include <tuple>
+#include <unordered_set>
 #include <vector>
 #include "limits.h"
+#include "tqdm.hpp"
 using namespace std;
 
-bool topo::Gate::is_avail() const {
+namespace topo {
+bool Gate::is_avail() const {
     bool avail = true;
     for (size_t i = 0; i < _prevs.size(); i++) {
         if (!_prevs[i].second) {
@@ -18,7 +21,7 @@ bool topo::Gate::is_avail() const {
     return avail;
 }
 
-bool topo::Gate::is_first() const {
+bool Gate::is_first() const {
     for (auto& elem : _prevs) {
         if (elem.first != UINT_MAX) {
             return false;
@@ -28,7 +31,7 @@ bool topo::Gate::is_first() const {
     return true;
 }
 
-bool topo::Gate::is_last() const {
+bool Gate::is_last() const {
     for (auto& elem : _nexts) {
         if (elem != UINT_MAX) {
             return false;
@@ -38,7 +41,7 @@ bool topo::Gate::is_last() const {
     return true;
 }
 
-void topo::Gate::finished(unsigned prev) {
+void Gate::finished(unsigned prev) {
 #ifdef DEBUG
     bool check = false;
     for (size_t i = 0; i < _prevs.size(); i++) {
@@ -56,11 +59,11 @@ void topo::Gate::finished(unsigned prev) {
 
 using namespace std;
 
-vector<unsigned> topo::Topology::get_first_gates() const {
+vector<unsigned> Topology::get_first_gates() const {
     vector<unsigned> result = {};
 
     for (unsigned i = 0; i < get_num_gates(); ++i) {
-        const topo::Gate& gate = get_gate(i);
+        const Gate& gate = get_gate(i);
 
         if (gate.is_first()) {
             result.push_back(i);
@@ -70,11 +73,11 @@ vector<unsigned> topo::Topology::get_first_gates() const {
     return result;
 }
 
-vector<unsigned> topo::Topology::get_last_gates() const {
+vector<unsigned> Topology::get_last_gates() const {
     vector<unsigned> result = {};
 
     for (unsigned i = 0; i < get_num_gates(); ++i) {
-        const topo::Gate& gate = get_gate(i);
+        const Gate& gate = get_gate(i);
 
         if (gate.is_last()) {
             result.push_back(i);
@@ -84,56 +87,81 @@ vector<unsigned> topo::Topology::get_last_gates() const {
     return result;
 }
 
-unordered_map<unsigned, unsigned> topo::Topology::dist_to_first() const {
+unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
     unordered_map<unsigned, unsigned> map = {};
 
-    vector<unsigned> current_gen = {};
+    unordered_set<unsigned> current_gen = {};
     for (auto idx : get_first_gates()) {
         map[idx] = 0;
-        current_gen.push_back(idx);
+        current_gen.insert(idx);
     }
 
-    for (unsigned gen = 0, num_gates = get_num_gates(); map.size() < num_gates;
-         ++gen) {
-        vector<unsigned> next = {};
+    cout << "Adding gate\n";
+    {
+        Tqdm bar{get_num_gates()};
+        for (unsigned gen = 0, num_gates = get_num_gates();
+             map.size() < num_gates; ++gen) {
+            unordered_set<unsigned> next = {};
 
-        for (auto idx : current_gen) {
-            for (auto child : get_gate(idx).get_nexts()) {
-                next.push_back(child);
-                map[child] = gen + 1;
+            for (auto idx : current_gen) {
+                for (auto child : get_gate(idx).get_nexts()) {
+                    bar.add();
+                    next.insert(child);
+                    map[child] = gen + 1;
+                }
             }
-        }
 
-        current_gen = next;
+            current_gen = next;
+        }
     }
     return map;
 }
 
-unordered_map<unsigned, unsigned> topo::Topology::dist_to_last() const {
+unordered_map<unsigned, unsigned> Topology::dist_to_last() const {
     unordered_map<unsigned, unsigned> map = {};
 
-    vector<unsigned> current_gen = {};
+    unordered_set<unsigned> current_gen = {};
     for (auto idx : get_last_gates()) {
         map[idx] = 0;
-        current_gen.push_back(idx);
+        current_gen.insert(idx);
     }
 
-    for (unsigned gen = 0, num_gates = get_num_gates(); map.size() < num_gates;
-         ++gen) {
-        vector<unsigned> prev = {};
+    cout << "Adding gate\n";
+    {
+        Tqdm bar{get_num_gates()};
+        for (unsigned gen = 0, num_gates = get_num_gates();
+             map.size() < num_gates; ++gen) {
+            unordered_set<unsigned> prev = {};
 
-        for (auto idx : current_gen) {
-            for (auto parent : get_gate(idx).get_prevs()) {
-                prev.push_back(parent.second);
-                map[parent.second] = gen + 1;
+            for (auto idx : current_gen) {
+                for (auto parent : get_gate(idx).get_prevs()) {
+                    bar.add();
+                    prev.insert(parent.first);
+                    map[parent.first] = gen + 1;
+                }
             }
-        }
 
-        current_gen = prev;
+            current_gen = prev;
+        }
     }
 
     return map;
 }
+
+unordered_map<unsigned, vector<unsigned>> Topology::gate_by_dist_to_first()
+    const {
+    auto dist = dist_to_first();
+    cout << "Dist to first done\n";
+    return gate_by_generation(dist);
+}
+
+unordered_map<unsigned, vector<unsigned>> Topology::gate_by_dist_to_last()
+    const {
+    auto dist = dist_to_last();
+    cout << "Dist to last done\n";
+    return gate_by_generation(dist);
+}
+}  // namespace topo
 
 void topo::AlgoTopology::update_avail_gates(unsigned executed) {
     assert(find(_avail_gates.begin(), _avail_gates.end(), executed) !=
@@ -149,8 +177,9 @@ void topo::AlgoTopology::update_avail_gates(unsigned executed) {
     for (unsigned i = 0; i < nexts.size(); i++) {
         unsigned n = nexts[i];
         _gates[n].finished(executed);
-        if (_gates[n].is_avail())
+        if (_gates[n].is_avail()) {
             _avail_gates.push_back(n);
+        }
     }
 }
 

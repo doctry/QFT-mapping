@@ -74,17 +74,36 @@ void QFTSchedulerStatic::assign_gates(QFTRouter& router) {
 }
 
 void QFTSchedulerOnion::assign_gates(QFTRouter& router) {
-    std::cout << "Dynamic scheduler running..." << std::endl;
+    using namespace std;
+    cout << "Onion scheduler running..." << endl;
 
-    auto generations = _topo.dist_to_last();
-    std::vector<std::pair<unsigned, unsigned>> gen{generations};
-    std::sort(gen.rbegin(), gen.rend(),
-              [&](std::pair < unsigned, unsigned >> a, std::pair < unsigned,
-                  unsigned >> b) -> bool { return a.second < b.second; });
+    auto gen_to_gates = [this]() {
+        return first_mode_ ? _topo.gate_by_dist_to_first()
+                           : _topo.gate_by_dist_to_last();
+    }();
 
-    for (Tqdm bar{_topo.get_num_gates()}; !_topo.get_avail_gates().empty();
-         bar.add()) {
+    unsigned num_gates = _topo.get_num_gates();
+    Tqdm bar{num_gates};
+    while (gen_to_gates.size() != 0) {
+        auto min_vectors =
+            min_element(gen_to_gates.begin(), gen_to_gates.end(),
+                        [](const pair<unsigned, vector<unsigned>>& a,
+                           const pair<unsigned, vector<unsigned>>& b) {
+                            return a.first < b.first;
+                        });
+
+        for (auto idx : min_vectors->second) {
+            bar.add();
+
+            auto& gate = _topo.get_gate(idx);
+            auto ops = router.assign_gate(gate);
+            _ops.insert(_ops.end(), ops.begin(), ops.end());
+        }
+
+        gen_to_gates.erase(min_vectors->first);
     }
+
+    assert(_topo.get_avail_gates().empty());
 }
 
 void QFTSchedulerGreedy::assign_gates(QFTRouter& router) {
@@ -134,7 +153,7 @@ std::unique_ptr<QFTScheduler> get_scheduler(std::string& typ,
     if (typ == "random") {
         return std::make_unique<QFTSchedulerRandom>(topo);
     } else if (typ == "onion") {
-        return std::make_unique<QFTSchedulerOnion>(topo);
+        return std::make_unique<QFTSchedulerOnion>(topo, conf);
     } else if (typ == "static") {
         return std::make_unique<QFTSchedulerStatic>(topo);
     } else if (typ == "greedy") {
