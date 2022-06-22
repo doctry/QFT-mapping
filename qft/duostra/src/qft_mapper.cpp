@@ -77,22 +77,21 @@ void QFTSchedulerOnion::assign_gates(QFTRouter& router) {
     using namespace std;
     cout << "Onion scheduler running..." << endl;
 
-    auto gen_to_gates = [this]() {
-        return first_mode_ ? _topo.gate_by_dist_to_first()
-                           : _topo.gate_by_dist_to_last();
-    }();
+    auto gen_to_gates = first_mode_ ? _topo.gate_by_dist_to_first()
+                                    : _topo.gate_by_dist_to_last();
 
     unsigned num_gates = _topo.get_num_gates();
+
     Tqdm bar{num_gates};
     while (gen_to_gates.size() != 0) {
-        auto min_vectors =
+        auto youngest =
             min_element(gen_to_gates.begin(), gen_to_gates.end(),
                         [](const pair<unsigned, vector<unsigned>>& a,
                            const pair<unsigned, vector<unsigned>>& b) {
                             return a.first < b.first;
                         });
 
-        for (auto idx : min_vectors->second) {
+        for (auto idx : youngest->second) {
             bar.add();
 
             auto& gate = _topo.get_gate(idx);
@@ -100,7 +99,7 @@ void QFTSchedulerOnion::assign_gates(QFTRouter& router) {
             _ops.insert(_ops.end(), ops.begin(), ops.end());
         }
 
-        gen_to_gates.erase(min_vectors->first);
+        gen_to_gates.erase(youngest->first);
     }
 
     assert(_topo.get_avail_gates().empty());
