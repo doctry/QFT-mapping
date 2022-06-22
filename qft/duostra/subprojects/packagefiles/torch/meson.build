@@ -1,0 +1,1 @@
+project('libtorch', 'cpp')
