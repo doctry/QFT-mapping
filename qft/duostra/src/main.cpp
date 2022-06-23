@@ -78,10 +78,11 @@ int main(int argc, char *argv[]) {
     // router
     std::cout << "creating router..." << std::endl;
     std::string router_typ = json_get<std::string>(conf_mapper, "router");
+    bool orient = json_get<bool>(conf_mapper, "orientation");
     std::string cost = (scheduler_typ == "greedy")
                            ? json_get<std::string>(conf_mapper, "cost")
                            : "start";
-    QFTRouter router(device, router_typ, cost);
+    QFTRouter router(device, router_typ, cost, orient);
 
     // routing
     std::cout << "routing..." << std::endl;

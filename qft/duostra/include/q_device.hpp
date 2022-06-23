@@ -155,20 +155,23 @@ class Device {
     Device(std::fstream &file, unsigned r, unsigned s, unsigned cx);
     Device(std::vector<std::vector<unsigned>> &, unsigned r, unsigned s,
            unsigned cx);
-    Device(const Device &other);
+    Device(const Device &other) = delete;
     Device(Device &&other);
 
     unsigned get_num_qubits() const;
     std::vector<unsigned> mapping() const;
+    unsigned get_shortest_cost(unsigned i, unsigned j) const;
     Qubit &get_qubit(const unsigned i);
     Operation execute_single(Operator op, unsigned q);
     std::vector<Operation>
-    routing(Operator op, std::tuple<unsigned, unsigned> qs, bool orient);
+    duostra_routing(Operator op, std::tuple<unsigned, unsigned> qs, bool orient);
+    std::vector<Operation>
+    apsp_routing(Operator op, std::tuple<unsigned, unsigned> qs, bool orient);
 
     void print_device_state(std::ostream &out);
     void place(std::vector<unsigned> &assign);
     std::vector<Operation> &get_operations();
-    std::vector<std::vector<unsigned>> init_apsp();
+    void init_apsp();
     void reset();
 
   private:
@@ -182,10 +185,18 @@ class Device {
     std::vector<Operation> traceback(Operator op, device::Qubit &q0,
                                      device::Qubit &q1, device::Qubit &t0,
                                      device::Qubit &t1); // standalone
+
+    // apsp
+    std::tuple<unsigned, unsigned> next_swap_cost(unsigned source, unsigned target);
+
+    // general
     void apply_gate(const Operation &op);
+
 
     // data member
     std::vector<Qubit> _qubits;
     unsigned _SINGLE_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
+    std::vector<std::vector<unsigned>> _shortest_path, _shortest_cost;
+
 };
 } // namespace device

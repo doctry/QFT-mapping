@@ -51,10 +51,20 @@ static ShortestPath floyd_warshall(torch::Tensor adj_mat) {
 
         auto new_cost = torch::minimum(cost_mat, alt_path);
 
+        auto new_pointer = pointer.clone();
         pointer = torch::where(cost_mat < alt_path, pointer,
-                               pointer.index({None, i, Slice()}));
+                               pointer.index({Slice(), i, None}));
         cost_mat = new_cost;
     }
+    for (int i = 0; i < dimensions; ++i) {
+        cost_mat.index({i, i}) = 0;
+        pointer.index({i, i}) = -1;
+    }
+
+#ifdef DEBUG
+    std::cout << cost_mat << std::endl;
+    std::cout << pointer << std::endl;
+#endif
 
     return {cost_mat, pointer};
 }

@@ -1,23 +1,26 @@
 {
-  "algo": 1121,
-  "cycle": {
-      "SINGLE_CYCLE": 0,
-      "SWAP_CYCLE": 3,
-      "CX_CYCLE": 2
-  },
-  "device": "/home/QFT-mapping/device/topo_1121.txt",
-  "output": "/home/QFT-mapping/output/topo_1121.json",
-  "mapper": {
-      "placer": "dfs",
-      "scheduler": "greedy",
-      "router": "orientation",
-      "cost": "end",
-      "greedy_conf": {
-          "candidates": -1,
-          "apsp_coef": 1,
-          "min_max": "max"
-      }
-  },
-  "stdio": false,
-  "dump": false
+    "algo": 127,
+    "cycle": {
+        "SINGLE_CYCLE": 0,
+        "SWAP_CYCLE": 3,
+        "CX_CYCLE": 2
+    },
+    "device": "/home/QFT-mapping/device/washington_127.txt",
+    "output": "/home/QFT-mapping/output/washington_127.json",
+    "mapper": {
+        "placer": "static",
+        "scheduler": "greedy",
+        "router": "apsp",
+        "orientation": true,
+        "cost": "end",
+        "greedy_conf": {
+            "candidates": -1,
+            "apsp_coef": 1,
+            "avail": "max",
+            "cost": "max",
+            "layer_from_first": true
+        }
+    },
+    "stdio": false,
+    "dump": false
 }

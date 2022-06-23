@@ -85,11 +85,17 @@ void QFTSchedulerOnion::assign_gates(QFTRouter& router) {
     Tqdm bar{num_gates};
     while (gen_to_gates.size() != 0) {
         auto youngest =
-            min_element(gen_to_gates.begin(), gen_to_gates.end(),
-                        [](const pair<unsigned, vector<unsigned>>& a,
-                           const pair<unsigned, vector<unsigned>>& b) {
-                            return a.first < b.first;
-                        });
+            cost_typ_
+                ? max_element(gen_to_gates.begin(), gen_to_gates.end(),
+                              [](const pair<unsigned, vector<unsigned>>& a,
+                                 const pair<unsigned, vector<unsigned>>& b) {
+                                  return a.first < b.first;
+                              })
+                : min_element(gen_to_gates.begin(), gen_to_gates.end(),
+                              [](const pair<unsigned, vector<unsigned>>& a,
+                                 const pair<unsigned, vector<unsigned>>& b) {
+                                  return a.first < b.first;
+                              });
 
         for (auto idx : youngest->second) {
             bar.add();
@@ -123,13 +129,17 @@ void QFTSchedulerGreedy::assign_gates(QFTRouter& router) {
             std::vector<unsigned> cost_list(wait_list.size(), 0);
             for (unsigned i = 0; i < wait_list.size(); ++i) {
                 topo::Gate& gate = _topo.get_gate(wait_list[i]);
-                unsigned cost =
-                    router.get_gate_cost(gate, _conf.min_max, _conf.apsp_coef);
+                unsigned cost = router.get_gate_cost(gate, _conf.avail_typ,
+                                                     _conf.apsp_coef);
                 cost_list[i] = cost;
             }
-            gate_idx =
-                wait_list[std::min_element(cost_list.begin(), cost_list.end()) -
-                          cost_list.begin()];
+            auto list_idx =
+                _conf.cost_typ
+                    ? std::max_element(cost_list.begin(), cost_list.end()) -
+                          cost_list.begin()
+                    : std::min_element(cost_list.begin(), cost_list.end()) -
+                          cost_list.begin();
+            gate_idx = wait_list[list_idx];
         }
         topo::Gate& gate = _topo.get_gate(gate_idx);
         std::vector<device::Operation> ops = router.assign_gate(gate);

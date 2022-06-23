@@ -129,12 +129,16 @@ class QFTPlacer {
 
 class QFTRouter {
    public:
-    QFTRouter(device::Device& device, std::string& typ, std::string& cost)
-        : _device(device), _apsp(false) {
-        if (typ == "naive") {
-            _orient = false;
-        } else if (typ == "orientation") {
-            _orient = true;
+    QFTRouter(device::Device& device,
+              std::string& typ,
+              std::string& cost,
+              bool orient)
+        : _orient(orient), _device(device), _apsp(false) {
+        if (typ == "apsp") {
+            _apsp = true;
+            _duostra = false;
+        } else if (typ == "duostra") {
+            _duostra = true;
         } else {
             std::cerr << typ << " is not a router type" << std::endl;
             abort();
@@ -142,13 +146,16 @@ class QFTRouter {
 
         if (cost == "end") {
             _greedy_type = true;
-            _shortest_path = _device.init_apsp();
             _apsp = true;
         } else if (cost == "start") {
             _greedy_type = false;
         } else {
             std::cerr << cost << " is not a cost type" << std::endl;
             abort();
+        }
+
+        if (_apsp) {
+            _device.init_apsp();
         }
 
         _topo2device.resize(device.get_num_qubits());
@@ -159,11 +166,11 @@ class QFTRouter {
     QFTRouter(const QFTRouter& other) = delete;
     QFTRouter(QFTRouter&& other)
         : _greedy_type(other._greedy_type),
+          _duostra(other._duostra),
           _orient(other._orient),
           _device(other._device),
           _topo2device(std::move(other._topo2device)),
-          _apsp(other._apsp),
-          _shortest_path(std::move(other._shortest_path)) {}
+          _apsp(other._apsp) {}
 
     unsigned get_gate_cost(topo::Gate& gate,
                            bool min_max,
@@ -183,8 +190,8 @@ class QFTRouter {
         device::Qubit& q1 = _device.get_qubit(q1_id);
         unsigned apsp_cost = 0;
         if (_apsp) {
-            apsp_cost = _shortest_path[q0_id][q1_id];
-            assert(apsp_cost == _shortest_path[q1_id][q0_id]);
+            apsp_cost = _device.get_shortest_cost(q0_id, q1_id);
+            assert(apsp_cost == _device.get_shortest_cost(q1_id, q0_id));
         }
         unsigned avail =
             min_max ? std::max(q0.get_avail_time(), q1.get_avail_time())
@@ -203,7 +210,10 @@ class QFTRouter {
             return std::vector<device::Operation>(1, op);
         }
         std::vector<device::Operation> op_list =
-            _device.routing(gate.get_type(), device_qubits_idx, _orient);
+            _duostra ? _device.duostra_routing(gate.get_type(),
+                                               device_qubits_idx, _orient)
+                     : _device.apsp_routing(gate.get_type(), device_qubits_idx,
+                                            _orient);
         std::vector<unsigned> change_list = _device.mapping();
 #ifdef DEBUG
         std::vector<bool> checker(_topo2device.size(), false);
@@ -269,11 +279,10 @@ class QFTRouter {
     }
 
     bool _greedy_type;
-    bool _orient;
+    bool _duostra, _orient;
     device::Device& _device;
     std::vector<unsigned> _topo2device;
     bool _apsp;
-    std::vector<std::vector<unsigned>> _shortest_path;
 };
 
 class QFTScheduler {
@@ -390,7 +399,8 @@ class QFTSchedulerOnion : public QFTScheduler {
    public:
     QFTSchedulerOnion(topo::Topology& topo, json& conf)
         : QFTScheduler(topo),
-          first_mode_(json_get<bool>(conf, "layer_from_first")) {}
+          first_mode_(json_get<bool>(conf, "layer_from_first")),
+          cost_typ_(json_get<bool>(conf, "cost")) {}
     QFTSchedulerOnion(const QFTSchedulerOnion& other) = delete;
     QFTSchedulerOnion(QFTSchedulerOnion&& other) = delete;
     ~QFTSchedulerOnion() override {}
@@ -399,14 +409,20 @@ class QFTSchedulerOnion : public QFTScheduler {
 
    private:
     bool first_mode_;
+    bool cost_typ_;  // true is max, false is min
 };
 
 class QFTSchedulerGreedy : public QFTScheduler {
    public:
     class GreedyConf {
        public:
-        GreedyConf() : min_max(true), candidates(UINT_MAX), apsp_coef(1) {}
-        bool min_max;  // true is max, false is min
+        GreedyConf()
+            : avail_typ(true),
+              cost_typ(false),
+              candidates(UINT_MAX),
+              apsp_coef(1) {}
+        bool avail_typ;  // true is max, false is min
+        bool cost_typ;   // true is max, false is min
         unsigned candidates, apsp_coef;
     };
     QFTSchedulerGreedy(topo::Topology& topo, json& conf) : QFTScheduler(topo) {
@@ -415,11 +431,21 @@ class QFTSchedulerGreedy : public QFTScheduler {
             _conf.candidates = candidates;
         }
         _conf.apsp_coef = json_get<unsigned>(conf, "apsp_coef");
-        std::string min_max = json_get<std::string>(conf, "min_max");
-        if (min_max == "min") {
-            _conf.min_max = false;
-        } else if (min_max == "max") {
-            _conf.min_max = true;
+        std::string avail_typ = json_get<std::string>(conf, "avail");
+        if (avail_typ == "min") {
+            _conf.avail_typ = false;
+        } else if (avail_typ == "max") {
+            _conf.avail_typ = true;
+        } else {
+            std::cerr << "\"min_max\" can only be \"min\" or \"max\"."
+                      << std::endl;
+            abort();
+        }
+        std::string cost_typ = json_get<std::string>(conf, "cost");
+        if (cost_typ == "min") {
+            _conf.cost_typ = false;
+        } else if (cost_typ == "max") {
+            _conf.cost_typ = true;
         } else {
             std::cerr << "\"min_max\" can only be \"min\" or \"max\"."
                       << std::endl;
