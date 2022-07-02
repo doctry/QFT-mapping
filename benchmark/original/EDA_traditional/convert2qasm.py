@@ -19,34 +19,34 @@ def convertCCX(w, qasmBits):
     # Depth 0
     w.append("h q[{}];\n".format(qasmBits[2]))
     # Depth 1
-    w.append("cx q[{ctrl}], q[{targ}];\n".format(ctrl=qasmBits[1],targ=qasmBits[2]))
+    w.append("cx q[{ctrl}],q[{targ}];\n".format(ctrl=qasmBits[1],targ=qasmBits[2]))
     # Depth 2
     w.append("tdg q[{}];\n".format(qasmBits[2]))
     # Depth 3
-    w.append("cx q[{ctrl}], q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[2]))
+    w.append("cx q[{ctrl}],q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[2]))
     # Depth 4
     w.append("t q[{}];\n".format(qasmBits[2]))
     # Depth 5
-    w.append("cx q[{ctrl}], q[{targ}];\n".format(ctrl=qasmBits[1],targ=qasmBits[2]))
+    w.append("cx q[{ctrl}],q[{targ}];\n".format(ctrl=qasmBits[1],targ=qasmBits[2]))
     # Depth 6
     w.append("tdg q[{}];\n".format(qasmBits[2]))
     # Depth 7
-    w.append("cx q[{ctrl}], q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[2]))
+    w.append("cx q[{ctrl}],q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[2]))
     # Depth 8
     w.append("t q[{}];\n".format(qasmBits[1]))
     w.append("t q[{}];\n".format(qasmBits[2]))
     # Depth 9
-    w.append("cx q[{ctrl}], q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[1]))
+    w.append("cx q[{ctrl}],q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[1]))
     w.append("h q[{}];\n".format(qasmBits[2]))
     # Depth 10
     w.append("t q[{}];\n".format(qasmBits[0]))
     w.append("tdg q[{}];\n".format(qasmBits[1]))
     # Depth 11
-    w.append("cx q[{ctrl}], q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[1]))
+    w.append("cx q[{ctrl}],q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[1]))
 
 def convertCX(w, qasmBits):
     assert(len(qasmBits)==2)
-    w.append("cx q[{ctrl}], q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[1]))
+    w.append("cx q[{ctrl}],q[{targ}];\n".format(ctrl=qasmBits[0],targ=qasmBits[1]))
 
 def convertX(w, qasmBits):
     assert(len(qasmBits)==1)
