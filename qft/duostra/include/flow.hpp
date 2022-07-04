@@ -8,7 +8,7 @@
 
 #pragma once
 
-unsigned flow(json& conf, std::vector<unsigned> assign);
+unsigned flow(json& conf, std::vector<unsigned> assign, bool io);
 
 unsigned device_num(json& conf);
 

@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
         sa_place(conf);
     } else {
         std::vector<unsigned> dummy;
-        flow(conf, dummy);
+        flow(conf, dummy, true);
     }
     return 0;
 }

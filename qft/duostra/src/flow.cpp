@@ -1,6 +1,9 @@
 #include "flow.hpp"
 
-unsigned flow(json& conf, std::vector<unsigned> assign) {
+unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
+    if(!io) {
+        std::cout.setstate(std::ios_base::failbit);
+    }
     // create topology
     std::cout << "creating topology..." << std::endl;
     std::unique_ptr<topo::Topology> topo;
@@ -98,6 +101,8 @@ unsigned flow(json& conf, std::vector<unsigned> assign) {
     std::cout << "final cost:  " << scheduler->get_final_cost() << "\n";
     std::cout << "total time:  " << scheduler->get_total_time() << "\n";
     std::cout << "total swaps: " << scheduler->get_swap_num() << "\n";
+
+    std::cout.clear();
     return scheduler->get_final_cost();
 }
 
