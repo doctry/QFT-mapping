@@ -62,7 +62,7 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     json greedy_conf = json_get<json>(conf_mapper, "greedy_conf");
     std::cout << "creating scheduler..." << std::endl;
     std::string scheduler_typ = json_get<std::string>(conf_mapper, "scheduler");
-    auto scheduler = get_scheduler(scheduler_typ, *topo, greedy_conf);
+    auto scheduler = get_scheduler(scheduler_typ, std::move(topo), greedy_conf);
 
     // router
     std::cout << "creating router..." << std::endl;

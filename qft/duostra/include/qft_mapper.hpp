@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>  // std::chrono::system_clock
 #include <iostream>
+#include <memory>
 #include <random>  // std::default_random_engine
 #include <string>
 #include <tuple>
@@ -14,11 +15,11 @@
 
 class TopologyWrapperWithCandidate {
    public:
-    TopologyWrapperWithCandidate(topo::Topology& topo, unsigned candidate)
+    TopologyWrapperWithCandidate(const topo::Topology* topo, unsigned candidate)
         : topo_(topo), candidate_(candidate) {}
 
     std::vector<unsigned> get_avail_gates() const {
-        auto& gates = topo_.get_avail_gates();
+        auto& gates = topo_->get_avail_gates();
 
         if (gates.size() < candidate_) {
             return gates;
@@ -31,7 +32,7 @@ class TopologyWrapperWithCandidate {
     }
 
    private:
-    topo::Topology& topo_;
+    const topo::Topology* topo_;
     unsigned candidate_;
 };
 
@@ -286,7 +287,8 @@ class QFTRouter {
 
 class QFTScheduler {
    public:
-    QFTScheduler(topo::Topology& topo) : _topo(topo) {}
+    QFTScheduler(std::unique_ptr<topo::Topology>&& topo)
+        : topo_(std::move(topo)) {}
     QFTScheduler(const QFTScheduler& other) = delete;
     QFTScheduler(QFTScheduler&& other) = delete;
     virtual ~QFTScheduler() {}
@@ -294,10 +296,10 @@ class QFTScheduler {
     virtual void assign_gates(QFTRouter& router);
 
     void write_assembly(std::ostream& out) {
-        std::sort(_ops.begin(), _ops.end(), device::op_order);
+        std::sort(ops_.begin(), ops_.end(), device::op_order);
 
-        for (unsigned i = 0; i < _ops.size(); ++i) {
-            device::Operation& op = _ops[i];
+        for (unsigned i = 0; i < ops_.size(); ++i) {
+            device::Operation& op = ops_[i];
             switch (op.get_operator()) {
                 case Operator::CX:
                     out << "CX ";
@@ -319,11 +321,11 @@ class QFTScheduler {
     }
 
     void to_json(json& j) {
-        std::sort(_ops.begin(), _ops.end(), device::op_order);
+        std::sort(ops_.begin(), ops_.end(), device::op_order);
 
         json o;
-        for (unsigned i = 0; i < _ops.size(); ++i) {
-            device::Operation& op = _ops[i];
+        for (unsigned i = 0; i < ops_.size(); ++i) {
+            device::Operation& op = ops_[i];
             json buf = op;
             o.push_back(buf);
         }
@@ -331,42 +333,42 @@ class QFTScheduler {
     }
 
     unsigned get_final_cost() {
-        std::sort(_ops.begin(), _ops.end(), device::op_order);
+        std::sort(ops_.begin(), ops_.end(), device::op_order);
 
-        return _ops[_ops.size() - 1].get_cost();
+        return ops_[ops_.size() - 1].get_cost();
     }
 
     unsigned get_total_time() {
-        std::sort(_ops.begin(), _ops.end(), device::op_order);
+        std::sort(ops_.begin(), ops_.end(), device::op_order);
 
         unsigned ret = 0;
-        for (unsigned i = 0; i < _ops.size(); ++i) {
-            std::tuple<unsigned, unsigned> dur = _ops[i].get_duration();
+        for (unsigned i = 0; i < ops_.size(); ++i) {
+            std::tuple<unsigned, unsigned> dur = ops_[i].get_duration();
             ret += std::get<1>(dur) - std::get<0>(dur);
         }
         return ret;
     }
 
     unsigned get_swap_num() {
-        std::sort(_ops.begin(), _ops.end(), device::op_order);
+        std::sort(ops_.begin(), ops_.end(), device::op_order);
         unsigned ret = 0;
-        for (unsigned i = 0; i < _ops.size(); ++i) {
-            if (_ops[i].get_operator() == Operator::Swap) {
+        for (unsigned i = 0; i < ops_.size(); ++i) {
+            if (ops_[i].get_operator() == Operator::Swap) {
                 ret += 1;
             }
         }
         return ret;
     }
 
-    const std::vector<device::Operation>& get_operations() { return _ops; }
+    const std::vector<device::Operation>& get_operations() { return ops_; }
 
    protected:
-    topo::Topology& _topo;
-    std::vector<device::Operation> _ops;
+    std::unique_ptr<topo::Topology> topo_;
+    std::vector<device::Operation> ops_;
 
     unsigned get_executable(QFTRouter& router, std::vector<unsigned> waitlist) {
         for (unsigned gate_idx : waitlist) {
-            if (router.is_executable(_topo.get_gate(gate_idx))) {
+            if (router.is_executable(topo_->get_gate(gate_idx))) {
                 return gate_idx;
             }
         }
@@ -376,7 +378,8 @@ class QFTScheduler {
 
 class QFTSchedulerRandom : public QFTScheduler {
    public:
-    QFTSchedulerRandom(topo::Topology& topo) : QFTScheduler(topo) {}
+    QFTSchedulerRandom(std::unique_ptr<topo::Topology>&& topo)
+        : QFTScheduler(std::move(topo)) {}
     QFTSchedulerRandom(const QFTSchedulerRandom& other) = delete;
     QFTSchedulerRandom(QFTSchedulerRandom&& other) = delete;
     ~QFTSchedulerRandom() override {}
@@ -386,7 +389,8 @@ class QFTSchedulerRandom : public QFTScheduler {
 
 class QFTSchedulerStatic : public QFTScheduler {
    public:
-    QFTSchedulerStatic(topo::Topology& topo) : QFTScheduler(topo) {}
+    QFTSchedulerStatic(std::unique_ptr<topo::Topology>&& topo)
+        : QFTScheduler(std::move(topo)) {}
     QFTSchedulerStatic(const QFTSchedulerStatic& other) = delete;
     QFTSchedulerStatic(QFTSchedulerStatic&& other) = delete;
     ~QFTSchedulerStatic() override {}
@@ -396,8 +400,8 @@ class QFTSchedulerStatic : public QFTScheduler {
 
 class QFTSchedulerOnion : public QFTScheduler {
    public:
-    QFTSchedulerOnion(topo::Topology& topo, json& conf)
-        : QFTScheduler(topo),
+    QFTSchedulerOnion(std::unique_ptr<topo::Topology>&& topo, json& conf)
+        : QFTScheduler(std::move(topo)),
           first_mode_(json_get<bool>(conf, "layer_from_first")),
           cost_typ_(json_get<bool>(conf, "cost")) {}
     QFTSchedulerOnion(const QFTSchedulerOnion& other) = delete;
@@ -424,7 +428,8 @@ class QFTSchedulerGreedy : public QFTScheduler {
         bool cost_typ;   // true is max, false is min
         unsigned candidates, apsp_coef;
     };
-    QFTSchedulerGreedy(topo::Topology& topo, json& conf) : QFTScheduler(topo) {
+    QFTSchedulerGreedy(std::unique_ptr<topo::Topology>&& topo, json& conf)
+        : QFTScheduler(std::move(topo)) {
         int candidates = json_get<int>(conf, "candidates");
         if (candidates > 0) {
             _conf.candidates = candidates;
@@ -461,6 +466,25 @@ class QFTSchedulerGreedy : public QFTScheduler {
     GreedyConf _conf;
 };
 
-std::unique_ptr<QFTScheduler> get_scheduler(std::string& typ,
-                                            topo::Topology& topo,
-                                            json& conf);
+class QFTSchedulerBlockadeRevitalizer : public QFTScheduler {
+   public:
+    class Tree {
+       public:
+       private:
+    };
+
+    QFTSchedulerBlockadeRevitalizer(std::unique_ptr<topo::Topology>&& topo,
+                                    size_t depth)
+        : QFTScheduler(std::move(topo)), depth(depth) {}
+
+    const size_t depth;
+
+   private:
+    friend class Tree;
+    friend class QFTSchedulerGreedy::GreedyConf;
+};
+
+std::unique_ptr<QFTScheduler> get_scheduler(
+    std::string& typ,
+    std::unique_ptr<topo::Topology>&& topo,
+    json& conf);
