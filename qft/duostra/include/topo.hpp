@@ -15,7 +15,14 @@ class Gate {
         _prevs.clear();
         _nexts.clear();
     }
-    Gate(const Gate& other) = delete;
+
+    Gate(const Gate& other)
+        : _id(other._id),
+          _type(other._type),
+          _qubits(other._qubits),
+          _prevs(other._prevs),
+          _nexts(other._nexts) {}
+
     Gate(Gate&& other)
         : _id(other._id),
           _type(other._type),
@@ -65,6 +72,12 @@ class Gate {
 
 class Topology {
    public:
+    Topology() : _num_qubits(0), _gates({}), _avail_gates({}) {}
+    Topology(Topology&& other)
+        : _num_qubits(other._num_qubits),
+          _gates(std::move(other._gates)),
+          _avail_gates(std::move(other._avail_gates)) {}
+
     virtual ~Topology() {}
     virtual unsigned get_num_qubits() const = 0;
     virtual unsigned get_num_gates() const = 0;
@@ -84,26 +97,12 @@ class Topology {
     unordered_map<unsigned, vector<unsigned>> gate_by_dist_to_first() const;
     unordered_map<unsigned, vector<unsigned>> gate_by_dist_to_last() const;
 
-   private:
+   protected:
+    unsigned _num_qubits;
+    std::vector<Gate> _gates;
+    std::vector<unsigned> _avail_gates;
+
     static unordered_map<unsigned, vector<unsigned>> gate_by_generation(
-        const unordered_map<unsigned, unsigned>& map) {
-        unordered_map<unsigned, vector<unsigned>> gen_map = {};
-
-        for (auto pair : map) {
-            unsigned gate_id = pair.first;
-            unsigned generation = pair.second;
-
-            gen_map[generation].push_back(gate_id);
-        }
-
-        size_t count = 0;
-        for (const auto& gen_ids : gen_map) {
-            count += gen_ids.second.size();
-        }
-        assert(count == map.size() &&
-               "Resulting map doesn't have the same size as original.");
-
-        return gen_map;
-    }
+        const unordered_map<unsigned, unsigned>& map);
 };
 };  // namespace topo
