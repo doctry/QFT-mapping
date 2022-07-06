@@ -1,6 +1,8 @@
 #include "qft_mapper.hpp"
 
-void QFTScheduler::assign_gates(QFTRouter& router) {
+using namespace scheduler;
+
+void Base::assign_gates(QFTRouter& router) {
     std::cout << "Default scheduler running..." << std::endl;
 
     Tqdm bar{topo_->get_num_gates()};
@@ -14,7 +16,7 @@ void QFTScheduler::assign_gates(QFTRouter& router) {
     }
 }
 
-void QFTSchedulerRandom::assign_gates(QFTRouter& router) {
+void Random::assign_gates(QFTRouter& router) {
     std::cout << "Random scheduler running..." << std::endl;
 
 #ifdef DEBUG
@@ -44,7 +46,7 @@ void QFTSchedulerRandom::assign_gates(QFTRouter& router) {
 #endif
 }
 
-void QFTSchedulerStatic::assign_gates(QFTRouter& router) {
+void Static::assign_gates(QFTRouter& router) {
     std::cout << "Static scheduler running..." << std::endl;
 
 #ifdef DEBUG
@@ -73,7 +75,7 @@ void QFTSchedulerStatic::assign_gates(QFTRouter& router) {
 #endif
 }
 
-void QFTSchedulerOnion::assign_gates(QFTRouter& router) {
+void Onion::assign_gates(QFTRouter& router) {
     using namespace std;
     cout << "Onion scheduler running..." << endl;
 
@@ -111,7 +113,7 @@ void QFTSchedulerOnion::assign_gates(QFTRouter& router) {
     assert(topo_->get_avail_gates().empty());
 }
 
-void QFTSchedulerGreedy::assign_gates(QFTRouter& router) {
+void Greedy::assign_gates(QFTRouter& router) {
     std::cout << "Greedy scheduler running..." << std::endl;
 
 #ifdef DEBUG
@@ -157,20 +159,19 @@ void QFTSchedulerGreedy::assign_gates(QFTRouter& router) {
 #endif
 }
 
-std::unique_ptr<QFTScheduler> get_scheduler(
-    std::string& typ,
-    std::unique_ptr<topo::Topology>&& topo,
-    json& conf) {
+std::unique_ptr<Base> scheduler::get(const std::string& typ,
+                                     std::unique_ptr<topo::Topology>&& topo,
+                                     json& conf) {
     if (typ == "random") {
-        return std::make_unique<QFTSchedulerRandom>(std::move(topo));
+        return std::make_unique<Random>(std::move(topo));
     } else if (typ == "onion") {
-        return std::make_unique<QFTSchedulerOnion>(std::move(topo), conf);
+        return std::make_unique<Onion>(std::move(topo), conf);
     } else if (typ == "static") {
-        return std::make_unique<QFTSchedulerStatic>(std::move(topo));
+        return std::make_unique<Static>(std::move(topo));
     } else if (typ == "greedy") {
-        return std::make_unique<QFTSchedulerGreedy>(std::move(topo), conf);
+        return std::make_unique<Greedy>(std::move(topo), conf);
     } else if (typ == "old") {
-        return std::make_unique<QFTScheduler>(std::move(topo));
+        return std::make_unique<Base>(std::move(topo));
     } else {
         std::cerr << typ << " is not a scheduler type" << std::endl;
         abort();
