@@ -4,7 +4,6 @@
 #include <chrono>  // std::chrono::system_clock
 #include <iostream>
 #include <random>  // std::default_random_engine
-#include <span>
 #include <string>
 #include <tuple>
 #include <vector>

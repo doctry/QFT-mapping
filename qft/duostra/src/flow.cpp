@@ -1,7 +1,7 @@
 #include "flow.hpp"
 
 unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
-    if(!io) {
+    if (!io) {
         std::cout.setstate(std::ios_base::failbit);
     }
     // create topology
@@ -52,7 +52,7 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     // place
     std::cout << "creating placer..." << std::endl;
     if (assign.size() == 0) {
-    std::string placer_typ = json_get<std::string>(conf_mapper, "placer");
+        std::string placer_typ = json_get<std::string>(conf_mapper, "placer");
         QFTPlacer placer;
         assign = placer.place(device, placer_typ);
     }
@@ -62,8 +62,7 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     json greedy_conf = json_get<json>(conf_mapper, "greedy_conf");
     std::cout << "creating scheduler..." << std::endl;
     std::string scheduler_typ = json_get<std::string>(conf_mapper, "scheduler");
-    std::unique_ptr<QFTScheduler> scheduler =
-        get_scheduler(scheduler_typ, *topo, greedy_conf);
+    auto scheduler = get_scheduler(scheduler_typ, *topo, greedy_conf);
 
     // router
     std::cout << "creating router..." << std::endl;
@@ -98,8 +97,8 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
         scheduler->write_assembly(std::cout);
     }
 
-    std::cout << "final cost:  " << scheduler->get_final_cost() << "\n";
-    std::cout << "total time:  " << scheduler->get_total_time() << "\n";
+    std::cout << "final cost: " << scheduler->get_final_cost() << "\n";
+    std::cout << "total time: " << scheduler->get_total_time() << "\n";
     std::cout << "total swaps: " << scheduler->get_swap_num() << "\n";
 
     std::cout.clear();
