@@ -73,11 +73,11 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     std::string cost = (scheduler_typ == "greedy")
                            ? json_get<std::string>(conf_mapper, "cost")
                            : "start";
-    QFTRouter router(device, router_typ, cost, orient);
+    auto router = std::make_unique<QFTRouter>(device, router_typ, cost, orient);
 
     // routing
     std::cout << "routing..." << std::endl;
-    sched->assign_gates(router);
+    sched->assign_gates(std::move(router));
 
     // dump
     bool dump = json_get<bool>(conf, "dump");

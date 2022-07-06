@@ -1,22 +1,22 @@
 #include "qft_mapper.hpp"
 
-using namespace scheduler;
+namespace scheduler {
 
-void Base::assign_gates(QFTRouter& router) {
+void Base::assign_gates(std::unique_ptr<QFTRouter> router) {
     std::cout << "Default scheduler running..." << std::endl;
 
     Tqdm bar{topo_->get_num_gates()};
     for (unsigned i = 0; i < topo_->get_num_gates(); ++i) {
         bar.add();
         topo::Gate& gate = topo_->get_gate(i);
-        std::vector<device::Operation> ops = router.assign_gate(gate);
+        auto ops = router->assign_gate(gate);
         ops_.insert(ops_.end(), ops.begin(),
                     ops.end());  // append operations to the back
         topo_->update_avail_gates(i);
     }
 }
 
-void Random::assign_gates(QFTRouter& router) {
+void Random::assign_gates(std::unique_ptr<QFTRouter> router) {
     std::cout << "Random scheduler running..." << std::endl;
 
 #ifdef DEBUG
@@ -32,7 +32,7 @@ void Random::assign_gates(QFTRouter& router) {
 #endif
         unsigned choose = rand() % wait_list.size();
         topo::Gate& gate = topo_->get_gate(wait_list[choose]);
-        std::vector<device::Operation> ops = router.assign_gate(gate);
+        auto ops = router->assign_gate(gate);
         ops_.insert(ops_.end(), ops.begin(),
                     ops.end());  // append operations to the back
 #ifdef DEBUG
@@ -46,7 +46,7 @@ void Random::assign_gates(QFTRouter& router) {
 #endif
 }
 
-void Static::assign_gates(QFTRouter& router) {
+void Static::assign_gates(std::unique_ptr<QFTRouter> router) {
     std::cout << "Static scheduler running..." << std::endl;
 
 #ifdef DEBUG
@@ -57,12 +57,12 @@ void Static::assign_gates(QFTRouter& router) {
          bar.add()) {
         auto& wait_list = topo_->get_avail_gates();
         assert(wait_list.size() > 0);
-        unsigned gate_idx = get_executable(router, wait_list);
+        unsigned gate_idx = get_executable(*router, wait_list);
         if (gate_idx == UINT_MAX) {
             gate_idx = wait_list[0];
         }
         topo::Gate& gate = topo_->get_gate(gate_idx);
-        std::vector<device::Operation> ops = router.assign_gate(gate);
+        auto ops = router->assign_gate(gate);
         ops_.insert(ops_.end(), ops.begin(),
                     ops.end());  // append operations to the back
 #ifdef DEBUG
@@ -75,7 +75,7 @@ void Static::assign_gates(QFTRouter& router) {
 #endif
 }
 
-void Onion::assign_gates(QFTRouter& router) {
+void Onion::assign_gates(std::unique_ptr<QFTRouter> router) {
     using namespace std;
     cout << "Onion scheduler running..." << endl;
 
@@ -103,7 +103,7 @@ void Onion::assign_gates(QFTRouter& router) {
             bar.add();
 
             auto& gate = topo_->get_gate(idx);
-            auto ops = router.assign_gate(gate);
+            auto ops = router->assign_gate(gate);
             ops_.insert(ops_.end(), ops.begin(), ops.end());
         }
 
@@ -113,27 +113,26 @@ void Onion::assign_gates(QFTRouter& router) {
     assert(topo_->get_avail_gates().empty());
 }
 
-void Greedy::assign_gates(QFTRouter& router) {
+void Greedy::assign_gates(std::unique_ptr<QFTRouter> router) {
     std::cout << "Greedy scheduler running..." << std::endl;
 
 #ifdef DEBUG
     unsigned count = 0;
 #endif
-    auto topo_wrap =
-        TopologyWrapperWithCandidate(topo_.get(), _conf.candidates);
+    auto topo_wrap = TopologyWrapperWithCandidate(*topo_, _conf.candidates);
 
     for (Tqdm bar{topo_->get_num_gates()}; !topo_wrap.get_avail_gates().empty();
          bar.add()) {
         auto wait_list = topo_wrap.get_avail_gates();
         assert(wait_list.size() > 0);
 
-        unsigned gate_idx = get_executable(router, wait_list);
+        unsigned gate_idx = get_executable(*router, wait_list);
         if (gate_idx == UINT_MAX) {
             std::vector<unsigned> cost_list(wait_list.size(), 0);
             for (unsigned i = 0; i < wait_list.size(); ++i) {
                 topo::Gate& gate = topo_->get_gate(wait_list[i]);
-                unsigned cost = router.get_gate_cost(gate, _conf.avail_typ,
-                                                     _conf.apsp_coef);
+                unsigned cost = router->get_gate_cost(gate, _conf.avail_typ,
+                                                      _conf.apsp_coef);
                 cost_list[i] = cost;
             }
             auto list_idx =
@@ -145,7 +144,7 @@ void Greedy::assign_gates(QFTRouter& router) {
             gate_idx = wait_list[list_idx];
         }
         topo::Gate& gate = topo_->get_gate(gate_idx);
-        std::vector<device::Operation> ops = router.assign_gate(gate);
+        auto ops = router->assign_gate(gate);
         ops_.insert(ops_.end(), ops.begin(),
                     ops.end());  // append operations to the back
 #ifdef DEBUG
@@ -159,9 +158,11 @@ void Greedy::assign_gates(QFTRouter& router) {
 #endif
 }
 
-std::unique_ptr<Base> scheduler::get(const std::string& typ,
-                                     std::unique_ptr<topo::Topology>&& topo,
-                                     json& conf) {
+void BlockadeRevitalizer::assign_gates(std::unique_ptr<QFTRouter> router) {}
+
+std::unique_ptr<Base> get(const std::string& typ,
+                          std::unique_ptr<topo::Topology>&& topo,
+                          json& conf) {
     if (typ == "random") {
         return std::make_unique<Random>(std::move(topo));
     } else if (typ == "onion") {
@@ -170,6 +171,8 @@ std::unique_ptr<Base> scheduler::get(const std::string& typ,
         return std::make_unique<Static>(std::move(topo));
     } else if (typ == "greedy") {
         return std::make_unique<Greedy>(std::move(topo), conf);
+    } else if (typ == "blkr") {
+        return std::make_unique<BlockadeRevitalizer>(std::move(topo), conf);
     } else if (typ == "old") {
         return std::make_unique<Base>(std::move(topo));
     } else {
@@ -177,3 +180,5 @@ std::unique_ptr<Base> scheduler::get(const std::string& typ,
         abort();
     }
 }
+
+}  // namespace scheduler

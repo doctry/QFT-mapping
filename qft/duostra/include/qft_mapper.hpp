@@ -15,11 +15,11 @@
 
 class TopologyWrapperWithCandidate {
    public:
-    TopologyWrapperWithCandidate(const topo::Topology* topo, unsigned candidate)
+    TopologyWrapperWithCandidate(const topo::Topology& topo, unsigned candidate)
         : topo_(topo), candidate_(candidate) {}
 
     std::vector<unsigned> get_avail_gates() const {
-        auto& gates = topo_->get_avail_gates();
+        auto& gates = topo_.get_avail_gates();
 
         if (gates.size() < candidate_) {
             return gates;
@@ -32,7 +32,7 @@ class TopologyWrapperWithCandidate {
     }
 
    private:
-    const topo::Topology* topo_;
+    const topo::Topology& topo_;
     unsigned candidate_;
 };
 
@@ -163,7 +163,15 @@ class QFTRouter {
             _topo2device[device.get_qubit(i).get_topo_qubit()] = i;
         }
     }
-    QFTRouter(const QFTRouter& other) = delete;
+
+    QFTRouter(const QFTRouter& other)
+        : _greedy_type(other._greedy_type),
+          _duostra(other._duostra),
+          _orient(other._orient),
+          _device(other._device),
+          _topo2device(other._topo2device),
+          _apsp(other._apsp) {}
+
     QFTRouter(QFTRouter&& other)
         : _greedy_type(other._greedy_type),
           _duostra(other._duostra),
@@ -293,7 +301,7 @@ class Base {
     Base(Base&& other) = delete;
     virtual ~Base() {}
 
-    virtual void assign_gates(QFTRouter& router);
+    virtual void assign_gates(std::unique_ptr<QFTRouter> router);
 
     void write_assembly(std::ostream& out) {
         std::sort(ops_.begin(), ops_.end(), device::op_order);
@@ -383,7 +391,7 @@ class Random : public Base {
     Random(Random&& other) = delete;
     ~Random() override {}
 
-    void assign_gates(QFTRouter& router) override;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 };
 
 class Static : public Base {
@@ -393,7 +401,7 @@ class Static : public Base {
     Static(Static&& other) = delete;
     ~Static() override {}
 
-    void assign_gates(QFTRouter& router) override;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 };
 
 class Onion : public Base {
@@ -406,7 +414,7 @@ class Onion : public Base {
     Onion(Onion&& other) = delete;
     ~Onion() override {}
 
-    void assign_gates(QFTRouter& router) override;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 
    private:
     bool first_mode_;
@@ -458,7 +466,7 @@ class Greedy : public Base {
     Greedy(Greedy&& other) = delete;
     ~Greedy() override {}
 
-    void assign_gates(QFTRouter& router) override;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 
    private:
     Conf _conf;
@@ -471,10 +479,11 @@ class BlockadeRevitalizer : public Base {
        private:
     };
 
-    BlockadeRevitalizer(std::unique_ptr<topo::Topology>&& topo, size_t depth)
-        : Base(std::move(topo)), depth(depth) {}
+    BlockadeRevitalizer(std::unique_ptr<topo::Topology>&& topo, json& conf)
+        : Base(std::move(topo)), depth(json_get<int>(conf, "depth")) {}
 
     const size_t depth;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 
    private:
     friend class Tree;
