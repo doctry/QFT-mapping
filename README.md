@@ -13,10 +13,11 @@ wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps
 unzip libtorch-shared-with-deps-latest.zip
 
 # Compile cmake
+git submodule update --init --recursive
 mkdir QFT-mapping/qft/duostra/build
 cd QFT-mapping/qft/duostra/build
 cmake -DCMAKE_PREFIX_PATH=<Path to libtorch> -DCMAKE_BUILD_TYPE=<Release|Debug> ..
-cmake --build . --config Release
+cmake --build .
 
 # Run
 ./Duostra ../config.json
