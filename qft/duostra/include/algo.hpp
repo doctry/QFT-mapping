@@ -10,7 +10,7 @@
 namespace topo {
 class AlgoTopology : public Topology {
   public:
-    AlgoTopology(std::fstream &f) { parse(f); }
+    AlgoTopology(std::fstream &f, bool IBMGate) { parse(f, IBMGate); }
     AlgoTopology(const AlgoTopology &other) = delete;
     AlgoTopology(AlgoTopology &&other)
         : _gates(std::move(other._gates)),
@@ -18,7 +18,7 @@ class AlgoTopology : public Topology {
 
     ~AlgoTopology() {}
 
-    void parse(std::fstream &);
+    void parse(std::fstream &, bool IBMGate);
 
     unsigned get_num_qubits() const override { return _num; }
     unsigned get_num_gates() const override { return _gates.size(); }

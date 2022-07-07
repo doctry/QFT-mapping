@@ -22,7 +22,8 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
             std::cerr << "There is no file" << algo_filename << std::endl;
             abort();
         }
-        topo = std::make_unique<topo::AlgoTopology>(algo_file);
+        bool onlyIBM = json_get<unsigned>(conf, "IBM_Gate");
+        topo = std::make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
     }
 
     // create device
@@ -143,7 +144,8 @@ unsigned topo_num(json& conf) {
             std::cerr << "There is no file" << algo_filename << std::endl;
             abort();
         }
-        topo = std::make_unique<topo::AlgoTopology>(algo_file);
+        bool onlyIBM = json_get<unsigned>(conf, "IBM_Gate");
+        topo = std::make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
     }
 
     return topo->get_num_qubits();

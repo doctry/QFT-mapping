@@ -183,7 +183,7 @@ void topo::AlgoTopology::update_avail_gates(unsigned executed) {
     }
 }
 
-void topo::AlgoTopology::parse(fstream& qasmFile) {
+void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
     string str;
     for (int i = 0; i < 6; i++)
         qasmFile >> str;
@@ -195,16 +195,20 @@ void topo::AlgoTopology::parse(fstream& qasmFile) {
         lastCnotWith.push_back(init);
     }
     unsigned gateId = 0;
-    vector<string> singleList{"h", "t", "x", "tdg", "sx", "s", "rz", "i"};
+    vector<string> singleList{"x", "sx", "s", "rz", "i"};
+    if (!IBMGate){
+        singleList.push_back("h");
+        singleList.push_back("t");
+        singleList.push_back("tdg");
+    }
     while (qasmFile >> str) {
         string space_delimiter = " ";
         string type = str.substr(0, str.find(" "));
         type = str.substr(0, str.find("("));
         string isCX = type.substr(0, 2);
-
-        // cout << type<<endl;
-
-        if (isCX != "cx") {
+        string isCRZ = type.substr(0, 3);
+        
+        if (isCX != "cx" && isCRZ != "crz") {
             if (find(begin(singleList), end(singleList), type) !=
                 end(singleList)) {
                 qasmFile >> str;
@@ -225,16 +229,23 @@ void topo::AlgoTopology::parse(fstream& qasmFile) {
                 gateId++;
             } else {
                 if (type != "creg" && type != "qreg") {
-                    cerr << "Unseen Gate " << type << endl;
+                    if (IBMGate) {
+                       cerr << "IBM machine does not support "<< type  << endl; 
+                    }
+                    else
+                        cerr << "Unseen Gate " << type << endl;
                     assert(true);
                     exit(0);
                 } else
                     qasmFile >> str;
             }
-            // qasmFile >> str;
         } else {
+            if((IBMGate) && (isCRZ == "crz")){
+                cerr << "IBM machine does not support crz" << endl;
+                assert(true);
+                exit(0);
+            }
             qasmFile >> str;
-            // cout << str << endl;
             string delimiter = ",";
             string token = str.substr(0, str.find(delimiter));
             string qubitId = token.substr(2, token.size() - 3);
@@ -243,19 +254,6 @@ void topo::AlgoTopology::parse(fstream& qasmFile) {
                                str.size() - str.find(delimiter) - 2);
             qubitId = token.substr(2, token.size() - 3);
             unsigned q2 = stoul(qubitId);
-
-            // if (lastCnotWith[q1].first == q2 && lastCnotWith[q2].first == q1)
-            // { Assert when Three Consecutive CNOTs
-            // assert(lastCnotWith[q1].second < 2 &&
-            //        lastCnotWith[q2].second < 2);
-
-            // lastCnotWith[q1].second++;
-            // lastCnotWith[q2].second++;
-            // } else {
-            // lastCnotWith[q1].first = q2;
-            // lastCnotWith[q2].first = q1;
-            // lastCnotWith[q1].second = 1;
-            // lastCnotWith[q2].second = 1;
 
             tuple<unsigned, unsigned> temp(q1, q2);
             topo::Gate tempGate(gateId, Operator::CX, temp);
@@ -275,7 +273,6 @@ void topo::AlgoTopology::parse(fstream& qasmFile) {
             _last_gate[q2] = gateId;
             _gates.push_back(move(tempGate));
             gateId++;
-            // }
         }
     }
     for (size_t i = 0; i < _gates.size(); i++) {
