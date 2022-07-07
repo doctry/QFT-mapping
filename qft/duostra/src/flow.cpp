@@ -1,5 +1,7 @@
 #include "flow.hpp"
 
+#include "qft_mapper.hpp"
+
 unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     if (!io) {
         std::cout.setstate(std::ios_base::failbit);
@@ -63,7 +65,7 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     json greedy_conf = json_get<json>(conf_mapper, "greedy_conf");
     std::cout << "creating scheduler..." << std::endl;
     std::string scheduler_typ = json_get<std::string>(conf_mapper, "scheduler");
-    auto scheduler = get_scheduler(scheduler_typ, std::move(topo), greedy_conf);
+    auto sched = scheduler::get(scheduler_typ, std::move(topo), greedy_conf);
 
     // router
     std::cout << "creating router..." << std::endl;
@@ -72,11 +74,11 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     std::string cost = (scheduler_typ == "greedy")
                            ? json_get<std::string>(conf_mapper, "cost")
                            : "start";
-    QFTRouter router(device, router_typ, cost, orient);
+    auto router = std::make_unique<QFTRouter>(device, router_typ, cost, orient);
 
     // routing
     std::cout << "routing..." << std::endl;
-    scheduler->assign_gates(router);
+    sched->assign_gates(std::move(router));
 
     // dump
     bool dump = json_get<bool>(conf, "dump");
@@ -88,22 +90,22 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
         // device.write_assembly(out_file);
         json jj;
         jj["initial"] = assign;
-        scheduler->to_json(jj);
-        jj["final_cost"] = scheduler->get_final_cost();
+        sched->to_json(jj);
+        jj["final_cost"] = sched->get_final_cost();
         out_file << jj;
         // out_file << "final_cost: " << device.get_final_cost() << "\n";
     }
 
     if (json_get<bool>(conf, "stdio")) {
-        scheduler->write_assembly(std::cout);
+        sched->write_assembly(std::cout);
     }
 
-    std::cout << "final cost: " << scheduler->get_final_cost() << "\n";
-    std::cout << "total time: " << scheduler->get_total_time() << "\n";
-    std::cout << "total swaps: " << scheduler->get_swap_num() << "\n";
+    std::cout << "final cost: " << sched->get_final_cost() << "\n";
+    std::cout << "total time: " << sched->get_total_time() << "\n";
+    std::cout << "total swaps: " << sched->get_swap_num() << "\n";
 
     std::cout.clear();
-    return scheduler->get_final_cost();
+    return sched->get_final_cost();
 }
 
 unsigned device_num(json& conf) {

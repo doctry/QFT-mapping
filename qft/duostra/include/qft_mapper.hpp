@@ -15,11 +15,11 @@
 
 class TopologyWrapperWithCandidate {
    public:
-    TopologyWrapperWithCandidate(const topo::Topology* topo, unsigned candidate)
+    TopologyWrapperWithCandidate(const topo::Topology& topo, unsigned candidate)
         : topo_(topo), candidate_(candidate) {}
 
     std::vector<unsigned> get_avail_gates() const {
-        auto& gates = topo_->get_avail_gates();
+        auto& gates = topo_.get_avail_gates();
 
         if (gates.size() < candidate_) {
             return gates;
@@ -32,7 +32,7 @@ class TopologyWrapperWithCandidate {
     }
 
    private:
-    const topo::Topology* topo_;
+    const topo::Topology& topo_;
     unsigned candidate_;
 };
 
@@ -163,7 +163,15 @@ class QFTRouter {
             _topo2device[device.get_qubit(i).get_topo_qubit()] = i;
         }
     }
-    QFTRouter(const QFTRouter& other) = delete;
+
+    QFTRouter(const QFTRouter& other)
+        : _greedy_type(other._greedy_type),
+          _duostra(other._duostra),
+          _orient(other._orient),
+          _device(other._device),
+          _topo2device(other._topo2device),
+          _apsp(other._apsp) {}
+
     QFTRouter(QFTRouter&& other)
         : _greedy_type(other._greedy_type),
           _duostra(other._duostra),
@@ -285,15 +293,15 @@ class QFTRouter {
     bool _apsp;
 };
 
-class QFTScheduler {
+namespace scheduler {
+class Base {
    public:
-    QFTScheduler(std::unique_ptr<topo::Topology>&& topo)
-        : topo_(std::move(topo)) {}
-    QFTScheduler(const QFTScheduler& other) = delete;
-    QFTScheduler(QFTScheduler&& other) = delete;
-    virtual ~QFTScheduler() {}
+    Base(std::unique_ptr<topo::Topology>&& topo) : topo_(std::move(topo)) {}
+    Base(const Base& other) = delete;
+    Base(Base&& other) = delete;
+    virtual ~Base() {}
 
-    virtual void assign_gates(QFTRouter& router);
+    virtual void assign_gates(std::unique_ptr<QFTRouter> router);
 
     void write_assembly(std::ostream& out) {
         std::sort(ops_.begin(), ops_.end(), device::op_order);
@@ -376,50 +384,48 @@ class QFTScheduler {
     }
 };
 
-class QFTSchedulerRandom : public QFTScheduler {
+class Random : public Base {
    public:
-    QFTSchedulerRandom(std::unique_ptr<topo::Topology>&& topo)
-        : QFTScheduler(std::move(topo)) {}
-    QFTSchedulerRandom(const QFTSchedulerRandom& other) = delete;
-    QFTSchedulerRandom(QFTSchedulerRandom&& other) = delete;
-    ~QFTSchedulerRandom() override {}
+    Random(std::unique_ptr<topo::Topology>&& topo) : Base(std::move(topo)) {}
+    Random(const Random& other) = delete;
+    Random(Random&& other) = delete;
+    ~Random() override {}
 
-    void assign_gates(QFTRouter& router) override;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 };
 
-class QFTSchedulerStatic : public QFTScheduler {
+class Static : public Base {
    public:
-    QFTSchedulerStatic(std::unique_ptr<topo::Topology>&& topo)
-        : QFTScheduler(std::move(topo)) {}
-    QFTSchedulerStatic(const QFTSchedulerStatic& other) = delete;
-    QFTSchedulerStatic(QFTSchedulerStatic&& other) = delete;
-    ~QFTSchedulerStatic() override {}
+    Static(std::unique_ptr<topo::Topology>&& topo) : Base(std::move(topo)) {}
+    Static(const Static& other) = delete;
+    Static(Static&& other) = delete;
+    ~Static() override {}
 
-    void assign_gates(QFTRouter& router) override;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 };
 
-class QFTSchedulerOnion : public QFTScheduler {
+class Onion : public Base {
    public:
-    QFTSchedulerOnion(std::unique_ptr<topo::Topology>&& topo, json& conf)
-        : QFTScheduler(std::move(topo)),
+    Onion(std::unique_ptr<topo::Topology>&& topo, json& conf)
+        : Base(std::move(topo)),
           first_mode_(json_get<bool>(conf, "layer_from_first")),
           cost_typ_(json_get<bool>(conf, "cost")) {}
-    QFTSchedulerOnion(const QFTSchedulerOnion& other) = delete;
-    QFTSchedulerOnion(QFTSchedulerOnion&& other) = delete;
-    ~QFTSchedulerOnion() override {}
+    Onion(const Onion& other) = delete;
+    Onion(Onion&& other) = delete;
+    ~Onion() override {}
 
-    void assign_gates(QFTRouter& router) override;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 
    private:
     bool first_mode_;
     bool cost_typ_;  // true is max, false is min
 };
 
-class QFTSchedulerGreedy : public QFTScheduler {
+class Greedy : public Base {
    public:
-    class GreedyConf {
+    class Conf {
        public:
-        GreedyConf()
+        Conf()
             : avail_typ(true),
               cost_typ(false),
               candidates(UINT_MAX),
@@ -428,8 +434,8 @@ class QFTSchedulerGreedy : public QFTScheduler {
         bool cost_typ;   // true is max, false is min
         unsigned candidates, apsp_coef;
     };
-    QFTSchedulerGreedy(std::unique_ptr<topo::Topology>&& topo, json& conf)
-        : QFTScheduler(std::move(topo)) {
+    Greedy(std::unique_ptr<topo::Topology>&& topo, json& conf)
+        : Base(std::move(topo)) {
         int candidates = json_get<int>(conf, "candidates");
         if (candidates > 0) {
             _conf.candidates = candidates;
@@ -456,35 +462,34 @@ class QFTSchedulerGreedy : public QFTScheduler {
             abort();
         }
     }
-    QFTSchedulerGreedy(const QFTSchedulerGreedy& other) = delete;
-    QFTSchedulerGreedy(QFTSchedulerGreedy&& other) = delete;
-    ~QFTSchedulerGreedy() override {}
+    Greedy(const Greedy& other) = delete;
+    Greedy(Greedy&& other) = delete;
+    ~Greedy() override {}
 
-    void assign_gates(QFTRouter& router) override;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 
    private:
-    GreedyConf _conf;
+    Conf _conf;
 };
 
-class QFTSchedulerBlockadeRevitalizer : public QFTScheduler {
+class BlockadeRevitalizer : public Base {
    public:
     class Tree {
        public:
        private:
     };
 
-    QFTSchedulerBlockadeRevitalizer(std::unique_ptr<topo::Topology>&& topo,
-                                    size_t depth)
-        : QFTScheduler(std::move(topo)), depth(depth) {}
+    BlockadeRevitalizer(std::unique_ptr<topo::Topology>&& topo, json& conf)
+        : Base(std::move(topo)), depth(json_get<int>(conf, "depth")) {}
 
     const size_t depth;
+    void assign_gates(std::unique_ptr<QFTRouter> router) override;
 
    private:
     friend class Tree;
-    friend class QFTSchedulerGreedy::GreedyConf;
 };
 
-std::unique_ptr<QFTScheduler> get_scheduler(
-    std::string& typ,
-    std::unique_ptr<topo::Topology>&& topo,
-    json& conf);
+std::unique_ptr<Base> get(const std::string& typ,
+                          std::unique_ptr<topo::Topology>&& topo,
+                          json& conf);
+}  // namespace scheduler

@@ -11,7 +11,8 @@
 namespace topo {
 class QFTTopology : public Topology {
    public:
-    QFTTopology(unsigned num) : _num_qubits(num) {
+    QFTTopology(unsigned num) {
+        _num_qubits = num;
         assert(num > 0);
 
         unsigned count = 0;
@@ -32,8 +33,10 @@ class QFTTopology : public Topology {
         _avail_gates.push_back(0);
     }
     QFTTopology(const QFTTopology& other) = delete;
-    QFTTopology(QFTTopology&& other)
-        : _gates(std::move(other._gates)), _avail_gates(other._avail_gates) {}
+    QFTTopology(QFTTopology&& other) {
+        _gates = std::move(other._gates);
+        _avail_gates = std::move(other._avail_gates);
+    }
     ~QFTTopology() {}
 
     unsigned get_num_qubits() const override { return _num_qubits; }
@@ -82,10 +85,5 @@ class QFTTopology : public Topology {
         }
 #endif
     }
-
-   private:
-    unsigned _num_qubits;
-    std::vector<Gate> _gates;
-    std::vector<unsigned> _avail_gates;
 };
 };  // namespace topo

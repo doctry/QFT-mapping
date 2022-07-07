@@ -161,6 +161,28 @@ unordered_map<unsigned, vector<unsigned>> Topology::gate_by_dist_to_last()
     cout << "Dist to last done\n";
     return gate_by_generation(dist);
 }
+
+unordered_map<unsigned, vector<unsigned>> Topology::gate_by_generation(
+    const unordered_map<unsigned, unsigned>& map) {
+    unordered_map<unsigned, vector<unsigned>> gen_map = {};
+
+    for (auto pair : map) {
+        unsigned gate_id = pair.first;
+        unsigned generation = pair.second;
+
+        gen_map[generation].push_back(gate_id);
+    }
+
+    size_t count = 0;
+    for (const auto& gen_ids : gen_map) {
+        count += gen_ids.second.size();
+    }
+    assert(count == map.size() &&
+           "Resulting map doesn't have the same size as original.");
+
+    return gen_map;
+}
+
 }  // namespace topo
 
 void topo::AlgoTopology::update_avail_gates(unsigned executed) {
@@ -187,10 +209,11 @@ void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
     string str;
     for (int i = 0; i < 6; i++)
         qasmFile >> str;
-    _num = stoi(str.substr(str.find("[") + 1, str.size() - str.find("[") - 3));
+    _num_qubits =
+        stoi(str.substr(str.find("[") + 1, str.size() - str.find("[") - 3));
     vector<pair<unsigned, unsigned>> lastCnotWith;
     pair<unsigned, unsigned> init(-1, 0);
-    for (size_t i = 0; i < _num; i++) {
+    for (size_t i = 0; i < _num_qubits; i++) {
         _last_gate.push_back(-1);
         lastCnotWith.push_back(init);
     }
