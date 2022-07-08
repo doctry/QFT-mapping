@@ -158,15 +158,15 @@ void Greedy::assign_gates(std::unique_ptr<QFTRouter> router) {
 #endif
 }
 
-void BlockadeRevitalizer::assign_gates(std::unique_ptr<QFTRouter> router) {
-    topo::DAG dag = topo_->dag();
+void Dora::assign_gates(std::unique_ptr<QFTRouter> router) {
     // generate all topo sorts under a particular depth
 
     // apply those routes
+
     // execute assign_gate interatively
 }
 
-void BlockadeRevitalizer::assign_one_gate(QFTRouter router) {}
+void Dora::assign_one_gate(QFTRouter router) {}
 
 std::unique_ptr<Base> get(const std::string& typ,
                           std::unique_ptr<topo::Topology>&& topo,
@@ -180,7 +180,7 @@ std::unique_ptr<Base> get(const std::string& typ,
     } else if (typ == "greedy") {
         return std::make_unique<Greedy>(std::move(topo), conf);
     } else if (typ == "blkr") {
-        return std::make_unique<BlockadeRevitalizer>(std::move(topo), conf);
+        return std::make_unique<Dora>(std::move(topo), conf);
     } else if (typ == "old") {
         return std::make_unique<Base>(std::move(topo));
     } else {

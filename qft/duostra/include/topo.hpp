@@ -4,6 +4,7 @@
 #include <set>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "operator.hpp"
 
@@ -75,18 +76,18 @@ class DAGNode {
    public:
     DAGNode() : parents_({}), children_({}) {}
 
-    DAGNode(std::set<size_t> parents, std::set<size_t> children)
+    DAGNode(set<size_t> parents, set<size_t> children)
         : parents_(parents), children_(children) {}
 
-    std::set<size_t>& parents() { return parents_; }
-    const std::set<size_t>& parents() const { return parents_; }
+    set<size_t>& parents() { return parents_; }
+    const set<size_t>& parents() const { return parents_; }
 
-    std::set<size_t>& children() { return children_; }
-    const std::set<size_t>& children() const { return children_; }
+    set<size_t>& children() { return children_; }
+    const set<size_t>& children() const { return children_; }
 
    private:
-    std::set<size_t> parents_;
-    std::set<size_t> children_;
+    set<size_t> parents_;
+    set<size_t> children_;
 };
 
 class DAG {
@@ -94,44 +95,43 @@ class DAG {
     DAG(size_t num_nodes) {
         for (size_t idx = 0; idx < num_nodes; ++idx) {
             nodes_[idx] = DAGNode();
+            heads_.insert(idx);
         }
     }
 
     size_t num_nodes() const { return nodes_.size(); }
-    std::unordered_map<size_t, DAGNode>& nodes() { return nodes_; }
-    const std::unordered_map<size_t, DAGNode>& nodes() const { return nodes_; }
 
+    unordered_map<size_t, DAGNode>& nodes() { return nodes_; }
+    const unordered_map<size_t, DAGNode>& nodes() const { return nodes_; }
     DAGNode& nodes(size_t idx) { return nodes_.at(idx); }
     const DAGNode& nodes(size_t idx) const { return nodes_.at(idx); }
 
-    void link(size_t parent, size_t child) {
-        nodes_[parent].children().insert(child);
-        nodes_[child].parents().insert(parent);
-    }
+    void link(size_t parent, size_t child);
+    size_t remove(size_t idx);
 
-    size_t remove(size_t idx) {
-        DAGNode node{nodes_[idx]};
-
-        for (size_t child : node.children()) {
-            nodes_[child].parents().erase(idx);
-        }
-
-        nodes_.erase(idx);
-    }
+    const unordered_set<size_t>& heads() const { return heads_; }
 
    private:
-    std::unordered_map<size_t, DAGNode> nodes_;
+    unordered_map<size_t, DAGNode> nodes_;
+    unordered_set<size_t> heads_;
 };
 
 class Topology {
    public:
     Topology() : _num_qubits(0), _gates({}), _avail_gates({}) {}
+
+    Topology(const Topology& other)
+        : _num_qubits(other._num_qubits),
+          _gates(other._gates),
+          _avail_gates(other._avail_gates) {}
+
     Topology(Topology&& other)
         : _num_qubits(other._num_qubits),
           _gates(std::move(other._gates)),
           _avail_gates(std::move(other._avail_gates)) {}
 
     virtual ~Topology() {}
+
     virtual unsigned get_num_qubits() const = 0;
     virtual unsigned get_num_gates() const = 0;
     virtual Gate& get_gate(unsigned i) = 0;
@@ -140,6 +140,7 @@ class Topology {
     }
     virtual const vector<unsigned>& get_avail_gates() const = 0;
     virtual void update_avail_gates(unsigned executed) = 0;
+    virtual unique_ptr<Topology> clone() const = 0;
 
     vector<unsigned> get_first_gates() const;
     vector<unsigned> get_last_gates() const;
@@ -154,8 +155,8 @@ class Topology {
 
    protected:
     unsigned _num_qubits;
-    std::vector<Gate> _gates;
-    std::vector<unsigned> _avail_gates;
+    vector<Gate> _gates;
+    vector<unsigned> _avail_gates;
 
     static unordered_map<unsigned, vector<unsigned>> gate_by_generation(
         const unordered_map<unsigned, unsigned>& map);

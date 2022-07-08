@@ -472,9 +472,9 @@ class Greedy : public Base {
     Conf _conf;
 };
 
-class BlockadeRevitalizer : public Base {
+class Dora : public Base {
    public:
-    BlockadeRevitalizer(std::unique_ptr<topo::Topology>&& topo, json& conf)
+    Dora(std::unique_ptr<topo::Topology>&& topo, json& conf)
         : Base(std::move(topo)), depth(json_get<int>(conf, "depth")) {}
 
     const size_t depth;

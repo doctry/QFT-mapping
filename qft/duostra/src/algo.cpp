@@ -184,6 +184,29 @@ unordered_map<unsigned, vector<unsigned>> Topology::gate_by_generation(
     return gen_map;
 }
 
+void DAG::link(size_t parent, size_t child) {
+    nodes_[parent].children().insert(child);
+    nodes_[child].parents().insert(parent);
+    heads_.erase(child);
+}
+
+size_t DAG::remove(size_t idx) {
+    DAGNode node{nodes_[idx]};
+
+    assert(node.parents().size() == 0);
+
+    for (size_t child : node.children()) {
+        nodes_[child].parents().erase(idx);
+
+        if (nodes_[child].parents().size() == 0) {
+            heads_.insert(child);
+        }
+    }
+
+    heads_.erase(idx);
+    nodes_.erase(idx);
+}
+
 DAG Topology::dag() const {
     const size_t num_gates = get_num_gates();
     DAG dag{num_gates};
@@ -218,9 +241,7 @@ DAG Topology::dag() const {
     return dag;
 }
 
-}  // namespace topo
-
-void topo::AlgoTopology::update_avail_gates(unsigned executed) {
+void AlgoTopology::update_avail_gates(unsigned executed) {
     assert(find(_avail_gates.begin(), _avail_gates.end(), executed) !=
            _avail_gates.end());
     Gate& g_exec = _gates[executed];
@@ -240,7 +261,7 @@ void topo::AlgoTopology::update_avail_gates(unsigned executed) {
     }
 }
 
-void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
+void AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
     string str;
     for (int i = 0; i < 6; i++)
         qasmFile >> str;
@@ -254,7 +275,7 @@ void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
     }
     unsigned gateId = 0;
     vector<string> singleList{"x", "sx", "s", "rz", "i"};
-    if (!IBMGate){
+    if (!IBMGate) {
         singleList.push_back("h");
         singleList.push_back("t");
         singleList.push_back("tdg");
@@ -265,7 +286,7 @@ void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
         type = str.substr(0, str.find("("));
         string isCX = type.substr(0, 2);
         string isCRZ = type.substr(0, 3);
-        
+
         if (isCX != "cx" && isCRZ != "crz") {
             if (find(begin(singleList), end(singleList), type) !=
                 end(singleList)) {
@@ -275,7 +296,7 @@ void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
                 unsigned q = stoul(singleQubitId);
 
                 tuple<unsigned, unsigned> temp(q, UINT_MAX);
-                topo::Gate tempGate(gateId, Operator::Single, temp);
+                Gate tempGate(gateId, Operator::Single, temp);
                 tempGate.set_prev(_last_gate[q], _last_gate[q]);
 
                 if (_last_gate[q] != (unsigned)-1)
@@ -288,9 +309,8 @@ void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
             } else {
                 if (type != "creg" && type != "qreg") {
                     if (IBMGate) {
-                       cerr << "IBM machine does not support "<< type  << endl; 
-                    }
-                    else
+                        cerr << "IBM machine does not support " << type << endl;
+                    } else
                         cerr << "Unseen Gate " << type << endl;
                     assert(true);
                     exit(0);
@@ -298,7 +318,7 @@ void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
                     qasmFile >> str;
             }
         } else {
-            if((IBMGate) && (isCRZ == "crz")){
+            if ((IBMGate) && (isCRZ == "crz")) {
                 cerr << "IBM machine does not support crz" << endl;
                 assert(true);
                 exit(0);
@@ -314,7 +334,7 @@ void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
             unsigned q2 = stoul(qubitId);
 
             tuple<unsigned, unsigned> temp(q1, q2);
-            topo::Gate tempGate(gateId, Operator::CX, temp);
+            Gate tempGate(gateId, Operator::CX, temp);
             tempGate.set_prev(_last_gate[q1], _last_gate[q2]);
 
             if (_last_gate[q1] != (unsigned)-1) {
@@ -343,7 +363,7 @@ void topo::AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
 #endif
 }
 
-void topo::AlgoTopology::print_gates_with_next() {
+void AlgoTopology::print_gates_with_next() {
     cout << "Print successors of each gate" << endl;
     for (size_t i = 0; i < _gates.size(); i++) {
         vector<unsigned> temp = _gates[i].get_nexts();
@@ -355,7 +375,7 @@ void topo::AlgoTopology::print_gates_with_next() {
     }
 }
 
-void topo::AlgoTopology::print_gates_with_prev() {
+void AlgoTopology::print_gates_with_prev() {
     cout << "Print predecessors of each gate" << endl;
     for (size_t i = 0; i < _gates.size(); i++) {
         vector<pair<unsigned, bool>> temp = _gates[i].get_prevs();
@@ -366,3 +386,5 @@ void topo::AlgoTopology::print_gates_with_prev() {
         cout << endl;
     }
 }
+
+}  // namespace topo

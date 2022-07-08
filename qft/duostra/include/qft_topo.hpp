@@ -32,11 +32,8 @@ class QFTTopology : public Topology {
         }
         _avail_gates.push_back(0);
     }
-    QFTTopology(const QFTTopology& other) = delete;
-    QFTTopology(QFTTopology&& other) {
-        _gates = std::move(other._gates);
-        _avail_gates = std::move(other._avail_gates);
-    }
+    QFTTopology(const QFTTopology& other) : Topology(other) {}
+    QFTTopology(QFTTopology&& other) : Topology(std::move(other)) {}
     ~QFTTopology() {}
 
     unsigned get_num_qubits() const override { return _num_qubits; }
@@ -45,6 +42,9 @@ class QFTTopology : public Topology {
     Gate& get_gate(unsigned i) override { return _gates[i]; }
     const std::vector<unsigned>& get_avail_gates() const override {
         return _avail_gates;
+    }
+    unique_ptr<Topology> clone() const override{
+        return make_unique<QFTTopology>(*this);
     }
 
     void update_avail_gates(unsigned executed) override {
