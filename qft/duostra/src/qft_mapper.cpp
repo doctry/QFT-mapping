@@ -167,8 +167,9 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
             paths_costs(depth, topo_->clone(), router->clone());
 
         // apply those routes
-        auto min = min_element(paths_and_costs.begin(), paths_and_costs.end(),
-                               [](auto a, auto b) { a.first < b.first; });
+        auto min = min_element(
+            paths_and_costs.begin(), paths_and_costs.end(),
+            [](auto a, auto b) -> bool { return a.first < b.first; });
         auto min_cost = min->first;
         auto min_path = min->second;
 
