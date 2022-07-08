@@ -7,6 +7,7 @@
 #include <random>  // std::default_random_engine
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 #include "q_device.hpp"
 #include "topo.hpp"
@@ -264,6 +265,15 @@ class QFTRouter {
         return q0.is_adj(q1);
     }
 
+    std::unique_ptr<QFTRouter> clone() const {
+        return std::make_unique<QFTRouter>(*this);
+    }
+
+    size_t cost_so_far() const {
+        assert(0);
+        return 0;
+    }
+
    private:
     std::tuple<unsigned, unsigned> get_device_qubits_idx(
         topo::Gate& gate) const {
@@ -294,17 +304,19 @@ class QFTRouter {
 };
 
 namespace scheduler {
+using namespace std;
+using namespace topo;
 class Base {
    public:
-    Base(std::unique_ptr<topo::Topology>&& topo) : topo_(std::move(topo)) {}
+    Base(unique_ptr<Topology>&& topo) : topo_(move(topo)) {}
     Base(const Base& other) = delete;
     Base(Base&& other) = delete;
     virtual ~Base() {}
 
-    virtual void assign_gates(std::unique_ptr<QFTRouter> router);
+    virtual void assign_gates(unique_ptr<QFTRouter> router);
 
-    void write_assembly(std::ostream& out) {
-        std::sort(ops_.begin(), ops_.end(), device::op_order);
+    void write_assembly(ostream& out) {
+        sort(ops_.begin(), ops_.end(), device::op_order);
 
         for (unsigned i = 0; i < ops_.size(); ++i) {
             device::Operation& op = ops_[i];
@@ -321,7 +333,7 @@ class Base {
                 default:
                     assert(false);
             }
-            std::tuple<unsigned, unsigned> qubits = op.get_qubits();
+            tuple<unsigned, unsigned> qubits = op.get_qubits();
             out << "Q[" << std::get<0>(qubits) << "] Q[" << std::get<1>(qubits)
                 << "]; ";
             out << "(" << op.get_op_time() << "," << op.get_cost() << ")\n";
@@ -329,7 +341,7 @@ class Base {
     }
 
     void to_json(json& j) {
-        std::sort(ops_.begin(), ops_.end(), device::op_order);
+        sort(ops_.begin(), ops_.end(), device::op_order);
 
         json o;
         for (unsigned i = 0; i < ops_.size(); ++i) {
@@ -341,24 +353,24 @@ class Base {
     }
 
     unsigned get_final_cost() {
-        std::sort(ops_.begin(), ops_.end(), device::op_order);
+        sort(ops_.begin(), ops_.end(), device::op_order);
 
         return ops_[ops_.size() - 1].get_cost();
     }
 
     unsigned get_total_time() {
-        std::sort(ops_.begin(), ops_.end(), device::op_order);
+        sort(ops_.begin(), ops_.end(), device::op_order);
 
         unsigned ret = 0;
         for (unsigned i = 0; i < ops_.size(); ++i) {
-            std::tuple<unsigned, unsigned> dur = ops_[i].get_duration();
+            tuple<unsigned, unsigned> dur = ops_[i].get_duration();
             ret += std::get<1>(dur) - std::get<0>(dur);
         }
         return ret;
     }
 
     unsigned get_swap_num() {
-        std::sort(ops_.begin(), ops_.end(), device::op_order);
+        sort(ops_.begin(), ops_.end(), device::op_order);
         unsigned ret = 0;
         for (unsigned i = 0; i < ops_.size(); ++i) {
             if (ops_[i].get_operator() == Operator::Swap) {
@@ -368,13 +380,13 @@ class Base {
         return ret;
     }
 
-    const std::vector<device::Operation>& get_operations() { return ops_; }
+    const vector<device::Operation>& get_operations() { return ops_; }
 
    protected:
-    std::unique_ptr<topo::Topology> topo_;
-    std::vector<device::Operation> ops_;
+    unique_ptr<topo::Topology> topo_;
+    vector<device::Operation> ops_;
 
-    unsigned get_executable(QFTRouter& router, std::vector<unsigned> waitlist) {
+    unsigned get_executable(QFTRouter& router, vector<unsigned> waitlist) {
         for (unsigned gate_idx : waitlist) {
             if (router.is_executable(topo_->get_gate(gate_idx))) {
                 return gate_idx;
@@ -386,35 +398,35 @@ class Base {
 
 class Random : public Base {
    public:
-    Random(std::unique_ptr<topo::Topology>&& topo) : Base(std::move(topo)) {}
+    Random(unique_ptr<topo::Topology>&& topo) : Base(move(topo)) {}
     Random(const Random& other) = delete;
     Random(Random&& other) = delete;
     ~Random() override {}
 
-    void assign_gates(std::unique_ptr<QFTRouter> router) override;
+    void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
 class Static : public Base {
    public:
-    Static(std::unique_ptr<topo::Topology>&& topo) : Base(std::move(topo)) {}
+    Static(unique_ptr<topo::Topology>&& topo) : Base(move(topo)) {}
     Static(const Static& other) = delete;
     Static(Static&& other) = delete;
     ~Static() override {}
 
-    void assign_gates(std::unique_ptr<QFTRouter> router) override;
+    void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
 class Onion : public Base {
    public:
-    Onion(std::unique_ptr<topo::Topology>&& topo, json& conf)
-        : Base(std::move(topo)),
+    Onion(unique_ptr<Topology>&& topo, json& conf)
+        : Base(move(topo)),
           first_mode_(json_get<bool>(conf, "layer_from_first")),
           cost_typ_(json_get<bool>(conf, "cost")) {}
     Onion(const Onion& other) = delete;
     Onion(Onion&& other) = delete;
     ~Onion() override {}
 
-    void assign_gates(std::unique_ptr<QFTRouter> router) override;
+    void assign_gates(unique_ptr<QFTRouter> router) override;
 
    private:
     bool first_mode_;
@@ -434,31 +446,28 @@ class Greedy : public Base {
         bool cost_typ;   // true is max, false is min
         unsigned candidates, apsp_coef;
     };
-    Greedy(std::unique_ptr<topo::Topology>&& topo, json& conf)
-        : Base(std::move(topo)) {
+    Greedy(unique_ptr<topo::Topology>&& topo, json& conf) : Base(move(topo)) {
         int candidates = json_get<int>(conf, "candidates");
         if (candidates > 0) {
             _conf.candidates = candidates;
         }
         _conf.apsp_coef = json_get<unsigned>(conf, "apsp_coef");
-        std::string avail_typ = json_get<std::string>(conf, "avail");
+        string avail_typ = json_get<string>(conf, "avail");
         if (avail_typ == "min") {
             _conf.avail_typ = false;
         } else if (avail_typ == "max") {
             _conf.avail_typ = true;
         } else {
-            std::cerr << "\"min_max\" can only be \"min\" or \"max\"."
-                      << std::endl;
+            cerr << "\"min_max\" can only be \"min\" or \"max\"." << endl;
             abort();
         }
-        std::string cost_typ = json_get<std::string>(conf, "cost");
+        string cost_typ = json_get<string>(conf, "cost");
         if (cost_typ == "min") {
             _conf.cost_typ = false;
         } else if (cost_typ == "max") {
             _conf.cost_typ = true;
         } else {
-            std::cerr << "\"min_max\" can only be \"min\" or \"max\"."
-                      << std::endl;
+            cerr << "\"min_max\" can only be \"min\" or \"max\"." << endl;
             abort();
         }
     }
@@ -466,7 +475,7 @@ class Greedy : public Base {
     Greedy(Greedy&& other) = delete;
     ~Greedy() override {}
 
-    void assign_gates(std::unique_ptr<QFTRouter> router) override;
+    void assign_gates(unique_ptr<QFTRouter> router) override;
 
    private:
     Conf _conf;
@@ -474,17 +483,20 @@ class Greedy : public Base {
 
 class Dora : public Base {
    public:
-    Dora(std::unique_ptr<topo::Topology>&& topo, json& conf)
-        : Base(std::move(topo)), depth(json_get<int>(conf, "depth")) {}
+    Dora(unique_ptr<Topology>&& topo, json& conf)
+        : Base(move(topo)), depth(json_get<int>(conf, "depth")) {}
 
     const size_t depth;
-    void assign_gates(std::unique_ptr<QFTRouter> router) override;
+    void assign_gates(unique_ptr<QFTRouter> router) override;
 
    private:
-    void assign_one_gate(QFTRouter router);
+    vector<pair<size_t, vector<size_t>>> paths_costs(
+        size_t depth,
+        unique_ptr<Topology> topo,
+        unique_ptr<QFTRouter> router) const;
 };
 
-std::unique_ptr<Base> get(const std::string& typ,
-                          std::unique_ptr<topo::Topology>&& topo,
-                          json& conf);
+unique_ptr<Base> get(const string& typ,
+                     unique_ptr<Topology>&& topo,
+                     json& conf);
 }  // namespace scheduler
