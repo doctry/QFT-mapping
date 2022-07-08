@@ -10,6 +10,7 @@
 using namespace std;
 
 namespace topo {
+
 bool Gate::is_avail() const {
     bool avail = true;
     for (size_t i = 0; i < _prevs.size(); i++) {
@@ -181,6 +182,40 @@ unordered_map<unsigned, vector<unsigned>> Topology::gate_by_generation(
            "Resulting map doesn't have the same size as original.");
 
     return gen_map;
+}
+
+DAG Topology::dag() const {
+    const size_t num_gates = get_num_gates();
+    DAG dag{num_gates};
+
+    for (size_t idx = 0; idx < num_gates; ++idx) {
+        const Gate& gate = _gates[idx];
+
+        for (auto elem : gate.get_prevs()) {
+            size_t parent_idx = elem.first;
+
+            if (parent_idx >= num_gates) {
+                continue;
+            }
+
+            dag.link(parent_idx, idx);
+        }
+    }
+
+    for (size_t idx = 0; idx < num_gates; ++idx) {
+        const Gate& gate = _gates[idx];
+
+        for (size_t child_idx : gate.get_nexts()) {
+            if (child_idx >= num_gates) {
+                continue;
+            }
+
+            assert(dag.nodes(idx).children().count(child_idx) == 1);
+            assert(dag.nodes(child_idx).parents().count(idx) == 1);
+        }
+    }
+
+    return dag;
 }
 
 }  // namespace topo

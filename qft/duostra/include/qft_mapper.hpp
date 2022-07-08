@@ -474,11 +474,6 @@ class Greedy : public Base {
 
 class BlockadeRevitalizer : public Base {
    public:
-    class Tree {
-       public:
-       private:
-    };
-
     BlockadeRevitalizer(std::unique_ptr<topo::Topology>&& topo, json& conf)
         : Base(std::move(topo)), depth(json_get<int>(conf, "depth")) {}
 
@@ -486,7 +481,7 @@ class BlockadeRevitalizer : public Base {
     void assign_gates(std::unique_ptr<QFTRouter> router) override;
 
    private:
-    friend class Tree;
+    void assign_one_gate(QFTRouter router);
 };
 
 std::unique_ptr<Base> get(const std::string& typ,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <set>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
@@ -70,6 +71,58 @@ class Gate {
     vector<unsigned> _nexts;
 };
 
+class DAGNode {
+   public:
+    DAGNode() : parents_({}), children_({}) {}
+
+    DAGNode(std::set<size_t> parents, std::set<size_t> children)
+        : parents_(parents), children_(children) {}
+
+    std::set<size_t>& parents() { return parents_; }
+    const std::set<size_t>& parents() const { return parents_; }
+
+    std::set<size_t>& children() { return children_; }
+    const std::set<size_t>& children() const { return children_; }
+
+   private:
+    std::set<size_t> parents_;
+    std::set<size_t> children_;
+};
+
+class DAG {
+   public:
+    DAG(size_t num_nodes) {
+        for (size_t idx = 0; idx < num_nodes; ++idx) {
+            nodes_[idx] = DAGNode();
+        }
+    }
+
+    size_t num_nodes() const { return nodes_.size(); }
+    std::unordered_map<size_t, DAGNode>& nodes() { return nodes_; }
+    const std::unordered_map<size_t, DAGNode>& nodes() const { return nodes_; }
+
+    DAGNode& nodes(size_t idx) { return nodes_.at(idx); }
+    const DAGNode& nodes(size_t idx) const { return nodes_.at(idx); }
+
+    void link(size_t parent, size_t child) {
+        nodes_[parent].children().insert(child);
+        nodes_[child].parents().insert(parent);
+    }
+
+    size_t remove(size_t idx) {
+        DAGNode node{nodes_[idx]};
+
+        for (size_t child : node.children()) {
+            nodes_[child].parents().erase(idx);
+        }
+
+        nodes_.erase(idx);
+    }
+
+   private:
+    std::unordered_map<size_t, DAGNode> nodes_;
+};
+
 class Topology {
    public:
     Topology() : _num_qubits(0), _gates({}), _avail_gates({}) {}
@@ -96,6 +149,8 @@ class Topology {
 
     unordered_map<unsigned, vector<unsigned>> gate_by_dist_to_first() const;
     unordered_map<unsigned, vector<unsigned>> gate_by_dist_to_last() const;
+
+    DAG dag() const;
 
    protected:
     unsigned _num_qubits;
