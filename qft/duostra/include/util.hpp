@@ -1,12 +1,12 @@
 #pragma once
-#include "nlohmann/json.hpp"
 #include <iostream>
 #include <vector>
+#include "nlohmann/json.hpp"
 
 using json = nlohmann::json;
 
 template <class T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
     os << "[";
     if (v.empty()) {
         return os << "]";
@@ -17,11 +17,13 @@ std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
     return os << v.back() << "]";
 }
 
-template <class T> T json_get(json &j, const char *key) {
+template <class T>
+T json_get(json& j, const char* key) {
     if (!j.contains(key)) {
         std::cerr << "Necessary key \"" << key << "\" does not exist."
                   << std::endl;
         abort();
     }
+    std::cout << "Reading: " << key << "\n";
     return j[key].get<T>();
 }

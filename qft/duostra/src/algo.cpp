@@ -61,7 +61,7 @@ void Gate::finished(unsigned prev) {
 using namespace std;
 
 vector<unsigned> Topology::get_first_gates() const {
-    vector<unsigned> result = {};
+    vector<unsigned> result;
 
     for (unsigned i = 0; i < get_num_gates(); ++i) {
         const Gate& gate = get_gate(i);
@@ -75,7 +75,7 @@ vector<unsigned> Topology::get_first_gates() const {
 }
 
 vector<unsigned> Topology::get_last_gates() const {
-    vector<unsigned> result = {};
+    vector<unsigned> result;
 
     for (unsigned i = 0; i < get_num_gates(); ++i) {
         const Gate& gate = get_gate(i);
@@ -89,9 +89,9 @@ vector<unsigned> Topology::get_last_gates() const {
 }
 
 unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
-    unordered_map<unsigned, unsigned> map = {};
+    unordered_map<unsigned, unsigned> map;
 
-    unordered_set<unsigned> current_gen = {};
+    unordered_set<unsigned> current_gen;
     for (auto idx : get_first_gates()) {
         map[idx] = 0;
         current_gen.insert(idx);
@@ -102,7 +102,7 @@ unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
         Tqdm bar{get_num_gates()};
         for (unsigned gen = 0, num_gates = get_num_gates();
              map.size() < num_gates; ++gen) {
-            unordered_set<unsigned> next = {};
+            unordered_set<unsigned> next;
 
             for (auto idx : current_gen) {
                 for (auto child : get_gate(idx).get_nexts()) {
@@ -115,13 +115,14 @@ unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
             current_gen = next;
         }
     }
+    assert(map.size() == get_num_gates());
     return map;
 }
 
 unordered_map<unsigned, unsigned> Topology::dist_to_last() const {
-    unordered_map<unsigned, unsigned> map = {};
+    unordered_map<unsigned, unsigned> map;
 
-    unordered_set<unsigned> current_gen = {};
+    unordered_set<unsigned> current_gen;
     for (auto idx : get_last_gates()) {
         map[idx] = 0;
         current_gen.insert(idx);
@@ -132,7 +133,7 @@ unordered_map<unsigned, unsigned> Topology::dist_to_last() const {
         Tqdm bar{get_num_gates()};
         for (unsigned gen = 0, num_gates = get_num_gates();
              map.size() < num_gates; ++gen) {
-            unordered_set<unsigned> prev = {};
+            unordered_set<unsigned> prev;
 
             for (auto idx : current_gen) {
                 for (auto parent : get_gate(idx).get_prevs()) {
@@ -146,6 +147,7 @@ unordered_map<unsigned, unsigned> Topology::dist_to_last() const {
         }
     }
 
+    assert(map.size() == get_num_gates());
     return map;
 }
 
@@ -165,7 +167,7 @@ unordered_map<unsigned, vector<unsigned>> Topology::gate_by_dist_to_last()
 
 unordered_map<unsigned, vector<unsigned>> Topology::gate_by_generation(
     const unordered_map<unsigned, unsigned>& map) {
-    unordered_map<unsigned, vector<unsigned>> gen_map = {};
+    unordered_map<unsigned, vector<unsigned>> gen_map;
 
     for (auto pair : map) {
         unsigned gate_id = pair.first;
@@ -205,6 +207,8 @@ size_t DAG::remove(size_t idx) {
 
     heads_.erase(idx);
     nodes_.erase(idx);
+
+    return idx;
 }
 
 DAG Topology::dag() const {

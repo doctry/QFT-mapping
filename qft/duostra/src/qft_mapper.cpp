@@ -85,9 +85,16 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
     unsigned num_gates = topo_->get_num_gates();
 
     Tqdm bar{num_gates};
-    while (gen_to_gates.size() != 0) {
+
+    auto total_size = 0;
+    for (const auto& gg : gen_to_gates) {
+        total_size += gg.second.size();
+    }
+    assert(total_size == num_gates);
+
+    while (gen_to_gates.size()) {
         auto youngest =
-            cost_typ_
+            conf_.cost_typ
                 ? max_element(gen_to_gates.begin(), gen_to_gates.end(),
                               [](const pair<unsigned, vector<unsigned>>& a,
                                  const pair<unsigned, vector<unsigned>>& b) {
@@ -99,18 +106,46 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
                                   return a.first < b.first;
                               });
 
-        for (auto idx : youngest->second) {
-            bar.add();
+        auto topo_wrap = TopologyWrapperWithCandidate(*topo_, conf_.candidates);
 
-            auto& gate = topo_->get_gate(idx);
+        auto& wait_list = youngest->second;
+        const auto wait_list_size = wait_list.size();
+        for (size_t jj = 0; jj < wait_list_size; ++jj, bar.add()) {
+            unsigned gate_idx = get_executable(*router, wait_list);
+            if (gate_idx == UINT_MAX) {
+                vector<unsigned> cost_list(wait_list.size(), 0);
+                for (unsigned i = 0; i < wait_list.size(); ++i) {
+                    topo::Gate& gate = topo_->get_gate(wait_list[i]);
+                    unsigned cost = router->get_gate_cost(gate, conf_.avail_typ,
+                                                          conf_.apsp_coef);
+                    cost_list[i] = cost;
+                }
+                auto list_idx =
+                    conf_.cost_typ
+                        ? max_element(cost_list.begin(), cost_list.end()) -
+                              cost_list.begin()
+                        : min_element(cost_list.begin(), cost_list.end()) -
+                              cost_list.begin();
+                gate_idx = wait_list[list_idx];
+            }
+
+            auto erase_idx =
+                std::find(wait_list.begin(), wait_list.end(), gate_idx);
+            auto x = *erase_idx;
+            assert(erase_idx != wait_list.end());
+            wait_list.erase(erase_idx);
+            --total_size;
+            topo::Gate& gate = topo_->get_gate(gate_idx);
             auto ops = router->assign_gate(gate);
             ops_.insert(ops_.end(), ops.begin(), ops.end());
         }
-
+        assert(youngest->second.empty());
         gen_to_gates.erase(youngest->first);
     }
-
-    assert(topo_->get_avail_gates().empty());
+    auto& avail_gates = topo_->get_avail_gates();
+    assert(avail_gates.empty());
+    assert(total_size == 0);
+    std::cout << avail_gates.size() << "\n";
 }
 
 void Greedy::assign_gates(unique_ptr<QFTRouter> router) {

@@ -416,12 +416,47 @@ class Static : public Base {
     void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
+class Conf {
+   public:
+    Conf()
+        : avail_typ(true),
+          cost_typ(false),
+          candidates(UINT_MAX),
+          apsp_coef(1) {}
+    bool avail_typ;  // true is max, false is min
+    bool cost_typ;   // true is max, false is min
+    unsigned candidates, apsp_coef;
+};
+
 class Onion : public Base {
    public:
     Onion(unique_ptr<Topology>&& topo, json& conf)
         : Base(move(topo)),
-          first_mode_(json_get<bool>(conf, "layer_from_first")),
-          cost_typ_(json_get<bool>(conf, "cost")) {}
+          first_mode_(json_get<bool>(conf, "layer_from_first")) {
+        int candidates = json_get<int>(conf, "candidates");
+        if (candidates > 0) {
+            conf_.candidates = candidates;
+        }
+        conf_.apsp_coef = json_get<unsigned>(conf, "apsp_coef");
+        string avail_typ = json_get<string>(conf, "avail");
+        if (avail_typ == "min") {
+            conf_.avail_typ = false;
+        } else if (avail_typ == "max") {
+            conf_.avail_typ = true;
+        } else {
+            cerr << "\"min_max\" can only be \"min\" or \"max\"." << endl;
+            abort();
+        }
+        string cost_typ = json_get<string>(conf, "cost");
+        if (cost_typ == "min") {
+            conf_.cost_typ = false;
+        } else if (cost_typ == "max") {
+            conf_.cost_typ = true;
+        } else {
+            cerr << "\"min_max\" can only be \"min\" or \"max\"." << endl;
+            abort();
+        }
+    }
     Onion(const Onion& other) = delete;
     Onion(Onion&& other) = delete;
     ~Onion() override {}
@@ -430,22 +465,11 @@ class Onion : public Base {
 
    private:
     bool first_mode_;
-    bool cost_typ_;  // true is max, false is min
+    Conf conf_;
 };
 
 class Greedy : public Base {
    public:
-    class Conf {
-       public:
-        Conf()
-            : avail_typ(true),
-              cost_typ(false),
-              candidates(UINT_MAX),
-              apsp_coef(1) {}
-        bool avail_typ;  // true is max, false is min
-        bool cost_typ;   // true is max, false is min
-        unsigned candidates, apsp_coef;
-    };
     Greedy(unique_ptr<topo::Topology>&& topo, json& conf) : Base(move(topo)) {
         int candidates = json_get<int>(conf, "candidates");
         if (candidates > 0) {
