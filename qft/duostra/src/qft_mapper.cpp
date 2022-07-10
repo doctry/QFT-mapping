@@ -106,8 +106,6 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
                                   return a.first < b.first;
                               });
 
-        auto topo_wrap = TopologyWrapperWithCandidate(*topo_, conf_.candidates);
-
         auto& wait_list = youngest->second;
         const auto wait_list_size = wait_list.size();
         for (size_t jj = 0; jj < wait_list_size; ++jj, bar.add()) {
@@ -138,6 +136,7 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
             topo::Gate& gate = topo_->get_gate(gate_idx);
             auto ops = router->assign_gate(gate);
             ops_.insert(ops_.end(), ops.begin(), ops.end());
+            topo_->update_avail_gates(gate_idx);
         }
         assert(youngest->second.empty());
         gen_to_gates.erase(youngest->first);
@@ -205,8 +204,8 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         auto min = min_element(
             paths_and_costs.begin(), paths_and_costs.end(),
             [](auto a, auto b) -> bool { return a.first < b.first; });
-        auto min_cost = min->first;
-        auto min_path = min->second;
+        auto min_cost = min->cost;
+        auto min_path = min->path;
 
         assert(min_path.size() != 0);
 
@@ -214,20 +213,21 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         auto& gate = topo_->get_gate(min_path[0]);
         auto ops = router->assign_gate(gate);
         ops_.insert(ops_.end(), ops.begin(), ops.end());
+        topo_->update_avail_gates(min_path[0]);
     }
 }
 
-vector<pair<size_t, vector<size_t>>> Dora::paths_costs(
-    size_t depth,
-    unique_ptr<Topology> topo,
-    unique_ptr<QFTRouter> router) const {
+vector<PathsCosts> Dora::paths_costs(size_t depth,
+                                     const vector<size_t>& path_so_far,
+                                     unique_ptr<Topology> topo,
+                                     unique_ptr<QFTRouter> router) const {
     if (!depth) {
         return {};
     }
 
     const auto& avail_gates = topo->get_avail_gates();
 
-    vector<pair<size_t, vector<size_t>>> paths;
+    vector<PathsCosts> paths;
 
     size_t cost_so_far = router->cost_so_far();
 
@@ -238,11 +238,14 @@ vector<pair<size_t, vector<size_t>>> Dora::paths_costs(
         auto& gate = cloned_topo->get_gate(idx);
         router->assign_gate(gate);
 
-        auto path_and_costs =
-            paths_costs(depth - 1, move(cloned_topo), move(cloned_router));
+        vector<size_t> current_path{path_so_far};
+        current_path.push_back(idx);
+
+        auto path_and_costs = paths_costs(
+            depth - 1, current_path, move(cloned_topo), move(cloned_router));
 
         for (auto& cp : path_and_costs) {
-            cp.first += cost_so_far;
+            cp.cost += cost_so_far;
         }
 
         paths.insert(paths.end(), path_and_costs.begin(), path_and_costs.end());

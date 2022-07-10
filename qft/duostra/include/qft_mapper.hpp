@@ -505,6 +505,11 @@ class Greedy : public Base {
     Conf _conf;
 };
 
+struct PathsCosts {
+    vector<size_t> path;
+    size_t cost;
+};
+
 class Dora : public Base {
    public:
     Dora(unique_ptr<Topology>&& topo, json& conf)
@@ -514,10 +519,10 @@ class Dora : public Base {
     void assign_gates(unique_ptr<QFTRouter> router) override;
 
    private:
-    vector<pair<size_t, vector<size_t>>> paths_costs(
-        size_t depth,
-        unique_ptr<Topology> topo,
-        unique_ptr<QFTRouter> router) const;
+    vector<PathsCosts> paths_costs(size_t depth,
+                                   const vector<size_t>& path_so_far,
+                                   unique_ptr<Topology> topo,
+                                   unique_ptr<QFTRouter> router) const;
 };
 
 unique_ptr<Base> get(const string& typ,
