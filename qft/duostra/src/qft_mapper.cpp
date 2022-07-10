@@ -198,12 +198,12 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     for (size_t idx = 0; idx < num_gates; ++idx, bar.add()) {
         // generate all topo sorts under a particular depth
         auto paths_and_costs =
-            paths_costs(depth, topo_->clone(), router->clone());
+            paths_costs(depth, {}, topo_->clone(), router->clone());
 
         // apply those routes
-        auto min = min_element(
-            paths_and_costs.begin(), paths_and_costs.end(),
-            [](auto a, auto b) -> bool { return a.first < b.first; });
+        auto min =
+            min_element(paths_and_costs.begin(), paths_and_costs.end(),
+                        [](auto a, auto b) -> bool { return a.cost < b.cost; });
         auto min_cost = min->cost;
         auto min_path = min->path;
 
