@@ -60,34 +60,6 @@ void Gate::finished(unsigned prev) {
 
 using namespace std;
 
-vector<unsigned> Topology::get_first_gates() const {
-    vector<unsigned> result;
-
-    for (unsigned i = 0; i < get_num_gates(); ++i) {
-        const Gate& gate = get_gate(i);
-
-        if (gate.is_first()) {
-            result.push_back(i);
-        }
-    }
-
-    return result;
-}
-
-vector<unsigned> Topology::get_last_gates() const {
-    vector<unsigned> result;
-
-    for (unsigned i = 0; i < get_num_gates(); ++i) {
-        const Gate& gate = get_gate(i);
-
-        if (gate.is_last()) {
-            result.push_back(i);
-        }
-    }
-
-    return result;
-}
-
 unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
     unordered_map<unsigned, unsigned> map;
 
@@ -97,6 +69,7 @@ unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
         current_gen.insert(idx);
     }
 
+    unordered_set<unsigned> visited;
     cout << "Adding gate\n";
     {
         Tqdm bar{get_num_gates()};
@@ -105,6 +78,12 @@ unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
             unordered_set<unsigned> next;
 
             for (auto idx : current_gen) {
+                if (visited.find(idx) != visited.end()) {
+                    visited.insert(idx);
+                } else {
+                    continue;
+                }
+
                 for (auto child : get_gate(idx).get_nexts()) {
                     bar.add();
                     next.insert(child);
@@ -128,6 +107,8 @@ unordered_map<unsigned, unsigned> Topology::dist_to_last() const {
         current_gen.insert(idx);
     }
 
+    unordered_set<unsigned> visited;
+
     cout << "Adding gate\n";
     {
         Tqdm bar{get_num_gates()};
@@ -136,6 +117,12 @@ unordered_map<unsigned, unsigned> Topology::dist_to_last() const {
             unordered_set<unsigned> prev;
 
             for (auto idx : current_gen) {
+                if (visited.find(idx) != visited.end()) {
+                    visited.insert(idx);
+                } else {
+                    continue;
+                }
+
                 for (auto parent : get_gate(idx).get_prevs()) {
                     bar.add();
                     prev.insert(parent.first);

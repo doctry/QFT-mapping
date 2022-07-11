@@ -142,9 +142,24 @@ class Topology {
     virtual void update_avail_gates(unsigned executed) = 0;
     virtual unique_ptr<Topology> clone() const = 0;
 
-    vector<unsigned> get_first_gates() const;
-    vector<unsigned> get_last_gates() const;
+    template <bool first>
+    vector<unsigned> first_or_last() const {
+        vector<unsigned> result;
 
+        for (unsigned i = 0; i < get_num_gates(); ++i) {
+            const Gate& gate = get_gate(i);
+
+            bool condition = first ? gate.is_first() : gate.is_last();
+            if (condition) {
+                result.push_back(i);
+            }
+        }
+
+        return result;
+    }
+
+    vector<unsigned> get_first_gates() const { return first_or_last<true>(); }
+    vector<unsigned> get_last_gates() const { return first_or_last<false>(); }
     unordered_map<unsigned, unsigned> dist_to_first() const;
     unordered_map<unsigned, unsigned> dist_to_last() const;
 
