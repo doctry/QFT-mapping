@@ -79,15 +79,20 @@ unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
 
             for (auto idx : current_gen) {
                 if (visited.find(idx) != visited.end()) {
-                    visited.insert(idx);
-                } else {
                     continue;
+                } else {
+                    visited.insert(idx);
                 }
 
                 for (auto child : get_gate(idx).get_nexts()) {
                     bar.add();
                     next.insert(child);
-                    map[child] = gen + 1;
+                    if (map.find(child) == map.end()) {
+                        map[child] = gen + 1;
+                    } else {
+                        map[child] =
+                            map[child] > gen + 1 ? map[child] : gen + 1;
+                    }
                 }
             }
 
@@ -118,15 +123,21 @@ unordered_map<unsigned, unsigned> Topology::dist_to_last() const {
 
             for (auto idx : current_gen) {
                 if (visited.find(idx) != visited.end()) {
-                    visited.insert(idx);
-                } else {
                     continue;
+                } else {
+                    visited.insert(idx);
                 }
 
                 for (auto parent : get_gate(idx).get_prevs()) {
                     bar.add();
                     prev.insert(parent.first);
-                    map[parent.first] = gen + 1;
+                    if (map.find(parent.first) == map.end()) {
+                        map[parent.first] = gen + 1;
+                    } else {
+                        map[parent.first] = map[parent.first] > gen + 1
+                                                ? map[parent.first]
+                                                : gen + 1;
+                    }
                 }
             }
 

@@ -1,0 +1,12 @@
+# Configurations in the config file
+- `algo`: If this configuration is a number $n$, the program maps a QFT of $n$ qubits consisting of only two-qubit gates. If this configuration is a string, then the configuration should be the path to the `.qasm` file.
+- `cycle`: The cycle number of different gates.
+    - `SINGLE_CYCLE`: The cycle number of single-qubit gates.
+    - `SWAP_CYCLE`: The cycle number of swap gates.
+    - `CX_CYCLE`: The cycle number of cnot gates.
+- `device`: The path to the device `.txt` file.
+- `output`: The path to the output `.json` file.
+- `mapper`: The configurations about the mapper.
+    - `placer`:  
+        - `sa`: The program performs simulated annealing on initial placement. If `dfs`, the initial placement is the order of doing dfs from the qubit 0. If `static`, the initial placement is the same as IBM's assignment. If `random`, the initial placement is randomly placed.
+    - `scheduler`: If the configuration is `onion`, the scheduler schedules layer by layer. If `static`, the scheduler always chooses the oldest item in the waitlist,
