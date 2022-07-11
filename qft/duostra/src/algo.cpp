@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <queue>
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -59,109 +60,6 @@ void Gate::finished(unsigned prev) {
 }
 
 using namespace std;
-
-unordered_map<unsigned, unsigned> Topology::dist_to_first() const {
-    unordered_map<unsigned, unsigned> map;
-
-    unordered_set<unsigned> current_gen;
-    for (auto idx : get_first_gates()) {
-        map[idx] = 0;
-        current_gen.insert(idx);
-    }
-
-    unordered_set<unsigned> visited;
-    cout << "Adding gate\n";
-    {
-        Tqdm bar{get_num_gates()};
-        for (unsigned gen = 0, num_gates = get_num_gates();
-             map.size() < num_gates; ++gen) {
-            unordered_set<unsigned> next;
-
-            for (auto idx : current_gen) {
-                if (visited.find(idx) != visited.end()) {
-                    continue;
-                } else {
-                    visited.insert(idx);
-                }
-
-                for (auto child : get_gate(idx).get_nexts()) {
-                    bar.add();
-                    next.insert(child);
-                    if (map.find(child) == map.end()) {
-                        map[child] = gen + 1;
-                    } else {
-                        map[child] =
-                            map[child] > gen + 1 ? map[child] : gen + 1;
-                    }
-                }
-            }
-
-            current_gen = next;
-        }
-    }
-    assert(map.size() == get_num_gates());
-    return map;
-}
-
-unordered_map<unsigned, unsigned> Topology::dist_to_last() const {
-    unordered_map<unsigned, unsigned> map;
-
-    unordered_set<unsigned> current_gen;
-    for (auto idx : get_last_gates()) {
-        map[idx] = 0;
-        current_gen.insert(idx);
-    }
-
-    unordered_set<unsigned> visited;
-
-    cout << "Adding gate\n";
-    {
-        Tqdm bar{get_num_gates()};
-        for (unsigned gen = 0, num_gates = get_num_gates();
-             map.size() < num_gates; ++gen) {
-            unordered_set<unsigned> prev;
-
-            for (auto idx : current_gen) {
-                if (visited.find(idx) != visited.end()) {
-                    continue;
-                } else {
-                    visited.insert(idx);
-                }
-
-                for (auto parent : get_gate(idx).get_prevs()) {
-                    bar.add();
-                    prev.insert(parent.first);
-                    if (map.find(parent.first) == map.end()) {
-                        map[parent.first] = gen + 1;
-                    } else {
-                        map[parent.first] = map[parent.first] > gen + 1
-                                                ? map[parent.first]
-                                                : gen + 1;
-                    }
-                }
-            }
-
-            current_gen = prev;
-        }
-    }
-
-    assert(map.size() == get_num_gates());
-    return map;
-}
-
-unordered_map<unsigned, vector<unsigned>> Topology::gate_by_dist_to_first()
-    const {
-    auto dist = dist_to_first();
-    cout << "Dist to first done\n";
-    return gate_by_generation(dist);
-}
-
-unordered_map<unsigned, vector<unsigned>> Topology::gate_by_dist_to_last()
-    const {
-    auto dist = dist_to_last();
-    cout << "Dist to last done\n";
-    return gate_by_generation(dist);
-}
 
 unordered_map<unsigned, vector<unsigned>> Topology::gate_by_generation(
     const unordered_map<unsigned, unsigned>& map) {
