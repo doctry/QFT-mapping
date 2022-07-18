@@ -71,7 +71,7 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     std::cout << "creating router..." << std::endl;
     std::string router_typ = json_get<std::string>(conf_mapper, "router");
     bool orient = json_get<bool>(conf_mapper, "orientation");
-    std::string cost = (scheduler_typ == "greedy")
+    std::string cost = (scheduler_typ == "greedy" || scheduler_typ == "onion")
                            ? json_get<std::string>(conf_mapper, "cost")
                            : "start";
     auto router = std::make_unique<QFTRouter>(device, router_typ, cost, orient);

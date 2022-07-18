@@ -1,23 +1,23 @@
 {
     "algo": 127,
     "cycle": {
-        "SINGLE_CYCLE": 0,
-        "SWAP_CYCLE": 3,
+        "SINGLE_CYCLE": 1,
+        "SWAP_CYCLE": 6,
         "CX_CYCLE": 2
     },
     "device": "/home/QFT-mapping/device/washington_127.txt",
     "output": "/home/QFT-mapping/output/washington_127.json",
     "mapper": {
-        "placer": "static",
+        "placer": "dfs",
         "scheduler": "greedy",
-        "router": "apsp",
+        "router": "duostra",
         "orientation": true,
         "cost": "end",
         "greedy_conf": {
             "candidates": -1,
             "apsp_coef": 1,
             "avail": "max",
-            "cost": "max",
+            "cost": "min",
             "layer_from_first": true
         }
     },

@@ -8,5 +8,44 @@
 - `output`: The path to the output `.json` file.
 - `mapper`: The configurations about the mapper.
     - `placer`:  
-        - `sa`: The program performs simulated annealing on initial placement. If `dfs`, the initial placement is the order of doing dfs from the qubit 0. If `static`, the initial placement is the same as IBM's assignment. If `random`, the initial placement is randomly placed.
-    - `scheduler`: If the configuration is `onion`, the scheduler schedules layer by layer. If `static`, the scheduler always chooses the oldest item in the waitlist,
+        - `sa`: Simulated annealing on initial placement. 
+        - `dfs`: The order of doing dfs from the qubit 0.
+        - `static`: The same as IBM's assignment. 
+        - `random`: Randomly placed.
+    - `scheduler`: 
+        - `onion`: Scheduling layer by layer.
+        - `static`: Choosing the oldest item in the waitlist.
+        - `greedy`: Choosing the best item in the waitlist.
+        - `dora`: 
+        - `old`: The gates are assigned according to the indices of the gates.
+        - `random`: Randomly choose an item in the waitlist.
+    - `router`: 
+        - `duostra`: Find the lowest time cost in every step.
+        - `apsp`: Find the shortest path(with lowest number of swaps) in every step.
+    - `orientation`:
+        - `true`: Qubits with small logical indices swapped first.
+        - `false`: Default.
+    - `cost`:
+        - `start`: The cost of a gate is the start time.
+        - `end`: The cost of a gate is the end time.
+    - `greedy_conf`: The configurations of greedy scheduler.
+        - `candidates`: The number of items considered in the waitlist. If the number is less than 1, all the items in the waitlist are considered.
+        - `apsp_coef`: The coeffecient dividing apsp cost. Must be integer.
+        - `avail`: The available time cost.
+            - `min`: The cost of available time is the smaller of the two.
+            - `max`: The cost of available time is the greater of the two.
+        - `cost`: 
+            - `min`: The min_element will be chosen from the waitlist.
+            - `max`: The max_element will be chosen from the waitlist.
+        - `layer_from_first`:
+            - `true`: The layer of onion scheduler is calculated from the first.
+            - `false`: The layer of onion scheduler is calculated from the last.
+- `IBM_Gate`:
+    - `true`:
+    - `false`:
+- `stdio`:
+    - `true`: Output the result.
+    - `false`: Not to output the result.
+- `dump`:
+    - `true`: Dump the result.
+    - `false`: Not to dump the result.

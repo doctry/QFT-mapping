@@ -11,6 +11,7 @@
 #include <vector>
 #include "operator.hpp"
 #include "tqdm.hpp"
+#include "util.hpp"
 
 namespace topo {
 using namespace std;
@@ -206,8 +207,10 @@ class Topology {
 
         unsigned counter = 0;
         for (Tqdm bar{get_num_gates()}; waiting.size() != 0;
-             ++counter, bar.add()) {
+             ++counter) {
             auto cloned_waiting{waiting};
+
+            vector<unsigned> visited_this_cycle;
             for (unsigned idx : cloned_waiting) {
                 if (no_preceding(idx)) {
                     const auto& gate = get_gate(idx);
@@ -222,9 +225,14 @@ class Topology {
                         }
                     }
 
-                    dist[idx] = counter;
+                    visited_this_cycle.push_back(idx);
                     waiting.erase(idx);
                 }
+            }
+
+            for (auto vtc : visited_this_cycle) {
+                dist[vtc] = counter;
+                bar.add();
             }
         }
 

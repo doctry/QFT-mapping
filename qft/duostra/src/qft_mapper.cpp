@@ -86,7 +86,7 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
 
     Tqdm bar{num_gates};
 
-    auto total_size = 0;
+    unsigned total_size = 0;
     for (const auto& gg : gen_to_gates) {
         total_size += gg.second.size();
     }
@@ -112,6 +112,7 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
             unsigned gate_idx = get_executable(*router, wait_list);
             if (gate_idx == UINT_MAX) {
                 vector<unsigned> cost_list(wait_list.size(), 0);
+                
                 for (unsigned i = 0; i < wait_list.size(); ++i) {
                     topo::Gate& gate = topo_->get_gate(wait_list[i]);
                     unsigned cost = router->get_gate_cost(gate, conf_.avail_typ,
