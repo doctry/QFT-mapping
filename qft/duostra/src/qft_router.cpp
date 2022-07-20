@@ -1,10 +1,10 @@
 #include "qft_router.hpp"
 
-QFTRouter::QFTRouter(device::Device& device,
+QFTRouter::QFTRouter(device::Device&& device,
                      std::string& typ,
                      std::string& cost,
                      bool orient) noexcept
-    : orient_(orient), apsp_(false), device_(device) {
+    : orient_(orient), apsp_(false), device_(std::move(device)) {
     if (typ == "apsp") {
         apsp_ = true;
         duostra_ = false;
@@ -65,8 +65,8 @@ unsigned QFTRouter::get_gate_cost(topo::Gate& gate,
 
     unsigned q0_id = std::get<0>(device_qubits_idx);
     unsigned q1_id = std::get<1>(device_qubits_idx);
-    device::Qubit& q0 = device_.get_qubit(q0_id);
-    device::Qubit& q1 = device_.get_qubit(q1_id);
+    const auto& q0 = device_.get_qubit(q0_id);
+    const auto& q1 = device_.get_qubit(q1_id);
     unsigned apsp_cost = 0;
     if (apsp_) {
         apsp_cost = device_.get_shortest_cost(q0_id, q1_id);
@@ -124,8 +124,8 @@ bool QFTRouter::is_executable(topo::Gate& gate) const {
     std::tuple<unsigned, unsigned> device_qubits_idx =
         get_device_qubits_idx(gate);
     assert(std::get<1>(device_qubits_idx) != UINT_MAX);
-    device::Qubit& q0 = device_.get_qubit(std::get<0>(device_qubits_idx));
-    device::Qubit& q1 = device_.get_qubit(std::get<1>(device_qubits_idx));
+    const auto& q0 = device_.get_qubit(std::get<0>(device_qubits_idx));
+    const auto& q1 = device_.get_qubit(std::get<1>(device_qubits_idx));
     return q0.is_adj(q1);
 }
 

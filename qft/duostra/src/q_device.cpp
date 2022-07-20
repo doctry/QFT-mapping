@@ -88,20 +88,20 @@ unsigned device::Qubit::get_avail_time() const {
     return occupied_until_;
 }
 
-bool device::Qubit::is_adj(Qubit& other) const {
-    return !(std::find(adj_list_.begin(), adj_list_.end(), other.id_) ==
-             adj_list_.end());
+bool device::Qubit::is_adj(const Qubit& other) const {
+    return std::find(adj_list_.begin(), adj_list_.end(), other.id_) !=
+           adj_list_.end();
 }
 
 unsigned device::Qubit::get_topo_qubit() const {
     return topo_qubit_;
 }
 
-void device::Qubit::set_topo_qubit(const unsigned i) {
+void device::Qubit::set_topo_qubit( unsigned i) {
     topo_qubit_ = i;
 }
 
-void device::Qubit::set_occupied_time(const unsigned t) {
+void device::Qubit::set_occupied_time( unsigned t) {
     if (occupied_until_ < t) {
         occupied_until_ = t;
     }
@@ -157,7 +157,10 @@ bool device::op_order(const device::Operation& a, const device::Operation& b) {
     return a.get_op_time() < b.get_op_time();
 }
 
-device::Device::Device(std::fstream& file, unsigned u, unsigned s, unsigned cx)
+device::Device::Device(std::fstream& file,
+                       unsigned u,
+                       unsigned s,
+                       unsigned cx) noexcept
     : SINGLE_CYCLE(u), SWAP_CYCLE(s), CX_CYCLE(cx) {
     unsigned num;
     file >> num;
@@ -182,7 +185,7 @@ device::Device::Device(std::fstream& file, unsigned u, unsigned s, unsigned cx)
 device::Device::Device(std::vector<std::vector<unsigned>>& adj_lists,
                        unsigned u,
                        unsigned s,
-                       unsigned cx)
+                       unsigned cx) noexcept
     : SINGLE_CYCLE(u), SWAP_CYCLE(s), CX_CYCLE(cx) {
     for (unsigned i = 0; i < adj_lists.size(); ++i) {
         std::vector<unsigned>& adj_list = adj_lists[i];
@@ -196,11 +199,21 @@ device::Device::Device(std::vector<std::vector<unsigned>>& adj_lists,
     }
 }
 
-device::Device::Device(Device&& other)
-    : qubits_(std::move(other.qubits_)),
-      SINGLE_CYCLE(other.SINGLE_CYCLE),
+device::Device::Device(const Device& other) noexcept
+    : SINGLE_CYCLE(other.SINGLE_CYCLE),
       SWAP_CYCLE(other.SWAP_CYCLE),
-      CX_CYCLE(other.CX_CYCLE) {}
+      CX_CYCLE(other.CX_CYCLE),
+      qubits_(other.qubits_),
+      shortest_path_(other.shortest_path_),
+      shortest_cost_(other.shortest_cost_) {}
+
+device::Device::Device(Device&& other) noexcept
+    : SINGLE_CYCLE(other.SINGLE_CYCLE),
+      SWAP_CYCLE(other.SWAP_CYCLE),
+      CX_CYCLE(other.CX_CYCLE),
+      qubits_(std::move(other.qubits_)),
+      shortest_path_(std::move(other.shortest_path_)),
+      shortest_cost_(std::move(other.shortest_cost_)) {}
 
 unsigned device::Device::get_num_qubits() const {
     return qubits_.size();
@@ -241,7 +254,11 @@ void device::Device::init_apsp() {
     }
 }
 
-device::Qubit& device::Device::get_qubit(const unsigned i) {
+device::Qubit& device::Device::get_qubit(unsigned i) {
+    return qubits_[i];
+}
+
+const device::Qubit& device::Device::get_qubit(unsigned i) const {
     return qubits_[i];
 }
 

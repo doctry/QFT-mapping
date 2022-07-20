@@ -6,7 +6,7 @@
 
 class QFTRouter {
    public:
-    QFTRouter(device::Device& device,
+    QFTRouter(device::Device&& device,
               std::string& typ,
               std::string& cost,
               bool orient) noexcept;
@@ -14,6 +14,9 @@ class QFTRouter {
     QFTRouter(QFTRouter&& other) noexcept;
 
     std::vector<device::Operation> assign_gate(const topo::Gate& gate);
+
+    device::Device& get_device() { return device_; }
+    const device::Device& get_device() const { return device_; }
 
     unsigned get_gate_cost(topo::Gate& gate,
                            bool min_max,
@@ -26,7 +29,7 @@ class QFTRouter {
     bool duostra_;
     bool orient_;
     bool apsp_;
-    device::Device& device_;
+    device::Device device_;
     std::vector<unsigned> topo_to_dev_;
 
     std::tuple<unsigned, unsigned> get_device_qubits_idx(

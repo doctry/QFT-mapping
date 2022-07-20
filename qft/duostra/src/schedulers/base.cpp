@@ -81,12 +81,10 @@ const vector<device::Operation>& Base::get_operations() const {
 
 size_t Base::ops_cost() const {
     return std::get<1>(
-        std::max_element(ops_.begin(), ops_.end(),
-                         [](auto a, auto b) {
-                             return std::get<1>(a.get_duration()) <
-                                    std::get<1>(b.get_duration());
-                         })
-            ->get_duration());
+        std::max_element(ops_.begin(), ops_.end(), [](auto a, auto b) {
+            return std::get<1>(a.get_duration()) <
+                   std::get<1>(b.get_duration());
+        })->get_duration());
 }
 
 unsigned Base::get_executable(QFTRouter& router,
@@ -100,8 +98,8 @@ unsigned Base::get_executable(QFTRouter& router,
 }
 
 void Base::route_gates(QFTRouter& router, size_t gate_idx) {
-    topo::Gate& gate = topo_->get_gate(gate_idx);
-    auto ops = router.assign_gate(gate);
+    const auto& gate = topo_->get_gate(gate_idx);
+    auto ops{router.assign_gate(gate)};
     ops_.insert(ops_.end(), ops.begin(), ops.end());
     topo_->update_avail_gates(gate_idx);
 }

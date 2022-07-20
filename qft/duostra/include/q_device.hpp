@@ -105,12 +105,12 @@ class Qubit {
 
     unsigned get_id() const;
     unsigned get_avail_time() const;
-    bool is_adj(Qubit& other) const;
+    bool is_adj(const Qubit& other) const;
     unsigned get_topo_qubit() const;
 
     void add_adj(unsigned i);
-    void set_topo_qubit(const unsigned i);
-    void set_occupied_time(const unsigned t);
+    void set_topo_qubit(unsigned i);
+    void set_occupied_time(unsigned t);
     const std::vector<unsigned>& get_adj_list() const;
 
     // A*
@@ -143,20 +143,23 @@ std::ostream& operator<<(std::ostream& os, const device::Qubit& q);
 
 class Device {
    public:
-    Device(std::fstream& file, unsigned r, unsigned s, unsigned cx);
+    Device(std::fstream& file, unsigned r, unsigned s, unsigned cx) noexcept;
     Device(std::vector<std::vector<unsigned>>&,
            unsigned r,
            unsigned s,
-           unsigned cx);
-    Device(const Device& other) = delete;
-    Device(Device&& other);
+           unsigned cx) noexcept;
+    Device(const Device& other) noexcept;
+    Device(Device&& other) noexcept;
 
     const unsigned SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE;
 
     unsigned get_num_qubits() const;
     std::vector<unsigned> mapping() const;
     unsigned get_shortest_cost(unsigned i, unsigned j) const;
-    Qubit& get_qubit(const unsigned i);
+
+    Qubit& get_qubit(unsigned i);
+    const Qubit& get_qubit(unsigned i) const;
+
     Operation execute_single(Operator op, unsigned q);
     std::vector<Operation> duostra_routing(Operator op,
                                            std::tuple<unsigned, unsigned> qs,

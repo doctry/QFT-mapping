@@ -32,12 +32,13 @@ class Base {
     const vector<device::Operation>& get_operations() const;
     size_t ops_cost() const;
 
+    void route_gates(QFTRouter& router, size_t gate_idx);
+
    protected:
     unique_ptr<topo::Topology> topo_;
     vector<device::Operation> ops_;
     bool sorted_ = false;
 
-    void route_gates(QFTRouter& router, size_t gate_idx);
     unsigned get_executable(QFTRouter& router,
                             vector<unsigned> wait_list) const;
 };

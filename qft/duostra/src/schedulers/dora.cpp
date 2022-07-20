@@ -13,9 +13,10 @@ struct DoraCostTree {
     DoraCostTreeNode root;
 };
 
-void scheduler::Dora::assign_gates(unique_ptr<QFTRouter> router) {
+void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     auto num_gates = topo_->get_num_gates();
     Tqdm bar{num_gates};
+
     for (size_t idx = 0; idx < num_gates; ++idx, bar.add()) {
         // generate all topo sorts under a particular depth
         auto paths_and_costs =
