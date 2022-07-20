@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "q_device.hpp"
@@ -11,13 +12,17 @@ namespace scheduler {
 using namespace std;
 using namespace topo;
 
-class Base {
+class SchedulerBase {
    public:
-    Base(const Base& other) = delete;
-    Base(unique_ptr<Topology>&& topo) noexcept;
-    Base(Base&& other) noexcept;
-    virtual ~Base() {}
+    SchedulerBase(const SchedulerBase& other) noexcept;
+    SchedulerBase(unique_ptr<Topology> topo) noexcept;
+    SchedulerBase(SchedulerBase&& other) noexcept;
+    virtual ~SchedulerBase() {}
 
+    topo::Topology& topo() { return *topo_; }
+    const topo::Topology& topo() const { return *topo_; }
+
+    virtual unique_ptr<SchedulerBase> clone() const;
     virtual void assign_gates(unique_ptr<QFTRouter> router);
 
     void sort();
@@ -28,11 +33,12 @@ class Base {
     unsigned get_final_cost() const;
     unsigned get_total_time() const;
     unsigned get_swap_num() const;
+    const vector<unsigned>& get_avail_gates() const;
 
     const vector<device::Operation>& get_operations() const;
     size_t ops_cost() const;
 
-    void route_gates(QFTRouter& router, size_t gate_idx);
+    void route_one_gate(QFTRouter& router, size_t gate_idx);
 
    protected:
     unique_ptr<topo::Topology> topo_;
@@ -43,45 +49,49 @@ class Base {
                             vector<unsigned> wait_list) const;
 };
 
-class Random : public Base {
+class Random : public SchedulerBase {
    public:
-    Random(unique_ptr<topo::Topology>&& topo) : Base(move(topo)) {}
-    Random(const Random& other) = delete;
-    Random(Random&& other) = delete;
+    Random(unique_ptr<topo::Topology> topo) noexcept;
+    Random(const Random& other) noexcept;
+    Random(Random&& other) noexcept;
     ~Random() override {}
 
+    unique_ptr<SchedulerBase> clone() const override;
+
     void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
-class Static : public Base {
+class Static : public SchedulerBase {
    public:
-    Static(unique_ptr<topo::Topology>&& topo) : Base(move(topo)) {}
-    Static(const Static& other) = delete;
-    Static(Static&& other) = delete;
+    Static(unique_ptr<topo::Topology> topo) noexcept;
+    Static(const Static& other) noexcept;
+    Static(Static&& other) noexcept;
     ~Static() override {}
 
+    unique_ptr<SchedulerBase> clone() const override;
     void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
-class Conf {
-   public:
-    Conf()
+struct Conf {
+    Conf() noexcept
         : avail_typ(true),
           cost_typ(false),
           candidates(UINT_MAX),
           apsp_coef(1) {}
     bool avail_typ;  // true is max, false is min
     bool cost_typ;   // true is max, false is min
-    unsigned candidates, apsp_coef;
+    unsigned candidates;
+    unsigned apsp_coef;
 };
 
-class Greedy : public Base {
+class Greedy : public SchedulerBase {
    public:
-    Greedy(unique_ptr<topo::Topology>&& topo, json& conf) noexcept;
-    Greedy(const Greedy& other) = delete;
-    Greedy(Greedy&& other) = delete;
+    Greedy(unique_ptr<topo::Topology> topo, json& conf) noexcept;
+    Greedy(const Greedy& other) noexcept;
+    Greedy(Greedy&& other) noexcept;
     ~Greedy() override {}
 
+    unique_ptr<SchedulerBase> clone() const override;
     void assign_gates(unique_ptr<QFTRouter> router) override;
     unsigned greedy_fallback(const QFTRouter& router,
                              const std::vector<unsigned>& wait_list,
@@ -93,13 +103,12 @@ class Greedy : public Base {
 
 class Onion : public Greedy {
    public:
-    Onion(unique_ptr<Topology>&& topo, json& conf)
-        : Greedy(move(topo), conf),
-          first_mode_(json_get<bool>(conf, "layer_from_first")) {}
-    Onion(const Onion& other) = delete;
-    Onion(Onion&& other) = delete;
+    Onion(unique_ptr<Topology> topo, json& conf) noexcept;
+    Onion(const Onion& other) noexcept;
+    Onion(Onion&& other) noexcept;
     ~Onion() override {}
 
+    unique_ptr<SchedulerBase> clone() const override;
     void assign_gates(unique_ptr<QFTRouter> router) override;
 
    private:
@@ -107,27 +116,54 @@ class Onion : public Greedy {
     Conf conf_;
 };
 
-struct PathsCosts {
-    vector<size_t> path;
-    size_t cost;
-};
-
-class Dora : public Base {
+// This is a node of the heuristic search tree.
+class TreeNode {
    public:
-    Dora(unique_ptr<Topology>&& topo, json& conf)
-        : Base(move(topo)), depth(json_get<int>(conf, "depth")) {}
+    TreeNode(size_t gate_idx,
+             unique_ptr<QFTRouter> router,
+             unique_ptr<SchedulerBase> scheduler) noexcept;
+    TreeNode(const TreeNode& other) noexcept;
+    TreeNode& operator=(const TreeNode& other) noexcept;
 
-    const size_t depth;
-    void assign_gates(unique_ptr<QFTRouter> router) override;
+    size_t cost(int depth) const;
+    size_t gate_idx() const { return gate_idx_; }
+
+    QFTRouter& router() { return *router_; }
+    SchedulerBase& scheduler() { return *scheduler_; }
+
+    vector<TreeNode>& children() { return children_; }
+    const vector<TreeNode>& children() const { return children_; }
+
+    bool is_leaf() const { return children_.empty(); }
 
    private:
-    vector<PathsCosts> paths_costs(size_t depth,
-                                   const vector<size_t>& path_so_far,
-                                   unique_ptr<Topology> topo,
-                                   unique_ptr<QFTRouter> router) const;
+    size_t gate_idx_;
+    vector<TreeNode> children_;
+    unique_ptr<QFTRouter> router_;
+    unique_ptr<SchedulerBase> scheduler_;
 };
 
-unique_ptr<Base> get(const string& typ,
-                     unique_ptr<Topology>&& topo,
-                     json& conf);
+class Dora : public Greedy {
+   public:
+    Dora(unique_ptr<Topology> topo, json& conf) noexcept;
+
+    Dora(const Dora& other) noexcept;
+    Dora(Dora&& other) noexcept;
+
+    const size_t depth;
+
+    unique_ptr<SchedulerBase> clone() const override;
+    void assign_gates(unique_ptr<QFTRouter> router) override;
+
+   protected:
+    void update_next_trees(unique_ptr<QFTRouter> router,
+                           unique_ptr<Greedy> scheduler,
+                           const vector<unsigned>& next_ids,
+                           vector<TreeNode>& next_trees);
+    void update_tree_recursive(int remaining_depth, TreeNode& root);
+};
+
+unique_ptr<SchedulerBase> get(const string& typ,
+                              unique_ptr<Topology> topo,
+                              json& conf);
 }  // namespace scheduler

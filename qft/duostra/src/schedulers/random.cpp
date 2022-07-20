@@ -2,7 +2,16 @@
 
 #include <chrono>
 
-void scheduler::Random::assign_gates(unique_ptr<QFTRouter> router) {
+using namespace scheduler;
+
+Random::Random(unique_ptr<topo::Topology> topo) noexcept
+    : SchedulerBase(move(topo)) {}
+
+Random::Random(const Random& other) noexcept : SchedulerBase(other) {}
+
+Random::Random(Random&& other) noexcept : SchedulerBase(move(other)) {}
+
+void Random::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Random scheduler running..." << endl;
 
     // unsigned count = 0;
@@ -15,11 +24,15 @@ void scheduler::Random::assign_gates(unique_ptr<QFTRouter> router) {
 
         unsigned choose = rand() % wait_list.size();
 
-        route_gates(*router, wait_list[choose]);
+        route_one_gate(*router, wait_list[choose]);
 
         // cout << wait_list << " " << wait_list[choose] << "\n\n";
         // count++;
     }
 
     // assert(count == topo_->get_num_gates());
+}
+
+unique_ptr<SchedulerBase> Random::clone() const {
+    return make_unique<Random>(*this);
 }

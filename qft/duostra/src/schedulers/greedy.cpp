@@ -2,6 +2,8 @@
 
 #include <vector>
 
+using namespace scheduler;
+
 class TopologyCandidate {
    public:
     TopologyCandidate(const topo::Topology& topo, size_t candidate)
@@ -22,9 +24,8 @@ class TopologyCandidate {
     size_t cands_;
 };
 
-scheduler::Greedy::Greedy(unique_ptr<topo::Topology>&& topo,
-                          json& conf) noexcept
-    : Base(move(topo)) {
+Greedy::Greedy(unique_ptr<topo::Topology> topo, json& conf) noexcept
+    : SchedulerBase(move(topo)) {
     int candidates = json_get<int>(conf, "candidates");
     if (candidates > 0) {
         conf_.candidates = candidates;
@@ -50,7 +51,13 @@ scheduler::Greedy::Greedy(unique_ptr<topo::Topology>&& topo,
     }
 }
 
-void scheduler::Greedy::assign_gates(unique_ptr<QFTRouter> router) {
+Greedy::Greedy(const Greedy& other) noexcept
+    : SchedulerBase(other), conf_(other.conf_) {}
+
+Greedy::Greedy(Greedy&& other) noexcept
+    : SchedulerBase(move(other)), conf_(other.conf_) {}
+
+void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Greedy scheduler running..." << endl;
 
     // unsigned count = 0;
@@ -63,17 +70,16 @@ void scheduler::Greedy::assign_gates(unique_ptr<QFTRouter> router) {
 
         unsigned gate_idx = get_executable(*router, wait_list);
         gate_idx = greedy_fallback(*router, wait_list, gate_idx);
-        route_gates(*router, gate_idx);
+        route_one_gate(*router, gate_idx);
         // cout << "waitlist: " << wait_list << " " << gate_idx << "\n\n";
         // count++;
     }
     // assert(count == topo_->get_num_gates());
 }
 
-unsigned scheduler::Greedy::greedy_fallback(
-    const QFTRouter& router,
-    const std::vector<unsigned>& wait_list,
-    unsigned gate_idx) const {
+unsigned Greedy::greedy_fallback(const QFTRouter& router,
+                                 const std::vector<unsigned>& wait_list,
+                                 unsigned gate_idx) const {
     if (gate_idx != UINT_MAX) {
         return gate_idx;
     }
@@ -91,4 +97,8 @@ unsigned scheduler::Greedy::greedy_fallback(
                         : min_element(cost_list.begin(), cost_list.end()) -
                               cost_list.begin();
     return wait_list[list_idx];
+}
+
+unique_ptr<SchedulerBase> Greedy::clone() const {
+    return make_unique<Greedy>(*this);
 }

@@ -1,6 +1,18 @@
 #include "qft_scheduler.hpp"
 
-void scheduler::Onion::assign_gates(unique_ptr<QFTRouter> router) {
+using namespace scheduler;
+
+Onion::Onion(unique_ptr<Topology> topo, json& conf) noexcept
+    : Greedy(move(topo), conf),
+      first_mode_(json_get<bool>(conf, "layer_from_first")) {}
+
+Onion::Onion(const Onion& other) noexcept
+    : Greedy(other), first_mode_(other.first_mode_) {}
+
+Onion::Onion(Onion&& other) noexcept
+    : Greedy(move(other)), first_mode_(other.first_mode_) {}
+
+void Onion::assign_gates(unique_ptr<QFTRouter> router) {
     using namespace std;
     cout << "Onion scheduler running..." << endl;
 
@@ -42,7 +54,7 @@ void scheduler::Onion::assign_gates(unique_ptr<QFTRouter> router) {
             assert(erase_idx != wait_list.end());
             wait_list.erase(erase_idx);
             // --total_size;
-            route_gates(*router, gate_idx);
+            route_one_gate(*router, gate_idx);
         }
         assert(youngest->second.empty());
         gen_to_gates.erase(youngest->first);
@@ -54,4 +66,8 @@ void scheduler::Onion::assign_gates(unique_ptr<QFTRouter> router) {
     // assert(total_size == 0);
 
     std::cout << avail_gates.size() << "\n";
+}
+
+unique_ptr<SchedulerBase> Onion::clone() const {
+    return make_unique<Onion>(*this);
 }

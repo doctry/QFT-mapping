@@ -1,75 +1,149 @@
 #include "qft_scheduler.hpp"
 
+#include <algorithm>
 #include <vector>
 
 using namespace std;
 using namespace scheduler;
 
-struct DoraCostTreeNode {
-    vector<DoraCostTreeNode> children;
-};
+TreeNode::TreeNode(size_t gate_idx,
+                   unique_ptr<QFTRouter> router,
+                   unique_ptr<SchedulerBase> scheduler) noexcept
+    : gate_idx_(gate_idx),
+      children_({}),
+      router_(move(router)),
+      scheduler_(move(scheduler)) {}
 
-struct DoraCostTree {
-    DoraCostTreeNode root;
-};
+TreeNode::TreeNode(const TreeNode& other) noexcept
+    : gate_idx_(other.gate_idx_),
+      children_(other.children_),
+      router_(other.router_->clone()),
+      scheduler_(other.scheduler_->clone()) {}
+
+TreeNode& TreeNode::operator=(const TreeNode& other) noexcept {
+    gate_idx_ = other.gate_idx_;
+    children_ = other.children_;
+    router_ = other.router_->clone();
+    scheduler_ = other.scheduler_->clone();
+    return *this;
+}
+
+// Cost recursively calls children's cost, and selects the best one.
+size_t TreeNode::cost(int depth) const {
+    // The leaf node contains the scheduling results.
+    if (depth <= 0 || is_leaf()) {
+        return scheduler_->ops_cost();
+    }
+
+    // Recursively calculates costs and returns theh best cost.
+    vector<size_t> costs{children_.size(), 0};
+    transform(children_.begin(), children_.end(), costs.begin(),
+              [depth](const TreeNode& child) { return child.cost(depth - 1); });
+    return *min_element(costs.begin(), costs.end());
+}
+
+Dora::Dora(unique_ptr<Topology> topo, json& conf) noexcept
+    : Greedy(move(topo), conf), depth(json_get<int>(conf, "depth")) {}
+
+Dora::Dora(const Dora& other) noexcept : Greedy(other), depth(other.depth) {}
+
+Dora::Dora(Dora&& other) noexcept : Greedy(other), depth(other.depth) {}
+
+unique_ptr<SchedulerBase> Dora::clone() const {
+    return make_unique<Dora>(*this);
+}
 
 void Dora::assign_gates(unique_ptr<QFTRouter> router) {
-    auto num_gates = topo_->get_num_gates();
-    Tqdm bar{num_gates};
+    auto total_gates = topo_->get_num_gates();
 
-    for (size_t idx = 0; idx < num_gates; ++idx, bar.add()) {
-        // generate all topo sorts under a particular depth
-        auto paths_and_costs =
-            paths_costs(depth, {}, topo_->clone(), router->clone());
+    Tqdm bar{total_gates};
+    vector<TreeNode> next_trees;
 
-        // apply those routes
-        auto min =
-            min_element(paths_and_costs.begin(), paths_and_costs.end(),
-                        [](auto a, auto b) -> bool { return a.cost < b.cost; });
-        auto min_cost = min->cost;
-        auto min_path = min->path;
-        (void)min_cost;
+    // For each step.
+    for (size_t idx = 0; idx < total_gates; ++idx, bar.add()) {
+        auto avail_gates = topo_->get_avail_gates();
 
-        assert(min_path.size() != 0);
+        // Generate heuristic trees if not present.
+        update_next_trees(router->clone(), make_unique<Greedy>(*this),
+                          avail_gates, next_trees);
 
-        // execute assign_gate interatively
-        route_gates(*router, min_path[0]);
+        // Calcuate each tree's costs and find the best one (smallest cost).
+        vector<size_t> costs{next_trees.size(), 0};
+        transform(next_trees.begin(), next_trees.end(), costs.begin(),
+                  [this](const TreeNode& root) { return root.cost(depth); });
+        auto argmin = min_element(costs.begin(), costs.end()) - costs.begin();
+
+        unsigned gate_idx = avail_gates[argmin];
+
+        route_one_gate(*router, gate_idx);
+
+        // Update the candidates.
+        next_trees = next_trees[argmin].children();
     }
 }
 
-vector<PathsCosts> Dora::paths_costs(size_t depth,
-                                     const vector<size_t>& path_so_far,
-                                     unique_ptr<Topology> topo,
-                                     unique_ptr<QFTRouter> router) const {
-    if (!depth) {
-        return {};
+// Check if ids are matched with chidren's ids.
+static void children_match_ids(const SchedulerBase& scheduler,
+                               const vector<unsigned>& ids,
+                               const vector<TreeNode>& children) {
+    unordered_set<unsigned> all_children{ids.begin(), ids.end()};
+
+    assert(all_children.size() == children.size());
+    for (const auto& child : children) {
+        assert(all_children.find(child.gate_idx()) != all_children.end());
     }
+}
 
-    const auto& avail_gates = topo->get_avail_gates();
+// If a tree is already present, the children of the root nodes must match.
+static void root_match_avail_gates(const SchedulerBase& scheduler,
+                                   const TreeNode& root) {
+    assert(!root.is_leaf());
 
-    vector<PathsCosts> paths;
+    children_match_ids(scheduler, scheduler.get_avail_gates(), root.children());
+}
 
-    size_t cost_so_far = ops_cost();
-
-    for (unsigned idx : avail_gates) {
-        auto cloned_topo = topo->clone();
-        auto cloned_router = router->clone();
-
-        auto& gate = cloned_topo->get_gate(idx);
-        router->assign_gate(gate);
-
-        vector<size_t> current_path{path_so_far};
-        current_path.push_back(idx);
-
-        auto path_and_costs = paths_costs(
-            depth - 1, current_path, move(cloned_topo), move(cloned_router));
-
-        for (auto& cp : path_and_costs) {
-            cp.cost += cost_so_far;
+void Dora::update_next_trees(unique_ptr<QFTRouter> router,
+                             unique_ptr<Greedy> scheduler,
+                             const vector<unsigned>& next_ids,
+                             vector<TreeNode>& next_trees) {
+    if (next_trees.empty()) {
+        for (size_t idx : next_ids) {
+            next_trees.push_back(TreeNode{idx, router->clone(),
+                                          make_unique<Greedy>(*scheduler)});
         }
-
-        paths.insert(paths.end(), path_and_costs.begin(), path_and_costs.end());
     }
 
-    return paths;
+    assert(next_trees.size() == next_ids.size());
+    for (auto& tree : next_trees) {
+        update_tree_recursive(depth, tree);
+    }
+}
+
+// Update and grow the trees given by the root recursively.
+// If `remaining_depth` is reached but there are still available gates,
+// the tree is extended.
+void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) {
+    const auto& avail_gates = root.scheduler().get_avail_gates();
+
+    if (remaining_depth <= 0 || avail_gates.empty()) {
+        return;
+    }
+
+    // If the heuristic tree has reached the leaf, extend it.
+    if (root.is_leaf()) {
+        for (unsigned gate_idx : avail_gates) {
+            auto cloned_router = root.router().clone();
+            auto cloned_sched = root.scheduler().clone();
+
+            cloned_sched->route_one_gate(*cloned_router, gate_idx);
+            root.children().push_back(
+                TreeNode{gate_idx, move(cloned_router), move(cloned_sched)});
+        }
+    }
+
+    // Update children heuristic search tree.
+    root_match_avail_gates(root.scheduler(), root);
+    for (auto& child_node : root.children()) {
+        update_tree_recursive(remaining_depth - 1, child_node);
+    }
 }

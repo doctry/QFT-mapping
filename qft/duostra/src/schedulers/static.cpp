@@ -1,6 +1,13 @@
 #include "qft_scheduler.hpp"
 
-void scheduler::Static::assign_gates(unique_ptr<QFTRouter> router) {
+using namespace scheduler;
+
+Static::Static(unique_ptr<topo::Topology> topo) noexcept
+    : SchedulerBase(move(topo)) {}
+Static::Static(const Static& other) noexcept : SchedulerBase(other) {}
+Static::Static(Static&& other) noexcept : SchedulerBase(move(other)) {}
+
+void Static::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Static scheduler running..." << endl;
 
     // unsigned count = 0;
@@ -15,9 +22,13 @@ void scheduler::Static::assign_gates(unique_ptr<QFTRouter> router) {
             gate_idx = wait_list[0];
         }
 
-        route_gates(*router, gate_idx);
+        route_one_gate(*router, gate_idx);
 
         // count++;
     }
     // assert(count == topo_->get_num_gates());
+}
+
+unique_ptr<SchedulerBase> Static::clone() const {
+    return make_unique<Static>(*this);
 }
