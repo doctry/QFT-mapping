@@ -12,7 +12,9 @@ TreeNode::TreeNode(size_t gate_idx,
     : gate_idx_(gate_idx),
       children_({}),
       router_(move(router)),
-      scheduler_(move(scheduler)) {}
+      scheduler_(move(scheduler)) {
+    exec_route();
+}
 
 TreeNode::TreeNode(const TreeNode& other) noexcept
     : gate_idx_(other.gate_idx_),
@@ -28,6 +30,16 @@ TreeNode& TreeNode::operator=(const TreeNode& other) noexcept {
     return *this;
 }
 
+void TreeNode::exec_route() {
+    const auto& gates = scheduler_->get_avail_gates();
+
+    assert(std::find(gates.begin(), gates.end(), gate_idx_) != gates.end());
+
+    scheduler_->route_one_gate(*router_, gate_idx_);
+
+    assert(std::find(gates.begin(), gates.end(), gate_idx_) == gates.end());
+}
+
 // Cost recursively calls children's cost, and selects the best one.
 size_t TreeNode::cost(int depth) const {
     // The leaf node contains the scheduling results.
@@ -40,6 +52,14 @@ size_t TreeNode::cost(int depth) const {
     transform(children_.begin(), children_.end(), costs.begin(),
               [depth](const TreeNode& child) { return child.cost(depth - 1); });
     return *min_element(costs.begin(), costs.end());
+}
+
+void TreeNode::grow() {
+    const auto& avail_gates = scheduler_->get_avail_gates();
+    for (size_t gate_idx : avail_gates) {
+        children_.push_back(
+            TreeNode{gate_idx, router_->clone(), scheduler_->clone()});
+    }
 }
 
 Dora::Dora(unique_ptr<Topology> topo, json& conf) noexcept
@@ -74,12 +94,11 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
                   [this](const TreeNode& root) { return root.cost(depth); });
         auto argmin = min_element(costs.begin(), costs.end()) - costs.begin();
 
+        // Update the candidates.
         size_t gate_idx = avail_gates[argmin];
+        next_trees = std::move(next_trees[argmin].children());
 
         route_one_gate(*router, gate_idx);
-
-        // Update the candidates.
-        next_trees = next_trees[argmin].children();
     }
 }
 
@@ -131,14 +150,7 @@ void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) {
 
     // If the heuristic tree has reached the leaf, extend it.
     if (root.is_leaf()) {
-        for (size_t gate_idx : avail_gates) {
-            auto cloned_router = root.router().clone();
-            auto cloned_sched = root.scheduler().clone();
-
-            cloned_sched->route_one_gate(*cloned_router, gate_idx);
-            root.children().push_back(
-                TreeNode{gate_idx, move(cloned_router), move(cloned_sched)});
-        }
+        root.grow();
     }
 
     // Update children heuristic search tree.

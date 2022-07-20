@@ -29,9 +29,9 @@ QFTRouter::QFTRouter(device::Device&& device,
         device_.init_apsp();
     }
 
-    topo_to_dev_.resize(device.get_num_qubits());
-    for (size_t i = 0; i < device.get_num_qubits(); ++i) {
-        topo_to_dev_[device.get_qubit(i).get_topo_qubit()] = i;
+    topo_to_dev_.resize(device_.get_num_qubits());
+    for (size_t i = 0; i < device_.get_num_qubits(); ++i) {
+        topo_to_dev_[device_.get_qubit(i).get_topo_qubit()] = i;
     }
 }
 
@@ -48,14 +48,13 @@ QFTRouter::QFTRouter(QFTRouter&& other) noexcept
       duostra_(other.duostra_),
       orient_(other.orient_),
       apsp_(other.apsp_),
-      device_(other.device_),
+      device_(std::move(other.device_)),
       topo_to_dev_(std::move(other.topo_to_dev_)) {}
 
 size_t QFTRouter::get_gate_cost(topo::Gate& gate,
-                                  bool min_max,
-                                  size_t apsp_coef) const {
-    std::tuple<size_t, size_t> device_qubits_idx =
-        get_device_qubits_idx(gate);
+                                bool min_max,
+                                size_t apsp_coef) const {
+    std::tuple<size_t, size_t> device_qubits_idx = get_device_qubits_idx(gate);
 
     if (gate.get_type() == Operator::Single) {
         assert(std::get<1>(device_qubits_idx) == size_t(-1));
@@ -72,15 +71,13 @@ size_t QFTRouter::get_gate_cost(topo::Gate& gate,
         apsp_cost = device_.get_shortest_cost(q0_id, q1_id);
         assert(apsp_cost == device_.get_shortest_cost(q1_id, q0_id));
     }
-    size_t avail = min_max
-                         ? std::max(q0.get_avail_time(), q1.get_avail_time())
-                         : std::min(q0.get_avail_time(), q1.get_avail_time());
+    size_t avail = min_max ? std::max(q0.get_avail_time(), q1.get_avail_time())
+                           : std::min(q0.get_avail_time(), q1.get_avail_time());
     return avail + apsp_cost / apsp_coef;
 }
 
 std::vector<device::Operation> QFTRouter::assign_gate(const topo::Gate& gate) {
-    std::tuple<size_t, size_t> device_qubits_idx =
-        get_device_qubits_idx(gate);
+    std::tuple<size_t, size_t> device_qubits_idx = get_device_qubits_idx(gate);
 
     if (gate.get_type() == Operator::Single) {
         assert(std::get<1>(device_qubits_idx) == size_t(-1));
@@ -121,8 +118,7 @@ bool QFTRouter::is_executable(topo::Gate& gate) const {
         return true;
     }
 
-    std::tuple<size_t, size_t> device_qubits_idx =
-        get_device_qubits_idx(gate);
+    std::tuple<size_t, size_t> device_qubits_idx = get_device_qubits_idx(gate);
     assert(std::get<1>(device_qubits_idx) != size_t(-1));
     const auto& q0 = device_.get_qubit(std::get<0>(device_qubits_idx));
     const auto& q1 = device_.get_qubit(std::get<1>(device_qubits_idx));

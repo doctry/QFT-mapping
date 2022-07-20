@@ -9,10 +9,10 @@ SchedulerBase::SchedulerBase(unique_ptr<Topology> topo) noexcept
     : topo_(move(topo)) {}
 
 SchedulerBase::SchedulerBase(const SchedulerBase& other) noexcept
-    : topo_(other.topo_->clone()) {}
+    : topo_(other.topo_->clone()), ops_(other.ops_) {}
 
 SchedulerBase::SchedulerBase(SchedulerBase&& other) noexcept
-    : topo_(move(other.topo_)) {}
+    : topo_(move(other.topo_)), ops_(std::move(other.ops_)) {}
 
 unique_ptr<SchedulerBase> SchedulerBase::clone() const {
     return make_unique<SchedulerBase>(*this);
@@ -94,15 +94,16 @@ const vector<device::Operation>& SchedulerBase::get_operations() const {
 }
 
 size_t SchedulerBase::ops_cost() const {
-    return std::get<1>(
-        std::max_element(ops_.begin(), ops_.end(), [](auto a, auto b) {
-            return std::get<1>(a.get_duration()) <
-                   std::get<1>(b.get_duration());
-        })->get_duration());
+    return std::max_element(
+               ops_.begin(), ops_.end(),
+               [](const device::Operation& a, const device::Operation& b) {
+                   return a.get_cost() < b.get_cost();
+               })
+        ->get_cost();
 }
 
 size_t SchedulerBase::get_executable(QFTRouter& router,
-                                       vector<size_t> wait_list) const {
+                                     vector<size_t> wait_list) const {
     for (size_t gate_idx : wait_list) {
         if (router.is_executable(topo_->get_gate(gate_idx))) {
             return gate_idx;

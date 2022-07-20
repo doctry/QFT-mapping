@@ -190,8 +190,7 @@ class Device {
                                      device::Qubit& t1);  // standalone
 
     // apsp
-    std::tuple<size_t, size_t> next_swap_cost(size_t source,
-                                                  size_t target);
+    std::tuple<size_t, size_t> next_swap_cost(size_t source, size_t target);
 
     // general
     void apply_gate(const Operation& op);

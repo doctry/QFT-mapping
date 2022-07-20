@@ -45,8 +45,7 @@ class SchedulerBase {
     vector<device::Operation> ops_;
     bool sorted_ = false;
 
-    size_t get_executable(QFTRouter& router,
-                            vector<size_t> wait_list) const;
+    size_t get_executable(QFTRouter& router, vector<size_t> wait_list) const;
 };
 
 class Random : public SchedulerBase {
@@ -94,8 +93,8 @@ class Greedy : public SchedulerBase {
     unique_ptr<SchedulerBase> clone() const override;
     void assign_gates(unique_ptr<QFTRouter> router) override;
     size_t greedy_fallback(const QFTRouter& router,
-                             const std::vector<size_t>& wait_list,
-                             size_t gate_idx) const;
+                           const std::vector<size_t>& wait_list,
+                           size_t gate_idx) const;
 
    protected:
     Conf conf_;
@@ -135,12 +134,15 @@ class TreeNode {
     const vector<TreeNode>& children() const { return children_; }
 
     bool is_leaf() const { return children_.empty(); }
+    void grow();
 
    private:
     size_t gate_idx_;
     vector<TreeNode> children_;
     unique_ptr<QFTRouter> router_;
     unique_ptr<SchedulerBase> scheduler_;
+
+    void exec_route();
 };
 
 class Dora : public Greedy {

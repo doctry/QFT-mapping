@@ -43,7 +43,7 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
         cerr << "There is no file" << device_filename << endl;
         abort();
     }
-    device::Device device(device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE);
+    device::Device device{device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE};
 
     if (topo->get_num_qubits() > device.get_num_qubits()) {
         cerr << "You cannot assign more QFT qubits than the device." << endl;
@@ -55,7 +55,7 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
 
     // place
     cout << "creating placer..." << endl;
-    if (assign.size() == 0) {
+    if (assign.empty()) {
         string placer_typ = json_get<string>(conf_mapper, "placer");
         QFTPlacer placer;
         assign = placer.place(device, placer_typ);
@@ -122,7 +122,7 @@ size_t device_num(json& conf) {
         cerr << "There is no file" << device_filename << endl;
         abort();
     }
-    device::Device device(device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE);
+    device::Device device{device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE};
 
     return device.get_num_qubits();
 }
