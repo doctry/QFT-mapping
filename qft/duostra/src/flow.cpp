@@ -79,6 +79,7 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     // routing
     std::cout << "routing..." << std::endl;
     sched->assign_gates(std::move(router));
+    sched->sort();
 
     // dump
     bool dump = json_get<bool>(conf, "dump");

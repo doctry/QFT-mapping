@@ -18,12 +18,12 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
 }
 
 template <class T>
-T json_get(json& j, const char* key) {
+T json_get(const json& j, const char* key) {
     if (!j.contains(key)) {
         std::cerr << "Necessary key \"" << key << "\" does not exist."
                   << std::endl;
         abort();
     }
     std::cout << "Reading: " << key << "\n";
-    return j[key].get<T>();
+    return j.at(key).get<T>();
 }

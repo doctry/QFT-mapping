@@ -1,7 +1,0 @@
-[wrap-file]
-directory = libtorch
-
-source_url = https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
-patch_directory = torch
-source_filename = libtorch.zip
-source_hash = ec29bc5c45be8b55763a4cdbaa45ceeb1aa481c52ed42e3376e8c747b9ce9601

@@ -23,6 +23,7 @@ enable_testing()
 # source files
 file (GLOB DUOSTRA_DEP
     "src/*.cpp"
+    "src/schedulers/*.cpp"
     "include/*.hpp"
 )
 add_executable(Duostra ${DUOSTRA_DEP})

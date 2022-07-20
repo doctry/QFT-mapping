@@ -90,6 +90,7 @@ double M(void* xp, void* yp) {
 
 /* take a step space */
 void S(const gsl_rng* r, void* xp, double step_size) {
+    (void)step_size;
     SAData* sa_data = (SAData*)xp;
     sa_data->step(gsl_rng_get(r));
 }
