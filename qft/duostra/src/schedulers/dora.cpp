@@ -35,7 +35,7 @@ size_t TreeNode::cost(int depth) const {
         return scheduler_->ops_cost();
     }
 
-    // Recursively calculates costs and returns theh best cost.
+    // Recursively calculates costs and returns the best cost.
     vector<size_t> costs{children_.size(), 0};
     transform(children_.begin(), children_.end(), costs.begin(),
               [depth](const TreeNode& child) { return child.cost(depth - 1); });
@@ -108,8 +108,8 @@ void Dora::update_next_trees(unique_ptr<QFTRouter> router,
                              vector<TreeNode>& next_trees) {
     if (next_trees.empty()) {
         for (size_t idx : next_ids) {
-            next_trees.push_back(TreeNode{idx, router->clone(),
-                                          make_unique<Greedy>(*scheduler)});
+            next_trees.push_back(
+                TreeNode{idx, router->clone(), scheduler->clone()});
         }
     }
 
