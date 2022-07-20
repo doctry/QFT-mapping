@@ -81,10 +81,12 @@ const vector<device::Operation>& Base::get_operations() const {
 
 size_t Base::ops_cost() const {
     return std::get<1>(
-        std::max_element(ops_.begin(), ops_.end(), [](auto a, auto b) {
-            return std::get<1>(a.get_duration()) <
-                   std::get<1>(b.get_duration());
-        })->get_duration());
+        std::max_element(ops_.begin(), ops_.end(),
+                         [](auto a, auto b) {
+                             return std::get<1>(a.get_duration()) <
+                                    std::get<1>(b.get_duration());
+                         })
+            ->get_duration());
 }
 
 unsigned Base::get_executable(QFTRouter& router,

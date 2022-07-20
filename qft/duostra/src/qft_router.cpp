@@ -111,7 +111,7 @@ std::vector<device::Operation> QFTRouter::assign_gate(const topo::Gate& gate) {
     // }
     // std::cout << "Gate: Q" << std::get<0>(gate.get_qubits()) << " Q"
     //           << std::get<1>(gate.get_qubits()) << "\n";
-    // _device.print_device_state(std::cout);
+    // device_.print_device_state(std::cout);
     return op_list;
 }
 

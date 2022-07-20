@@ -9,131 +9,27 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include "gate.hpp"
 #include "operator.hpp"
 #include "tqdm.hpp"
 #include "util.hpp"
 
 namespace topo {
 using namespace std;
-class Gate {
-   public:
-    Gate(unsigned id, Operator type, tuple<unsigned, unsigned> qs)
-        : _id(id), _type(type), _qubits(qs) {
-        _prevs.clear();
-        _nexts.clear();
-    }
-
-    Gate(const Gate& other)
-        : _id(other._id),
-          _type(other._type),
-          _qubits(other._qubits),
-          _prevs(other._prevs),
-          _nexts(other._nexts) {}
-
-    Gate(Gate&& other)
-        : _id(other._id),
-          _type(other._type),
-          _qubits(other._qubits),
-          _prevs(move(other._prevs)),
-          _nexts(move(other._nexts)) {}
-
-    unsigned get_id() const { return _id; }
-    tuple<unsigned, unsigned> get_qubits() const { return _qubits; }
-
-    void set_type(Operator t) { _type = t; }
-    void set_prev(unsigned a, unsigned b) {
-        pair<unsigned, bool> first(a, false);
-        pair<unsigned, bool> second(b, false);
-
-        if (a != (unsigned)-1) {
-            _prevs.push_back(first);
-        }
-
-        if (a != b && b != (unsigned)-1) {
-            _prevs.push_back(second);
-        }
-    }
-
-    void add_next(unsigned n) {
-        if (n != (unsigned)-1) {
-            _nexts.push_back(n);
-        }
-    }
-    void finished(unsigned);
-    bool is_avail() const;
-
-    bool is_first() const;
-    bool is_last() const;
-
-    const vector<pair<unsigned, bool>>& get_prevs() const { return _prevs; }
-    const vector<unsigned>& get_nexts() const { return _nexts; }
-    Operator get_type() const { return _type; }
-
-   private:
-    unsigned _id;
-    Operator _type;
-    tuple<unsigned, unsigned> _qubits;
-    vector<pair<unsigned, bool>> _prevs;
-    vector<unsigned> _nexts;
-};
-
-class DAGNode {
-   public:
-    DAGNode() : parents_({}), children_({}) {}
-
-    DAGNode(set<size_t> parents, set<size_t> children)
-        : parents_(parents), children_(children) {}
-
-    set<size_t>& parents() { return parents_; }
-    const set<size_t>& parents() const { return parents_; }
-
-    set<size_t>& children() { return children_; }
-    const set<size_t>& children() const { return children_; }
-
-   private:
-    set<size_t> parents_;
-    set<size_t> children_;
-};
-
-class DAG {
-   public:
-    DAG(size_t num_nodes) {
-        for (size_t idx = 0; idx < num_nodes; ++idx) {
-            nodes_[idx] = DAGNode();
-            heads_.insert(idx);
-        }
-    }
-
-    size_t num_nodes() const { return nodes_.size(); }
-
-    unordered_map<size_t, DAGNode>& nodes() { return nodes_; }
-    const unordered_map<size_t, DAGNode>& nodes() const { return nodes_; }
-    DAGNode& nodes(size_t idx) { return nodes_.at(idx); }
-    const DAGNode& nodes(size_t idx) const { return nodes_.at(idx); }
-
-    void link(size_t parent, size_t child);
-    size_t remove(size_t idx);
-
-    const unordered_set<size_t>& heads() const { return heads_; }
-
-   private:
-    unordered_map<size_t, DAGNode> nodes_;
-    unordered_set<size_t> heads_;
-};
 
 class Topology {
    public:
-    Topology() : _num_qubits(0), _gates({}), _avail_gates({}) {}
+    Topology() : num_qubits_(0), gates_({}), avail_gates_({}) {}
 
     Topology(const Topology& other)
-        : _num_qubits(other._num_qubits),
-          _gates(other._gates),
-          _avail_gates(other._avail_gates) {}
+        : num_qubits_(other.num_qubits_),
+          gates_(other.gates_),
+          avail_gates_(other.avail_gates_) {}
 
     Topology(Topology&& other)
-        : _num_qubits(other._num_qubits),
-          _gates(std::move(other._gates)),
-          _avail_gates(std::move(other._avail_gates)) {}
+        : num_qubits_(other.num_qubits_),
+          gates_(std::move(other.gates_)),
+          avail_gates_(std::move(other.avail_gates_)) {}
 
     virtual ~Topology() {}
 
@@ -148,97 +44,13 @@ class Topology {
     virtual unique_ptr<Topology> clone() const = 0;
 
     template <bool first>
-    vector<unsigned> get_gates() const {
-        using namespace std;
-        vector<unsigned> result;
-
-        for (unsigned i = 0; i < get_num_gates(); ++i) {
-            const Gate& gate = get_gate(i);
-
-            bool condition = first ? gate.is_first() : gate.is_last();
-            if (condition) {
-                result.push_back(i);
-            }
-        }
-
-        return result;
-    }
+    vector<unsigned> get_gates() const;
 
     vector<unsigned> get_first_gates() const { return get_gates<true>(); }
     vector<unsigned> get_last_gates() const { return get_gates<false>(); }
 
     template <bool first>
-    unordered_map<unsigned, unsigned> dist_to() const {
-        using namespace std;
-
-        unordered_map<unsigned, unsigned> dist;
-        unordered_set<unsigned> waiting;
-
-        auto no_preceding = [&](size_t gate_idx) -> bool {
-            const auto& gate = get_gate(gate_idx);
-
-            if (first) {
-                for (auto prev : gate.get_prevs()) {
-                    if (prev.first == UINT_MAX) {
-                        continue;
-                    }
-                    if (dist.find(prev.first) == dist.end()) {
-                        return false;
-                    }
-                }
-                return true;
-            } else {
-                for (auto next : gate.get_nexts()) {
-                    if (next == UINT_MAX) {
-                        continue;
-                    }
-                    if (dist.find(next) == dist.end()) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        };
-
-        auto zero_nodes = get_gates<first>();
-        for (auto node : zero_nodes) {
-            waiting.insert(node);
-        }
-
-        unsigned counter = 0;
-        for (Tqdm bar{get_num_gates()}; waiting.size() != 0;
-             ++counter) {
-            auto cloned_waiting{waiting};
-
-            vector<unsigned> visited_this_cycle;
-            for (unsigned idx : cloned_waiting) {
-                if (no_preceding(idx)) {
-                    const auto& gate = get_gate(idx);
-
-                    if (first) {
-                        for (auto next : gate.get_nexts()) {
-                            waiting.insert(next);
-                        }
-                    } else {
-                        for (auto prev : gate.get_prevs()) {
-                            waiting.insert(prev.first);
-                        }
-                    }
-
-                    visited_this_cycle.push_back(idx);
-                    waiting.erase(idx);
-                }
-            }
-
-            for (auto vtc : visited_this_cycle) {
-                dist[vtc] = counter;
-                bar.add();
-            }
-        }
-
-        return dist;
-    }
-
+    unordered_map<unsigned, unsigned> dist_to() const;
     unordered_map<unsigned, unsigned> dist_to_first() const {
         return dist_to<true>();
     }
@@ -257,14 +69,14 @@ class Topology {
         return gate_by_generation(dist);
     }
 
-    DAG dag() const;
-
    protected:
-    unsigned _num_qubits;
-    vector<Gate> _gates;
-    vector<unsigned> _avail_gates;
+    unsigned num_qubits_;
+    vector<Gate> gates_;
+    vector<unsigned> avail_gates_;
 
     static unordered_map<unsigned, vector<unsigned>> gate_by_generation(
         const unordered_map<unsigned, unsigned>& map);
 };
 };  // namespace topo
+
+#include "topo.tpp"

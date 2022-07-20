@@ -25,38 +25,38 @@ class Operation {
     Operation(Operator oper,
               std::tuple<unsigned, unsigned> qs,
               std::tuple<unsigned, unsigned> du)
-        : _oper(oper), _qubits(qs), _duration(du) {
+        : oper_(oper), qubits_(qs), duration_(du) {
         // sort qs
         unsigned a = std::get<0>(qs);
         unsigned b = std::get<1>(qs);
         assert(a != b);
         if (a > b) {
-            _qubits = std::make_tuple(b, a);
+            qubits_ = std::make_tuple(b, a);
         }
     }
     Operation(const Operation& other)
-        : _oper(other._oper),
-          _qubits(other._qubits),
-          _duration(other._duration) {}
+        : oper_(other.oper_),
+          qubits_(other.qubits_),
+          duration_(other.duration_) {}
 
     Operation& operator=(const Operation& other) {
-        _oper = other._oper;
-        _qubits = other._qubits;
-        _duration = other._duration;
+        oper_ = other.oper_;
+        qubits_ = other.qubits_;
+        duration_ = other.duration_;
         return *this;
     }
 
-    unsigned get_cost() const { return std::get<1>(_duration); }
-    unsigned get_op_time() const { return std::get<0>(_duration); }
-    std::tuple<unsigned, unsigned> get_duration() const { return _duration; }
-    Operator get_operator() const { return _oper; }
-    std::string get_operator_name() const { return operator_get_name(_oper); }
-    std::tuple<unsigned, unsigned> get_qubits() const { return _qubits; }
+    unsigned get_cost() const { return std::get<1>(duration_); }
+    unsigned get_op_time() const { return std::get<0>(duration_); }
+    std::tuple<unsigned, unsigned> get_duration() const { return duration_; }
+    Operator get_operator() const { return oper_; }
+    std::string get_operator_name() const { return operator_get_name(oper_); }
+    std::tuple<unsigned, unsigned> get_qubits() const { return qubits_; }
 
    private:
-    Operator _oper;
-    std::tuple<unsigned, unsigned> _qubits;
-    std::tuple<unsigned, unsigned> _duration;  // <from, to>
+    Operator oper_;
+    std::tuple<unsigned, unsigned> qubits_;
+    std::tuple<unsigned, unsigned> duration_;  // <from, to>
 };
 
 std::ostream& operator<<(std::ostream&, Operation&);
@@ -68,33 +68,31 @@ class AStarNode {
    public:
     friend class AStarComp;
     AStarNode(unsigned cost, unsigned id, bool swtch)
-        : _estimated_cost(cost), _id(id), _swtch(swtch) {}
+        : est_cost_(cost), id_(id), swtch_(swtch) {}
     AStarNode(const AStarNode& other)
-        : _estimated_cost(other._estimated_cost),
-          _id(other._id),
-          _swtch(other._swtch) {}
+        : est_cost_(other.est_cost_), id_(other.id_), swtch_(other.swtch_) {}
 
     AStarNode& operator=(const AStarNode& other) {
-        _estimated_cost = other._estimated_cost;
-        _id = other._id;
-        _swtch = other._swtch;
+        est_cost_ = other.est_cost_;
+        id_ = other.id_;
+        swtch_ = other.swtch_;
         return *this;
     }
 
-    bool get_swtch() const { return _swtch; }
-    unsigned get_id() const { return _id; }
-    unsigned get_cost() const { return _estimated_cost; }
+    bool get_swtch() const { return swtch_; }
+    unsigned get_id() const { return id_; }
+    unsigned get_cost() const { return est_cost_; }
 
    private:
-    unsigned _estimated_cost;
-    unsigned _id;
-    bool _swtch;  // false q0 propagate, true q1 propagate
+    unsigned est_cost_;
+    unsigned id_;
+    bool swtch_;  // false q0 propagate, true q1 propagate
 };
 
 class AStarComp {
    public:
     bool operator()(const AStarNode& a, const AStarNode& b) {
-        return a._estimated_cost > b._estimated_cost;
+        return a.est_cost_ > b.est_cost_;
     }
 };
 
@@ -127,18 +125,18 @@ class Qubit {
     void take_route(unsigned cost, unsigned swap_time);
 
    private:
-    unsigned _id;
-    std::vector<unsigned> _adj_list;
-    unsigned _topo_qubit;
-    unsigned _occupied_until;
+    unsigned id_;
+    std::vector<unsigned> adj_list_;
+    unsigned topo_qubit_;
+    unsigned occupied_until_;
 
     // for A*
-    bool _marked;
-    unsigned _pred;
-    unsigned _cost;
-    unsigned _swap_time;
-    bool _swtch;
-    bool _taken;
+    bool marked_;
+    unsigned pred_;
+    unsigned cost_;
+    unsigned swap_time_;
+    bool swtch_;
+    bool taken_;
 };
 
 std::ostream& operator<<(std::ostream& os, const device::Qubit& q);
@@ -152,6 +150,8 @@ class Device {
            unsigned cx);
     Device(const Device& other) = delete;
     Device(Device&& other);
+
+    const unsigned SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE;
 
     unsigned get_num_qubits() const;
     std::vector<unsigned> mapping() const;
@@ -194,8 +194,7 @@ class Device {
     void apply_gate(const Operation& op);
 
     // data member
-    std::vector<Qubit> _qubits;
-    unsigned _SINGLE_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
-    std::vector<std::vector<unsigned>> _shortest_path, _shortest_cost;
+    std::vector<Qubit> qubits_;
+    std::vector<std::vector<unsigned>> shortest_path_, shortest_cost_;
 };
 }  // namespace device

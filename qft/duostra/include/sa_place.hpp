@@ -5,59 +5,59 @@
 class SAData {
    public:
     SAData(json& conf, unsigned t, unsigned d)
-        : _conf(conf), _topo_num(t), _device_num(d) {
-        for (unsigned i = 0; i < _topo_num; ++i) {
-            _device2topo.push_back(i);
-            _topo2device.push_back(i);
+        : conf_(conf), topo_num_(t), dev_num_(d) {
+        for (unsigned i = 0; i < topo_num_; ++i) {
+            dev_to_topo_.push_back(i);
+            topo_to_dev_.push_back(i);
         }
-        for (unsigned i = _topo_num; i < _device_num; ++i) {
-            _device2topo.push_back(UINT_MAX);
+        for (unsigned i = topo_num_; i < dev_num_; ++i) {
+            dev_to_topo_.push_back(UINT_MAX);
         }
     }
 
     void step(unsigned rand_num) {
-        unsigned choose_topo = rand_num % _topo_num;
-        unsigned choose_device = _topo2device[choose_topo];
+        unsigned choose_topo = rand_num % topo_num_;
+        unsigned choose_device = topo_to_dev_[choose_topo];
 
-        if (choose_device == _device_num - 1) {
+        if (choose_device == dev_num_ - 1) {
             swap_q(choose_device, 0);
         } else {
             swap_q(choose_device, choose_device + 1);
         }
     }
 
-    json& get_conf() { return _conf; }
-    std::vector<unsigned>& get_topo2device() { return _topo2device; }
+    json& get_conf() { return conf_; }
+    std::vector<unsigned>& get_topo2device() { return topo_to_dev_; }
 
     unsigned get_distance(SAData& other) {
         unsigned ret = 0;
-        assert(_device2topo.size() == other._device2topo.size());
-        for (unsigned i = 0; i < _device2topo.size(); ++i) {
-            ret += _device2topo[i] == other._device2topo[i] ? 0 : 1;
+        assert(dev_to_topo_.size() == other.dev_to_topo_.size());
+        for (unsigned i = 0; i < dev_to_topo_.size(); ++i) {
+            ret += dev_to_topo_[i] == other.dev_to_topo_[i] ? 0 : 1;
         }
         return ret;
     }
 
    private:
-    json& _conf;
-    unsigned _topo_num;
-    unsigned _device_num;
-    std::vector<unsigned> _device2topo;
-    std::vector<unsigned> _topo2device;
+    json& conf_;
+    unsigned topo_num_;
+    unsigned dev_num_;
+    std::vector<unsigned> dev_to_topo_;
+    std::vector<unsigned> topo_to_dev_;
 
     void swap_q(unsigned device0, unsigned device1) {
-        std::swap(_device2topo[device0], _device2topo[device1]);
+        std::swap(dev_to_topo_[device0], dev_to_topo_[device1]);
 
-        assign_q(_device2topo[device0], device0);
-        assign_q(_device2topo[device1], device1);
+        assign_q(dev_to_topo_[device0], device0);
+        assign_q(dev_to_topo_[device1], device1);
     }
 
     void assign_q(unsigned topo, unsigned device) {
         if (topo == UINT_MAX) {
             return;
         }
-        assert(_topo2device[topo] != device);
-        _topo2device[topo] = device;
+        assert(topo_to_dev_[topo] != device);
+        topo_to_dev_[topo] = device;
     }
 };
 

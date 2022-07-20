@@ -1,15 +1,15 @@
 #include "apsp.hpp"
 
-#include "tqdm.hpp"
 #include <cassert>
 #include <cmath>
 #include <iostream>
 #include <utility>
+#include "tqdm.hpp"
 
 using namespace std;
 using namespace torch::indexing;
 
-std::ostream &operator<<(std::ostream &out, const ShortestPath sp) {
+std::ostream& operator<<(std::ostream& out, const ShortestPath sp) {
     return out << "Cost:\n"
                << sp.cost << '\n'
                << "Pointer:\n"
