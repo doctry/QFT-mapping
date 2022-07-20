@@ -103,14 +103,14 @@ class tqdm {
 
 class Tqdm {
    public:
-    Tqdm(long total) : counter_(0), total_(total), tqdm_(tqdm()) {}
+    Tqdm(size_t total) : counter_(0), total_(total), tqdm_(tqdm()) {}
     ~Tqdm() { tqdm_.finish(); }
 
     void add() { tqdm_.progress(counter_++, total_); }
 
    private:
-    long counter_;
-    long total_;
+    size_t counter_;
+    size_t total_;
     tqdm tqdm_;
 };
 #endif

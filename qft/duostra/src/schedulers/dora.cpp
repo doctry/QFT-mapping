@@ -56,7 +56,7 @@ unique_ptr<SchedulerBase> Dora::clone() const {
 void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     auto total_gates = topo_->get_num_gates();
 
-    Tqdm bar{int(total_gates)};
+    Tqdm bar{total_gates};
     vector<TreeNode> next_trees;
 
     // For each step.
