@@ -156,8 +156,8 @@ class Dora : public Greedy {
     void assign_gates(unique_ptr<QFTRouter> router) override;
 
    protected:
-    void update_next_trees(unique_ptr<QFTRouter> router,
-                           unique_ptr<Greedy> scheduler,
+    void update_next_trees(const QFTRouter& router,
+                           const SchedulerBase& scheduler,
                            const vector<unsigned>& next_ids,
                            vector<TreeNode>& next_trees);
     void update_tree_recursive(int remaining_depth, TreeNode& root);

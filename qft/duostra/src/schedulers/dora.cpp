@@ -64,8 +64,9 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         auto avail_gates = topo_->get_avail_gates();
 
         // Generate heuristic trees if not present.
-        update_next_trees(router->clone(), make_unique<Greedy>(*this),
-                          avail_gates, next_trees);
+        // Since router and this both outlive update_next_trees,
+        // this function is safe.
+        update_next_trees(*router, *this, avail_gates, next_trees);
 
         // Calcuate each tree's costs and find the best one (smallest cost).
         vector<size_t> costs{next_trees.size(), 0};
@@ -102,14 +103,14 @@ static void root_match_avail_gates(const SchedulerBase& scheduler,
     children_match_ids(scheduler, scheduler.get_avail_gates(), root.children());
 }
 
-void Dora::update_next_trees(unique_ptr<QFTRouter> router,
-                             unique_ptr<Greedy> scheduler,
+void Dora::update_next_trees(const QFTRouter& router,
+                             const SchedulerBase& scheduler,
                              const vector<unsigned>& next_ids,
                              vector<TreeNode>& next_trees) {
     if (next_trees.empty()) {
         for (size_t idx : next_ids) {
             next_trees.push_back(
-                TreeNode{idx, router->clone(), scheduler->clone()});
+                TreeNode{idx, router.clone(), scheduler.clone()});
         }
     }
 
