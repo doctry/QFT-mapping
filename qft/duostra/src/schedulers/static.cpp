@@ -10,15 +10,15 @@ Static::Static(Static&& other) noexcept : SchedulerBase(move(other)) {}
 void Static::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Static scheduler running..." << endl;
 
-    // unsigned count = 0;
+    // size_t count = 0;
 
     for (Tqdm bar{topo_->get_num_gates()}; !topo_->get_avail_gates().empty();
          bar.add()) {
         auto& wait_list = topo_->get_avail_gates();
         assert(wait_list.size() > 0);
 
-        unsigned gate_idx = get_executable(*router, wait_list);
-        if (gate_idx == UINT_MAX) {
+        size_t gate_idx = get_executable(*router, wait_list);
+        if (gate_idx == size_t(-1)) {
             gate_idx = wait_list[0];
         }
 

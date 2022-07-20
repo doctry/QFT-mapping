@@ -9,7 +9,7 @@ SchedulerBase::SchedulerBase(unique_ptr<Topology> topo) noexcept
     : topo_(move(topo)) {}
 
 SchedulerBase::SchedulerBase(const SchedulerBase& other) noexcept
-    : topo_(topo_->clone()) {}
+    : topo_(other.topo_->clone()) {}
 
 SchedulerBase::SchedulerBase(SchedulerBase&& other) noexcept
     : topo_(move(other.topo_)) {}
@@ -26,11 +26,11 @@ void SchedulerBase::sort() {
 void SchedulerBase::write_assembly(ostream& out) const {
     assert(sorted_);
 
-    for (unsigned i = 0; i < ops_.size(); ++i) {
+    for (size_t i = 0; i < ops_.size(); ++i) {
         const auto& op = ops_.at(i);
         auto operator_name = operator_get_name(op.get_operator());
         out << operator_name << " ";
-        tuple<unsigned, unsigned> qubits = op.get_qubits();
+        tuple<size_t, size_t> qubits = op.get_qubits();
         out << "Q[" << std::get<0>(qubits) << "] Q[" << std::get<1>(qubits)
             << "]; ";
         out << "(" << op.get_op_time() << "," << op.get_cost() << ")\n";
@@ -52,32 +52,32 @@ void SchedulerBase::to_json(json& j) const {
 void SchedulerBase::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Default scheduler running..." << endl;
 
-    Tqdm bar{topo_->get_num_gates()};
-    for (unsigned i = 0; i < topo_->get_num_gates(); ++i) {
+    Tqdm bar{int(topo_->get_num_gates())};
+    for (size_t i = 0; i < topo_->get_num_gates(); ++i) {
         bar.add();
         route_one_gate(*router, i);
     }
 }
 
-unsigned SchedulerBase::get_final_cost() const {
+size_t SchedulerBase::get_final_cost() const {
     assert(sorted_);
     return ops_.at(ops_.size() - 1).get_cost();
 }
 
-unsigned SchedulerBase::get_total_time() const {
+size_t SchedulerBase::get_total_time() const {
     assert(sorted_);
 
-    unsigned ret = 0;
-    for (unsigned i = 0; i < ops_.size(); ++i) {
-        tuple<unsigned, unsigned> dur = ops_[i].get_duration();
+    size_t ret = 0;
+    for (size_t i = 0; i < ops_.size(); ++i) {
+        tuple<size_t, size_t> dur = ops_[i].get_duration();
         ret += std::get<1>(dur) - std::get<0>(dur);
     }
     return ret;
 }
 
-unsigned SchedulerBase::get_swap_num() const {
-    unsigned ret = 0;
-    for (unsigned i = 0; i < ops_.size(); ++i) {
+size_t SchedulerBase::get_swap_num() const {
+    size_t ret = 0;
+    for (size_t i = 0; i < ops_.size(); ++i) {
         if (ops_.at(i).get_operator() == Operator::Swap) {
             ++ret;
         }
@@ -85,7 +85,7 @@ unsigned SchedulerBase::get_swap_num() const {
     return ret;
 }
 
-const vector<unsigned>& SchedulerBase::get_avail_gates() const {
+const vector<size_t>& SchedulerBase::get_avail_gates() const {
     return topo_->get_avail_gates();
 }
 
@@ -101,14 +101,14 @@ size_t SchedulerBase::ops_cost() const {
         })->get_duration());
 }
 
-unsigned SchedulerBase::get_executable(QFTRouter& router,
-                                       vector<unsigned> wait_list) const {
-    for (unsigned gate_idx : wait_list) {
+size_t SchedulerBase::get_executable(QFTRouter& router,
+                                       vector<size_t> wait_list) const {
+    for (size_t gate_idx : wait_list) {
         if (router.is_executable(topo_->get_gate(gate_idx))) {
             return gate_idx;
         }
     }
-    return UINT_MAX;
+    return size_t(-1);
 }
 
 void SchedulerBase::route_one_gate(QFTRouter& router, size_t gate_idx) {

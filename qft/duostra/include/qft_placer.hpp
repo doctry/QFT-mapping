@@ -10,7 +10,7 @@ class QFTPlacer {
     QFTPlacer(const QFTPlacer& other) = delete;
     QFTPlacer(QFTPlacer&& other) = delete;
 
-    std::vector<unsigned> place(device::Device& device, std::string& typ) {
+    std::vector<size_t> place(device::Device& device, std::string& typ) {
         if (typ == "static") {
             return static_place(device);
         } else if (typ == "random") {
@@ -23,28 +23,28 @@ class QFTPlacer {
         }
     }
 
-    std::vector<unsigned> random_place(device::Device& device) {
-        std::vector<unsigned> assign;
-        for (unsigned i = 0; i < device.get_num_qubits(); ++i) {
+    std::vector<size_t> random_place(device::Device& device) {
+        std::vector<size_t> assign;
+        for (size_t i = 0; i < device.get_num_qubits(); ++i) {
             assign.push_back(i);
         }
-        unsigned seed =
+        size_t seed =
             std::chrono::system_clock::now().time_since_epoch().count();
 
         shuffle(assign.begin(), assign.end(), std::default_random_engine(seed));
         return assign;
     }
 
-    std::vector<unsigned> static_place(device::Device& device) {
-        std::vector<unsigned> assign;
-        for (unsigned i = 0; i < device.get_num_qubits(); ++i) {
+    std::vector<size_t> static_place(device::Device& device) {
+        std::vector<size_t> assign;
+        for (size_t i = 0; i < device.get_num_qubits(); ++i) {
             assign.push_back(i);
         }
         return assign;
     }
 
-    std::vector<unsigned> dfs_place(device::Device& device) {
-        std::vector<unsigned> assign;
+    std::vector<size_t> dfs_place(device::Device& device) {
+        std::vector<size_t> assign;
         std::vector<bool> qubit_mark(device.get_num_qubits(), false);
         dfs_device(0, device, assign, qubit_mark);
         assert(assign.size() == device.get_num_qubits());
@@ -52,9 +52,9 @@ class QFTPlacer {
     }
 
    private:
-    inline void dfs_device(unsigned current,
+    inline void dfs_device(size_t current,
                            device::Device& device,
-                           std::vector<unsigned>& assign,
+                           std::vector<size_t>& assign,
                            std::vector<bool>& qubit_mark) {
         if (qubit_mark[current] == true) {
             std::cout << current << std::endl;
@@ -64,10 +64,10 @@ class QFTPlacer {
         assign.push_back(current);
 
         device::Qubit& q = device.get_qubit(current);
-        std::vector<unsigned> adj_waitlist;
+        std::vector<size_t> adj_waitlist;
 
-        for (unsigned i = 0; i < q.get_adj_list().size(); ++i) {
-            unsigned adj = q.get_adj_list()[i];
+        for (size_t i = 0; i < q.get_adj_list().size(); ++i) {
+            size_t adj = q.get_adj_list()[i];
 
             // already marked
             if (qubit_mark[adj]) {
@@ -84,8 +84,8 @@ class QFTPlacer {
                 adj_waitlist.push_back(adj);
             }
         }
-        for (unsigned i = 0; i < adj_waitlist.size(); ++i) {
-            unsigned adj = adj_waitlist[i];
+        for (size_t i = 0; i < adj_waitlist.size(); ++i) {
+            size_t adj = adj_waitlist[i];
             if (qubit_mark[adj]) {
                 continue;
             }

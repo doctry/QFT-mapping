@@ -11,7 +11,7 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
     if (v.empty()) {
         return os << "]";
     }
-    for (unsigned i = 0; i < v.size() - 1; ++i) {
+    for (size_t i = 0; i < v.size() - 1; ++i) {
         os << v[i] << ", ";
     }
     return os << v.back() << "]";

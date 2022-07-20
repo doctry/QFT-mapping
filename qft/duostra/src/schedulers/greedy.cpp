@@ -9,14 +9,14 @@ class TopologyCandidate {
     TopologyCandidate(const topo::Topology& topo, size_t candidate)
         : topo_(topo), cands_(candidate) {}
 
-    std::vector<unsigned> get_avail_gates() const {
+    std::vector<size_t> get_avail_gates() const {
         auto& gates = topo_.get_avail_gates();
 
         if (gates.size() < cands_) {
             return gates;
         }
 
-        return std::vector<unsigned>(gates.begin(), gates.begin() + cands_);
+        return std::vector<size_t>(gates.begin(), gates.begin() + cands_);
     }
 
    private:
@@ -30,7 +30,7 @@ Greedy::Greedy(unique_ptr<topo::Topology> topo, json& conf) noexcept
     if (candidates > 0) {
         conf_.candidates = candidates;
     }
-    conf_.apsp_coef = json_get<unsigned>(conf, "apsp_coef");
+    conf_.apsp_coef = json_get<size_t>(conf, "apsp_coef");
     string avail_typ = json_get<string>(conf, "avail");
     if (avail_typ == "min") {
         conf_.avail_typ = false;
@@ -60,7 +60,7 @@ Greedy::Greedy(Greedy&& other) noexcept
 void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Greedy scheduler running..." << endl;
 
-    // unsigned count = 0;
+    // size_t count = 0;
     auto topo_wrap = TopologyCandidate(*topo_, conf_.candidates);
 
     for (Tqdm bar{topo_->get_num_gates()}; !topo_wrap.get_avail_gates().empty();
@@ -68,7 +68,7 @@ void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
         auto wait_list = topo_wrap.get_avail_gates();
         assert(wait_list.size() > 0);
 
-        unsigned gate_idx = get_executable(*router, wait_list);
+        size_t gate_idx = get_executable(*router, wait_list);
         gate_idx = greedy_fallback(*router, wait_list, gate_idx);
         route_one_gate(*router, gate_idx);
         // cout << "waitlist: " << wait_list << " " << gate_idx << "\n\n";
@@ -77,15 +77,15 @@ void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
     // assert(count == topo_->get_num_gates());
 }
 
-unsigned Greedy::greedy_fallback(const QFTRouter& router,
-                                 const std::vector<unsigned>& wait_list,
-                                 unsigned gate_idx) const {
-    if (gate_idx != UINT_MAX) {
+size_t Greedy::greedy_fallback(const QFTRouter& router,
+                                 const std::vector<size_t>& wait_list,
+                                 size_t gate_idx) const {
+    if (gate_idx != size_t(-1)) {
         return gate_idx;
     }
-    vector<unsigned> cost_list(wait_list.size(), 0);
+    vector<size_t> cost_list(wait_list.size(), 0);
 
-    for (unsigned i = 0; i < wait_list.size(); ++i) {
+    for (size_t i = 0; i < wait_list.size(); ++i) {
         topo::Gate& gate = topo_->get_gate(wait_list[i]);
         cost_list[i] =
             router.get_gate_cost(gate, conf_.avail_typ, conf_.apsp_coef);

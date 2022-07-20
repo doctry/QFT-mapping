@@ -4,7 +4,7 @@
 
 using namespace std;
 
-unsigned flow(json& conf, vector<unsigned> assign, bool io) {
+size_t flow(json& conf, vector<size_t> assign, bool io) {
     if (!io) {
         cout.setstate(ios_base::failbit);
     }
@@ -15,7 +15,7 @@ unsigned flow(json& conf, vector<unsigned> assign, bool io) {
         cerr << "Necessary key \"algo\" does not exist." << endl;
         abort();
     } else if (conf["algo"].type() == json::value_t::number_unsigned) {
-        unsigned num_qubit = json_get<unsigned>(conf, "algo");
+        size_t num_qubit = json_get<size_t>(conf, "algo");
         topo = make_unique<topo::QFTTopology>(num_qubit);
     } else {
         fstream algo_file;
@@ -26,16 +26,16 @@ unsigned flow(json& conf, vector<unsigned> assign, bool io) {
             cerr << "There is no file" << algo_filename << endl;
             abort();
         }
-        bool onlyIBM = json_get<unsigned>(conf, "IBM_Gate");
+        bool onlyIBM = json_get<bool>(conf, "IBM_Gate");
         topo = make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
     }
 
     // create device
     cout << "creating device..." << endl;
     json cycle_conf = json_get<json>(conf, "cycle");
-    unsigned SINGLE_CYCLE = json_get<unsigned>(cycle_conf, "SINGLE_CYCLE");
-    unsigned SWAP_CYCLE = json_get<unsigned>(cycle_conf, "SWAP_CYCLE");
-    unsigned CX_CYCLE = json_get<unsigned>(cycle_conf, "CX_CYCLE");
+    size_t SINGLE_CYCLE = json_get<size_t>(cycle_conf, "SINGLE_CYCLE");
+    size_t SWAP_CYCLE = json_get<size_t>(cycle_conf, "SWAP_CYCLE");
+    size_t CX_CYCLE = json_get<size_t>(cycle_conf, "CX_CYCLE");
     fstream device_file;
     string device_filename = json_get<string>(conf, "device");
     device_file.open(device_filename, fstream::in);
@@ -108,13 +108,13 @@ unsigned flow(json& conf, vector<unsigned> assign, bool io) {
     return sched->get_final_cost();
 }
 
-unsigned device_num(json& conf) {
+size_t device_num(json& conf) {
     // create device
     cout << "creating device..." << endl;
     json cycle_conf = json_get<json>(conf, "cycle");
-    unsigned SINGLE_CYCLE = json_get<unsigned>(cycle_conf, "SINGLE_CYCLE");
-    unsigned SWAP_CYCLE = json_get<unsigned>(cycle_conf, "SWAP_CYCLE");
-    unsigned CX_CYCLE = json_get<unsigned>(cycle_conf, "CX_CYCLE");
+    size_t SINGLE_CYCLE = json_get<size_t>(cycle_conf, "SINGLE_CYCLE");
+    size_t SWAP_CYCLE = json_get<size_t>(cycle_conf, "SWAP_CYCLE");
+    size_t CX_CYCLE = json_get<size_t>(cycle_conf, "CX_CYCLE");
     fstream device_file;
     string device_filename = json_get<string>(conf, "device");
     device_file.open(device_filename, fstream::in);
@@ -127,7 +127,7 @@ unsigned device_num(json& conf) {
     return device.get_num_qubits();
 }
 
-unsigned topo_num(json& conf) {
+size_t topo_num(json& conf) {
     // create topology
     cout << "creating topology..." << endl;
     unique_ptr<topo::Topology> topo;
@@ -135,7 +135,7 @@ unsigned topo_num(json& conf) {
         cerr << "Necessary key \"algo\" does not exist." << endl;
         abort();
     } else if (conf["algo"].type() == json::value_t::number_unsigned) {
-        unsigned num_qubit = json_get<unsigned>(conf, "algo");
+        size_t num_qubit = json_get<size_t>(conf, "algo");
         topo = make_unique<topo::QFTTopology>(num_qubit);
     } else {
         fstream algo_file;
@@ -146,7 +146,7 @@ unsigned topo_num(json& conf) {
             cerr << "There is no file" << algo_filename << endl;
             abort();
         }
-        bool onlyIBM = json_get<unsigned>(conf, "IBM_Gate");
+        bool onlyIBM = json_get<size_t>(conf, "IBM_Gate");
         topo = make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
     }
 

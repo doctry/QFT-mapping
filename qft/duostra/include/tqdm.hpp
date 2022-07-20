@@ -27,7 +27,7 @@ class tqdm {
     int nupdates = 0;
     int total_ = 0;
     int period = 1;
-    unsigned int smoothing = 50;
+    size_t smoothing = 50;
     bool use_ema = true;
     float alpha_ema = 0.1;
 

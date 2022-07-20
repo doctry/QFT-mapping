@@ -63,7 +63,7 @@ void tqdm::progress(int curr, int tot) {
         double avgrate = 0.;
         if (use_ema) {
             avgrate = deq_n[0] / deq_t[0];
-            for (unsigned int i = 1; i < deq_t.size(); i++) {
+            for (size_t i = 1; i < deq_t.size(); i++) {
                 double r = 1.0 * deq_n[i] / deq_t[i];
                 avgrate = alpha_ema * r + (1.0 - alpha_ema) * avgrate;
             }

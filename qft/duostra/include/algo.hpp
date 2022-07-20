@@ -22,23 +22,23 @@ class AlgoTopology : public Topology {
 
     void parse(std::fstream&, bool IBMGate);
 
-    unsigned get_num_qubits() const override { return num_qubits_; }
-    unsigned get_num_gates() const override { return gates_.size(); }
-    Gate& get_gate(unsigned i) override { return gates_[i]; }
+    size_t get_num_qubits() const override { return num_qubits_; }
+    size_t get_num_gates() const override { return gates_.size(); }
+    Gate& get_gate(size_t i) override { return gates_[i]; }
     unique_ptr<Topology> clone() const override {
         return make_unique<AlgoTopology>(*this);
     }
 
-    const std::vector<unsigned>& get_avail_gates() const override {
+    const std::vector<size_t>& get_avail_gates() const override {
         return avail_gates_;
     }
 
-    void update_avail_gates(unsigned) override;
+    void update_avail_gates(size_t) override;
     void print_gates_with_next();
     void print_gates_with_prev();
 
    private:
-    std::vector<unsigned> last_gate_;
+    std::vector<size_t> last_gate_;
 };
 
 };  // namespace topo

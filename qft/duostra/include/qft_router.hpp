@@ -18,9 +18,9 @@ class QFTRouter {
     device::Device& get_device() { return device_; }
     const device::Device& get_device() const { return device_; }
 
-    unsigned get_gate_cost(topo::Gate& gate,
+    size_t get_gate_cost(topo::Gate& gate,
                            bool min_max,
-                           unsigned apsp_coef) const;
+                           size_t apsp_coef) const;
     bool is_executable(topo::Gate& gate) const;
     std::unique_ptr<QFTRouter> clone() const;
 
@@ -30,8 +30,8 @@ class QFTRouter {
     bool orient_;
     bool apsp_;
     device::Device device_;
-    std::vector<unsigned> topo_to_dev_;
+    std::vector<size_t> topo_to_dev_;
 
-    std::tuple<unsigned, unsigned> get_device_qubits_idx(
+    std::tuple<size_t, size_t> get_device_qubits_idx(
         const topo::Gate& gate) const;
 };

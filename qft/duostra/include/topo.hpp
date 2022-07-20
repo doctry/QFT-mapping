@@ -33,49 +33,49 @@ class Topology {
 
     virtual ~Topology() {}
 
-    virtual unsigned get_num_qubits() const = 0;
-    virtual unsigned get_num_gates() const = 0;
-    virtual Gate& get_gate(unsigned i) = 0;
-    const Gate& get_gate(unsigned i) const {
+    virtual size_t get_num_qubits() const = 0;
+    virtual size_t get_num_gates() const = 0;
+    virtual Gate& get_gate(size_t i) = 0;
+    const Gate& get_gate(size_t i) const {
         return const_cast<topo::Topology*>(this)->get_gate(i);
     }
-    virtual const vector<unsigned>& get_avail_gates() const = 0;
-    virtual void update_avail_gates(unsigned executed) = 0;
+    virtual const vector<size_t>& get_avail_gates() const = 0;
+    virtual void update_avail_gates(size_t executed) = 0;
     virtual unique_ptr<Topology> clone() const = 0;
 
     template <bool first>
-    vector<unsigned> get_gates() const;
+    vector<size_t> get_gates() const;
 
-    vector<unsigned> get_first_gates() const { return get_gates<true>(); }
-    vector<unsigned> get_last_gates() const { return get_gates<false>(); }
+    vector<size_t> get_first_gates() const { return get_gates<true>(); }
+    vector<size_t> get_last_gates() const { return get_gates<false>(); }
 
     template <bool first>
-    unordered_map<unsigned, unsigned> dist_to() const;
-    unordered_map<unsigned, unsigned> dist_to_first() const {
+    unordered_map<size_t, size_t> dist_to() const;
+    unordered_map<size_t, size_t> dist_to_first() const {
         return dist_to<true>();
     }
-    unordered_map<unsigned, unsigned> dist_to_last() const {
+    unordered_map<size_t, size_t> dist_to_last() const {
         return dist_to<false>();
     }
 
-    unordered_map<unsigned, vector<unsigned>> gate_by_dist_to_first() const {
+    unordered_map<size_t, vector<size_t>> gate_by_dist_to_first() const {
         auto dist = dist_to_first();
         std::cout << "Dist to first done\n";
         return gate_by_generation(dist);
     }
-    unordered_map<unsigned, vector<unsigned>> gate_by_dist_to_last() const {
+    unordered_map<size_t, vector<size_t>> gate_by_dist_to_last() const {
         auto dist = dist_to_last();
         std::cout << "Dist to last done\n";
         return gate_by_generation(dist);
     }
 
    protected:
-    unsigned num_qubits_;
+    size_t num_qubits_;
     vector<Gate> gates_;
-    vector<unsigned> avail_gates_;
+    vector<size_t> avail_gates_;
 
-    static unordered_map<unsigned, vector<unsigned>> gate_by_generation(
-        const unordered_map<unsigned, unsigned>& map);
+    static unordered_map<size_t, vector<size_t>> gate_by_generation(
+        const unordered_map<size_t, size_t>& map);
 };
 };  // namespace topo
 

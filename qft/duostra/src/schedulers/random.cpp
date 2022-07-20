@@ -14,7 +14,7 @@ Random::Random(Random&& other) noexcept : SchedulerBase(move(other)) {}
 void Random::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Random scheduler running..." << endl;
 
-    // unsigned count = 0;
+    // size_t count = 0;
 
     for (Tqdm bar{topo_->get_num_gates()}; !topo_->get_avail_gates().empty();
          bar.add()) {
@@ -22,7 +22,7 @@ void Random::assign_gates(unique_ptr<QFTRouter> router) {
         assert(wait_list.size() > 0);
         srand(chrono::system_clock::now().time_since_epoch().count());
 
-        unsigned choose = rand() % wait_list.size();
+        size_t choose = rand() % wait_list.size();
 
         route_one_gate(*router, wait_list[choose]);
 

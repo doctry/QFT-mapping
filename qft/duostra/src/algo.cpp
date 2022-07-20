@@ -12,15 +12,15 @@ using namespace std;
 
 namespace topo {
 
-void Gate::set_prev(unsigned a, unsigned b) {
-    pair<unsigned, bool> first(a, false);
-    pair<unsigned, bool> second(b, false);
+void Gate::set_prev(size_t a, size_t b) {
+    pair<size_t, bool> first(a, false);
+    pair<size_t, bool> second(b, false);
 
-    if (a != (unsigned)-1) {
+    if (a != size_t(-1)) {
         prevs_.push_back(first);
     }
 
-    if (a != b && b != (unsigned)-1) {
+    if (a != b && b != size_t(-1)) {
         prevs_.push_back(second);
     }
 }
@@ -38,7 +38,7 @@ bool Gate::is_avail() const {
 
 bool Gate::is_first() const {
     for (auto& elem : prevs_) {
-        if (elem.first != UINT_MAX) {
+        if (elem.first != size_t(-1)) {
             return false;
         }
     }
@@ -48,7 +48,7 @@ bool Gate::is_first() const {
 
 bool Gate::is_last() const {
     for (auto& elem : nexts_) {
-        if (elem != UINT_MAX) {
+        if (elem != size_t(-1)) {
             return false;
         }
     }
@@ -56,7 +56,7 @@ bool Gate::is_last() const {
     return true;
 }
 
-void Gate::finished(unsigned prev) {
+void Gate::finished(size_t prev) {
 #ifdef DEBUG
     bool check = false;
     for (size_t i = 0; i < prevs_.size(); i++) {
@@ -74,13 +74,13 @@ void Gate::finished(unsigned prev) {
 
 using namespace std;
 
-unordered_map<unsigned, vector<unsigned>> Topology::gate_by_generation(
-    const unordered_map<unsigned, unsigned>& map) {
-    unordered_map<unsigned, vector<unsigned>> gen_map;
+unordered_map<size_t, vector<size_t>> Topology::gate_by_generation(
+    const unordered_map<size_t, size_t>& map) {
+    unordered_map<size_t, vector<size_t>> gen_map;
 
     for (auto pair : map) {
-        unsigned gate_id = pair.first;
-        unsigned generation = pair.second;
+        size_t gate_id = pair.first;
+        size_t generation = pair.second;
 
         gen_map[generation].push_back(gate_id);
     }
@@ -95,7 +95,7 @@ unordered_map<unsigned, vector<unsigned>> Topology::gate_by_generation(
     return gen_map;
 }
 
-void AlgoTopology::update_avail_gates(unsigned executed) {
+void AlgoTopology::update_avail_gates(size_t executed) {
     assert(find(avail_gates_.begin(), avail_gates_.end(), executed) !=
            avail_gates_.end());
     Gate& g_exec = gates_[executed];
@@ -104,10 +104,10 @@ void AlgoTopology::update_avail_gates(unsigned executed) {
         avail_gates_.end());
     assert(g_exec.get_id() == executed);
 
-    vector<unsigned> nexts = g_exec.get_nexts();
+    vector<size_t> nexts = g_exec.get_nexts();
 
-    for (unsigned i = 0; i < nexts.size(); i++) {
-        unsigned n = nexts[i];
+    for (size_t i = 0; i < nexts.size(); i++) {
+        size_t n = nexts[i];
         gates_[n].finished(executed);
         if (gates_[n].is_avail()) {
             avail_gates_.push_back(n);
@@ -121,13 +121,13 @@ void AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
         qasmFile >> str;
     num_qubits_ =
         stoi(str.substr(str.find("[") + 1, str.size() - str.find("[") - 3));
-    vector<pair<unsigned, unsigned>> lastCnotWith;
-    pair<unsigned, unsigned> init(-1, 0);
+    vector<pair<size_t, size_t>> lastCnotWith;
+    pair<size_t, size_t> init(-1, 0);
     for (size_t i = 0; i < num_qubits_; i++) {
         last_gate_.push_back(-1);
         lastCnotWith.push_back(init);
     }
-    unsigned gateId = 0;
+    size_t gateId = 0;
     vector<string> singleList{"x", "sx", "s", "rz", "i"};
     if (!IBMGate) {
         singleList.push_back("h");
@@ -147,13 +147,13 @@ void AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
                 qasmFile >> str;
                 string singleQubitId = str.substr(2, str.size() - 4);
 
-                unsigned q = stoul(singleQubitId);
+                size_t q = stoul(singleQubitId);
 
-                tuple<unsigned, unsigned> temp(q, UINT_MAX);
+                tuple<size_t, size_t> temp(q, size_t(-1));
                 Gate tempGate(gateId, Operator::Single, temp);
                 tempGate.set_prev(last_gate_[q], last_gate_[q]);
 
-                if (last_gate_[q] != (unsigned)-1)
+                if (last_gate_[q] != size_t(-1))
                     gates_[last_gate_[q]].add_next(gateId);
 
                 // update Id
@@ -181,22 +181,22 @@ void AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
             string delimiter = ",";
             string token = str.substr(0, str.find(delimiter));
             string qubitId = token.substr(2, token.size() - 3);
-            unsigned q1 = stoul(qubitId);
+            size_t q1 = stoul(qubitId);
             token = str.substr(str.find(delimiter) + 1,
                                str.size() - str.find(delimiter) - 2);
             qubitId = token.substr(2, token.size() - 3);
-            unsigned q2 = stoul(qubitId);
+            size_t q2 = stoul(qubitId);
 
-            tuple<unsigned, unsigned> temp(q1, q2);
+            tuple<size_t, size_t> temp(q1, q2);
             Gate tempGate(gateId, Operator::CX, temp);
             tempGate.set_prev(last_gate_[q1], last_gate_[q2]);
 
-            if (last_gate_[q1] != (unsigned)-1) {
+            if (last_gate_[q1] != size_t(-1)) {
                 gates_[last_gate_[q1]].add_next(gateId);
             }
 
             if (last_gate_[q1] != last_gate_[q2] &&
-                last_gate_[q2] != (unsigned)-1) {
+                last_gate_[q2] != size_t(-1)) {
                 gates_[last_gate_[q2]].add_next(gateId);
             }
 
@@ -220,7 +220,7 @@ void AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
 void AlgoTopology::print_gates_with_next() {
     cout << "Print successors of each gate" << endl;
     for (size_t i = 0; i < gates_.size(); i++) {
-        vector<unsigned> temp = gates_[i].get_nexts();
+        vector<size_t> temp = gates_[i].get_nexts();
         cout << gates_[i].get_id() << "(" << gates_[i].get_type() << ") || ";
         for (size_t j = 0; j < temp.size(); j++) {
             cout << temp[j] << " ";
@@ -232,7 +232,7 @@ void AlgoTopology::print_gates_with_next() {
 void AlgoTopology::print_gates_with_prev() {
     cout << "Print predecessors of each gate" << endl;
     for (size_t i = 0; i < gates_.size(); i++) {
-        vector<pair<unsigned, bool>> temp = gates_[i].get_prevs();
+        vector<pair<size_t, bool>> temp = gates_[i].get_prevs();
         cout << gates_[i].get_id() << "(" << gates_[i].get_type() << ") || ";
         for (size_t j = 0; j < temp.size(); j++) {
             cout << temp[j].first << "(" << temp[j].second << ") ";

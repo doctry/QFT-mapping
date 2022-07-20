@@ -18,7 +18,7 @@ using namespace std;
 
 class Gate {
    public:
-    Gate(unsigned id, Operator type, tuple<unsigned, unsigned> qs)
+    Gate(size_t id, Operator type, tuple<size_t, size_t> qs)
         : id_(id), type_(type), qubits_(qs) {
         prevs_.clear();
         nexts_.clear();
@@ -38,31 +38,31 @@ class Gate {
           prevs_(move(other.prevs_)),
           nexts_(move(other.nexts_)) {}
 
-    unsigned get_id() const { return id_; }
-    tuple<unsigned, unsigned> get_qubits() const { return qubits_; }
+    size_t get_id() const { return id_; }
+    tuple<size_t, size_t> get_qubits() const { return qubits_; }
 
     void set_type(Operator t) { type_ = t; }
-    void set_prev(unsigned a, unsigned b);
+    void set_prev(size_t a, size_t b);
 
-    void add_next(unsigned n) {
-        if (n != UINT_MAX) {
+    void add_next(size_t n) {
+        if (n != size_t(-1)) {
             nexts_.push_back(n);
         }
     }
-    void finished(unsigned);
+    void finished(size_t);
     bool is_avail() const;
     bool is_first() const;
     bool is_last() const;
 
-    const vector<pair<unsigned, bool>>& get_prevs() const { return prevs_; }
-    const vector<unsigned>& get_nexts() const { return nexts_; }
+    const vector<pair<size_t, bool>>& get_prevs() const { return prevs_; }
+    const vector<size_t>& get_nexts() const { return nexts_; }
     Operator get_type() const { return type_; }
 
    private:
-    unsigned id_;
+    size_t id_;
     Operator type_;
-    tuple<unsigned, unsigned> qubits_;
-    vector<pair<unsigned, bool>> prevs_;
-    vector<unsigned> nexts_;
+    tuple<size_t, size_t> qubits_;
+    vector<pair<size_t, bool>> prevs_;
+    vector<size_t> nexts_;
 };
 }  // namespace topo

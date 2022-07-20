@@ -56,7 +56,7 @@ unique_ptr<SchedulerBase> Dora::clone() const {
 void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     auto total_gates = topo_->get_num_gates();
 
-    Tqdm bar{total_gates};
+    Tqdm bar{int(total_gates)};
     vector<TreeNode> next_trees;
 
     // For each step.
@@ -74,7 +74,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
                   [this](const TreeNode& root) { return root.cost(depth); });
         auto argmin = min_element(costs.begin(), costs.end()) - costs.begin();
 
-        unsigned gate_idx = avail_gates[argmin];
+        size_t gate_idx = avail_gates[argmin];
 
         route_one_gate(*router, gate_idx);
 
@@ -84,10 +84,9 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 }
 
 // Check if ids are matched with chidren's ids.
-static void children_match_ids(const SchedulerBase& scheduler,
-                               const vector<unsigned>& ids,
+static void children_match_ids(const vector<size_t>& ids,
                                const vector<TreeNode>& children) {
-    unordered_set<unsigned> all_children{ids.begin(), ids.end()};
+    unordered_set<size_t> all_children{ids.begin(), ids.end()};
 
     assert(all_children.size() == children.size());
     for (const auto& child : children) {
@@ -100,12 +99,12 @@ static void root_match_avail_gates(const SchedulerBase& scheduler,
                                    const TreeNode& root) {
     assert(!root.is_leaf());
 
-    children_match_ids(scheduler, scheduler.get_avail_gates(), root.children());
+    children_match_ids(scheduler.get_avail_gates(), root.children());
 }
 
 void Dora::update_next_trees(const QFTRouter& router,
                              const SchedulerBase& scheduler,
-                             const vector<unsigned>& next_ids,
+                             const vector<size_t>& next_ids,
                              vector<TreeNode>& next_trees) {
     if (next_trees.empty()) {
         for (size_t idx : next_ids) {
@@ -132,7 +131,7 @@ void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) {
 
     // If the heuristic tree has reached the leaf, extend it.
     if (root.is_leaf()) {
-        for (unsigned gate_idx : avail_gates) {
+        for (size_t gate_idx : avail_gates) {
             auto cloned_router = root.router().clone();
             auto cloned_sched = root.scheduler().clone();
 

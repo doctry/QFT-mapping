@@ -4,20 +4,20 @@
 
 class SAData {
    public:
-    SAData(json& conf, unsigned t, unsigned d)
+    SAData(json& conf, size_t t, size_t d)
         : conf_(conf), topo_num_(t), dev_num_(d) {
-        for (unsigned i = 0; i < topo_num_; ++i) {
+        for (size_t i = 0; i < topo_num_; ++i) {
             dev_to_topo_.push_back(i);
             topo_to_dev_.push_back(i);
         }
-        for (unsigned i = topo_num_; i < dev_num_; ++i) {
-            dev_to_topo_.push_back(UINT_MAX);
+        for (size_t i = topo_num_; i < dev_num_; ++i) {
+            dev_to_topo_.push_back(size_t(-1));
         }
     }
 
-    void step(unsigned rand_num) {
-        unsigned choose_topo = rand_num % topo_num_;
-        unsigned choose_device = topo_to_dev_[choose_topo];
+    void step(size_t rand_num) {
+        size_t choose_topo = rand_num % topo_num_;
+        size_t choose_device = topo_to_dev_[choose_topo];
 
         if (choose_device == dev_num_ - 1) {
             swap_q(choose_device, 0);
@@ -27,12 +27,12 @@ class SAData {
     }
 
     json& get_conf() { return conf_; }
-    std::vector<unsigned>& get_topo2device() { return topo_to_dev_; }
+    std::vector<size_t>& get_topo2device() { return topo_to_dev_; }
 
-    unsigned get_distance(SAData& other) {
-        unsigned ret = 0;
+    size_t get_distance(SAData& other) {
+        size_t ret = 0;
         assert(dev_to_topo_.size() == other.dev_to_topo_.size());
-        for (unsigned i = 0; i < dev_to_topo_.size(); ++i) {
+        for (size_t i = 0; i < dev_to_topo_.size(); ++i) {
             ret += dev_to_topo_[i] == other.dev_to_topo_[i] ? 0 : 1;
         }
         return ret;
@@ -40,20 +40,20 @@ class SAData {
 
    private:
     json& conf_;
-    unsigned topo_num_;
-    unsigned dev_num_;
-    std::vector<unsigned> dev_to_topo_;
-    std::vector<unsigned> topo_to_dev_;
+    size_t topo_num_;
+    size_t dev_num_;
+    std::vector<size_t> dev_to_topo_;
+    std::vector<size_t> topo_to_dev_;
 
-    void swap_q(unsigned device0, unsigned device1) {
+    void swap_q(size_t device0, size_t device1) {
         std::swap(dev_to_topo_[device0], dev_to_topo_[device1]);
 
         assign_q(dev_to_topo_[device0], device0);
         assign_q(dev_to_topo_[device1], device1);
     }
 
-    void assign_q(unsigned topo, unsigned device) {
-        if (topo == UINT_MAX) {
+    void assign_q(size_t topo, size_t device) {
+        if (topo == size_t(-1)) {
             return;
         }
         assert(topo_to_dev_[topo] != device);
@@ -102,8 +102,8 @@ void P(void* xp) {
 
 void sa_place(json& conf) {
     // init data
-    unsigned t_num = topo_num(conf);
-    unsigned d_num = device_num(conf);
+    size_t t_num = topo_num(conf);
+    size_t d_num = device_num(conf);
     SAData sa_data(conf, t_num, d_num);
 
     const gsl_rng* r = gsl_rng_alloc(gsl_rng_env_setup());

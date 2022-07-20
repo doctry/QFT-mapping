@@ -30,10 +30,10 @@ class SchedulerBase {
     void write_assembly(ostream& out) const;
     void to_json(json& j) const;
 
-    unsigned get_final_cost() const;
-    unsigned get_total_time() const;
-    unsigned get_swap_num() const;
-    const vector<unsigned>& get_avail_gates() const;
+    size_t get_final_cost() const;
+    size_t get_total_time() const;
+    size_t get_swap_num() const;
+    const vector<size_t>& get_avail_gates() const;
 
     const vector<device::Operation>& get_operations() const;
     size_t ops_cost() const;
@@ -45,8 +45,8 @@ class SchedulerBase {
     vector<device::Operation> ops_;
     bool sorted_ = false;
 
-    unsigned get_executable(QFTRouter& router,
-                            vector<unsigned> wait_list) const;
+    size_t get_executable(QFTRouter& router,
+                            vector<size_t> wait_list) const;
 };
 
 class Random : public SchedulerBase {
@@ -76,12 +76,12 @@ struct Conf {
     Conf() noexcept
         : avail_typ(true),
           cost_typ(false),
-          candidates(UINT_MAX),
+          candidates(size_t(-1)),
           apsp_coef(1) {}
     bool avail_typ;  // true is max, false is min
     bool cost_typ;   // true is max, false is min
-    unsigned candidates;
-    unsigned apsp_coef;
+    size_t candidates;
+    size_t apsp_coef;
 };
 
 class Greedy : public SchedulerBase {
@@ -93,9 +93,9 @@ class Greedy : public SchedulerBase {
 
     unique_ptr<SchedulerBase> clone() const override;
     void assign_gates(unique_ptr<QFTRouter> router) override;
-    unsigned greedy_fallback(const QFTRouter& router,
-                             const std::vector<unsigned>& wait_list,
-                             unsigned gate_idx) const;
+    size_t greedy_fallback(const QFTRouter& router,
+                             const std::vector<size_t>& wait_list,
+                             size_t gate_idx) const;
 
    protected:
     Conf conf_;
@@ -158,7 +158,7 @@ class Dora : public Greedy {
    protected:
     void update_next_trees(const QFTRouter& router,
                            const SchedulerBase& scheduler,
-                           const vector<unsigned>& next_ids,
+                           const vector<size_t>& next_ids,
                            vector<TreeNode>& next_trees);
     void update_tree_recursive(int remaining_depth, TreeNode& root);
 };
