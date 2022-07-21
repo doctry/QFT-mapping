@@ -5,14 +5,14 @@
 
 using namespace scheduler;
 
-SchedulerBase::SchedulerBase(unique_ptr<Topology> topo) noexcept
-    : topo_(move(topo)) {}
+SchedulerBase::SchedulerBase(unique_ptr<Topology> topo)
+    : topo_(move(topo)), ops_({}) {}
 
-SchedulerBase::SchedulerBase(const SchedulerBase& other) noexcept
+SchedulerBase::SchedulerBase(const SchedulerBase& other)
     : topo_(other.topo_->clone()), ops_(other.ops_) {}
 
-SchedulerBase::SchedulerBase(SchedulerBase&& other) noexcept
-    : topo_(move(other.topo_)), ops_(std::move(other.ops_)) {}
+SchedulerBase::SchedulerBase(SchedulerBase&& other)
+    : topo_(move(other.topo_)), ops_(move(other.ops_)) {}
 
 unique_ptr<SchedulerBase> SchedulerBase::clone() const {
     return make_unique<SchedulerBase>(*this);

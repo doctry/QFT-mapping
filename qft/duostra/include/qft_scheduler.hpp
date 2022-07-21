@@ -14,9 +14,9 @@ using namespace topo;
 
 class SchedulerBase {
    public:
-    SchedulerBase(const SchedulerBase& other) noexcept;
-    SchedulerBase(unique_ptr<Topology> topo) noexcept;
-    SchedulerBase(SchedulerBase&& other) noexcept;
+    SchedulerBase(const SchedulerBase& other);
+    SchedulerBase(unique_ptr<Topology> topo);
+    SchedulerBase(SchedulerBase&& other);
     virtual ~SchedulerBase() {}
 
     topo::Topology& topo() { return *topo_; }
@@ -50,9 +50,9 @@ class SchedulerBase {
 
 class Random : public SchedulerBase {
    public:
-    Random(unique_ptr<topo::Topology> topo) noexcept;
-    Random(const Random& other) noexcept;
-    Random(Random&& other) noexcept;
+    Random(unique_ptr<topo::Topology> topo);
+    Random(const Random& other);
+    Random(Random&& other);
     ~Random() override {}
 
     unique_ptr<SchedulerBase> clone() const override;
@@ -62,9 +62,9 @@ class Random : public SchedulerBase {
 
 class Static : public SchedulerBase {
    public:
-    Static(unique_ptr<topo::Topology> topo) noexcept;
-    Static(const Static& other) noexcept;
-    Static(Static&& other) noexcept;
+    Static(unique_ptr<topo::Topology> topo);
+    Static(const Static& other);
+    Static(Static&& other);
     ~Static() override {}
 
     unique_ptr<SchedulerBase> clone() const override;
@@ -72,7 +72,7 @@ class Static : public SchedulerBase {
 };
 
 struct Conf {
-    Conf() noexcept
+    Conf()
         : avail_typ(true),
           cost_typ(false),
           candidates(size_t(-1)),
@@ -85,9 +85,9 @@ struct Conf {
 
 class Greedy : public SchedulerBase {
    public:
-    Greedy(unique_ptr<topo::Topology> topo, json& conf) noexcept;
-    Greedy(const Greedy& other) noexcept;
-    Greedy(Greedy&& other) noexcept;
+    Greedy(unique_ptr<topo::Topology> topo, json& conf);
+    Greedy(const Greedy& other);
+    Greedy(Greedy&& other);
     ~Greedy() override {}
 
     unique_ptr<SchedulerBase> clone() const override;
@@ -102,9 +102,9 @@ class Greedy : public SchedulerBase {
 
 class Onion : public Greedy {
    public:
-    Onion(unique_ptr<Topology> topo, json& conf) noexcept;
-    Onion(const Onion& other) noexcept;
-    Onion(Onion&& other) noexcept;
+    Onion(unique_ptr<Topology> topo, json& conf);
+    Onion(const Onion& other);
+    Onion(Onion&& other);
     ~Onion() override {}
 
     unique_ptr<SchedulerBase> clone() const override;
@@ -112,7 +112,6 @@ class Onion : public Greedy {
 
    private:
     bool first_mode_;
-    Conf conf_;
 };
 
 // This is a node of the heuristic search tree.
@@ -120,9 +119,11 @@ class TreeNode {
    public:
     TreeNode(size_t gate_idx,
              unique_ptr<QFTRouter> router,
-             unique_ptr<SchedulerBase> scheduler) noexcept;
-    TreeNode(const TreeNode& other) noexcept;
-    TreeNode& operator=(const TreeNode& other) noexcept;
+             unique_ptr<SchedulerBase> scheduler);
+    TreeNode(const TreeNode& other);
+    TreeNode(TreeNode&& other);
+    TreeNode& operator=(const TreeNode& other);
+    TreeNode& operator=(TreeNode&& other);
 
     size_t cost(int depth) const;
     size_t gate_idx() const { return gate_idx_; }
@@ -147,10 +148,10 @@ class TreeNode {
 
 class Dora : public Greedy {
    public:
-    Dora(unique_ptr<Topology> topo, json& conf) noexcept;
-
-    Dora(const Dora& other) noexcept;
-    Dora(Dora&& other) noexcept;
+    Dora(unique_ptr<Topology> topo, json& conf);
+    Dora(const Dora& other);
+    Dora(Dora&& other);
+    ~Dora() override {}
 
     const size_t depth;
 

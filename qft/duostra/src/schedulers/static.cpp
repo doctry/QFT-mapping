@@ -2,10 +2,9 @@
 
 using namespace scheduler;
 
-Static::Static(unique_ptr<topo::Topology> topo) noexcept
-    : SchedulerBase(move(topo)) {}
-Static::Static(const Static& other) noexcept : SchedulerBase(other) {}
-Static::Static(Static&& other) noexcept : SchedulerBase(move(other)) {}
+Static::Static(unique_ptr<topo::Topology> topo) : SchedulerBase(move(topo)) {}
+Static::Static(const Static& other) : SchedulerBase(other) {}
+Static::Static(Static&& other) : SchedulerBase(move(other)) {}
 
 void Static::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Static scheduler running..." << endl;

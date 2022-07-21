@@ -24,8 +24,8 @@ class TopologyCandidate {
     size_t cands_;
 };
 
-Greedy::Greedy(unique_ptr<topo::Topology> topo, json& conf) noexcept
-    : SchedulerBase(move(topo)) {
+Greedy::Greedy(unique_ptr<topo::Topology> topo, json& conf)
+    : SchedulerBase(move(topo)), conf_({}) {
     int candidates = json_get<int>(conf, "candidates");
     if (candidates > 0) {
         conf_.candidates = candidates;
@@ -51,10 +51,10 @@ Greedy::Greedy(unique_ptr<topo::Topology> topo, json& conf) noexcept
     }
 }
 
-Greedy::Greedy(const Greedy& other) noexcept
+Greedy::Greedy(const Greedy& other)
     : SchedulerBase(other), conf_(other.conf_) {}
 
-Greedy::Greedy(Greedy&& other) noexcept
+Greedy::Greedy(Greedy&& other)
     : SchedulerBase(move(other)), conf_(other.conf_) {}
 
 void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
@@ -78,8 +78,8 @@ void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
 }
 
 size_t Greedy::greedy_fallback(const QFTRouter& router,
-                                 const std::vector<size_t>& wait_list,
-                                 size_t gate_idx) const {
+                               const std::vector<size_t>& wait_list,
+                               size_t gate_idx) const {
     if (gate_idx != size_t(-1)) {
         return gate_idx;
     }

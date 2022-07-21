@@ -5,7 +5,11 @@
 class SAData {
    public:
     SAData(json& conf, size_t t, size_t d)
-        : conf_(conf), topo_num_(t), dev_num_(d) {
+        : conf_(conf),
+          topo_num_(t),
+          dev_num_(d),
+          dev_to_topo_({}),
+          topo_to_dev_({}) {
         for (size_t i = 0; i < topo_num_; ++i) {
             dev_to_topo_.push_back(i);
             topo_to_dev_.push_back(i);

@@ -2,14 +2,14 @@
 
 using namespace scheduler;
 
-Onion::Onion(unique_ptr<Topology> topo, json& conf) noexcept
+Onion::Onion(unique_ptr<Topology> topo, json& conf)
     : Greedy(move(topo), conf),
       first_mode_(json_get<bool>(conf, "layer_from_first")) {}
 
-Onion::Onion(const Onion& other) noexcept
+Onion::Onion(const Onion& other)
     : Greedy(other), first_mode_(other.first_mode_) {}
 
-Onion::Onion(Onion&& other) noexcept
+Onion::Onion(Onion&& other)
     : Greedy(move(other)), first_mode_(other.first_mode_) {}
 
 void Onion::assign_gates(unique_ptr<QFTRouter> router) {

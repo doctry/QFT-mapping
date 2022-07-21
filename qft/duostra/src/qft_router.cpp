@@ -4,7 +4,12 @@ QFTRouter::QFTRouter(device::Device&& device,
                      std::string& typ,
                      std::string& cost,
                      bool orient) noexcept
-    : orient_(orient), apsp_(false), device_(std::move(device)) {
+    : greedy_type_(false),
+      duostra_(false),
+      orient_(orient),
+      apsp_(false),
+      device_(std::move(device)),
+      topo_to_dev_({}) {
     if (typ == "apsp") {
         apsp_ = true;
         duostra_ = false;

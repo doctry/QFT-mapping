@@ -8,7 +8,7 @@ using namespace scheduler;
 
 TreeNode::TreeNode(size_t gate_idx,
                    unique_ptr<QFTRouter> router,
-                   unique_ptr<SchedulerBase> scheduler) noexcept
+                   unique_ptr<SchedulerBase> scheduler)
     : gate_idx_(gate_idx),
       children_({}),
       router_(move(router)),
@@ -16,17 +16,31 @@ TreeNode::TreeNode(size_t gate_idx,
     exec_route();
 }
 
-TreeNode::TreeNode(const TreeNode& other) noexcept
+TreeNode::TreeNode(const TreeNode& other)
     : gate_idx_(other.gate_idx_),
       children_(other.children_),
       router_(other.router_->clone()),
       scheduler_(other.scheduler_->clone()) {}
 
-TreeNode& TreeNode::operator=(const TreeNode& other) noexcept {
+TreeNode::TreeNode(TreeNode&& other)
+    : gate_idx_(other.gate_idx_),
+      children_(move(other.children_)),
+      router_(move(other.router_)),
+      scheduler_(move(other.scheduler_)) {}
+
+TreeNode& TreeNode::operator=(const TreeNode& other) {
     gate_idx_ = other.gate_idx_;
     children_ = other.children_;
     router_ = other.router_->clone();
     scheduler_ = other.scheduler_->clone();
+    return *this;
+}
+
+TreeNode& TreeNode::operator=(TreeNode&& other) {
+    gate_idx_ = other.gate_idx_;
+    children_ = move(other.children_);
+    router_ = move(other.router_);
+    scheduler_ = move(other.scheduler_);
     return *this;
 }
 
@@ -62,12 +76,12 @@ void TreeNode::grow() {
     }
 }
 
-Dora::Dora(unique_ptr<Topology> topo, json& conf) noexcept
+Dora::Dora(unique_ptr<Topology> topo, json& conf)
     : Greedy(move(topo), conf), depth(json_get<int>(conf, "depth")) {}
 
-Dora::Dora(const Dora& other) noexcept : Greedy(other), depth(other.depth) {}
+Dora::Dora(const Dora& other) : Greedy(other), depth(other.depth) {}
 
-Dora::Dora(Dora&& other) noexcept : Greedy(other), depth(other.depth) {}
+Dora::Dora(Dora&& other) : Greedy(other), depth(other.depth) {}
 
 unique_ptr<SchedulerBase> Dora::clone() const {
     return make_unique<Dora>(*this);
@@ -96,7 +110,8 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 
         // Update the candidates.
         size_t gate_idx = avail_gates[argmin];
-        next_trees = std::move(next_trees[argmin].children());
+        auto selectd_tree{next_trees[argmin]};
+        next_trees = selectd_tree.children();
 
         route_one_gate(*router, gate_idx);
     }

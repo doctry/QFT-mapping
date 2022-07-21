@@ -8,11 +8,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # set flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -DDEBUG -fstack-protector-all")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Weffc++ -DDEBUG -fstack-protector-all")
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
     cmake_print_variables(CMAKE_CXX_FLAGS_DEBUG)
 endif()
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Wextra -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Wextra -Weffc++ -DNDEBUG")
 if(CMAKE_BUILD_TYPE MATCHES "Release")
     cmake_print_variables(CMAKE_CXX_FLAGS_RELEASE)
 endif()

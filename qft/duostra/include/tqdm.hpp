@@ -47,7 +47,7 @@ class tqdm {
     void hsv_to_rgb(float h, float s, float v, int& r, int& g, int& b) const;
 
    public:
-    tqdm() {
+    tqdm() : deq_t({}), deq_n({}) {
         if (in_screen) {
             set_theme_basic();
             color_transition = false;

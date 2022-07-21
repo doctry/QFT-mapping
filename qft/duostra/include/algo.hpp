@@ -14,9 +14,12 @@ using namespace std;
 
 class AlgoTopology : public Topology {
    public:
-    AlgoTopology(std::fstream& f, bool IBMGate) { parse(f, IBMGate); }
-    AlgoTopology(const AlgoTopology& other) : Topology(other) {}
-    AlgoTopology(AlgoTopology&& other) : Topology(std::move(other)) {}
+    AlgoTopology(std::fstream& f, bool IBMGate) : last_gate_({}) {
+        parse(f, IBMGate);
+    }
+    AlgoTopology(const AlgoTopology& other) : Topology(other), last_gate_({}) {}
+    AlgoTopology(AlgoTopology&& other)
+        : Topology(std::move(other)), last_gate_({}) {}
 
     ~AlgoTopology() {}
 
