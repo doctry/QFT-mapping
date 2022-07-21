@@ -125,7 +125,8 @@ class TreeNode {
     TreeNode& operator=(const TreeNode& other);
     TreeNode& operator=(TreeNode&& other);
 
-    size_t cost(int depth) const;
+    size_t tree_size(int depth) const;
+    size_t best_cost(int depth) const;
     size_t gate_idx() const { return gate_idx_; }
 
     QFTRouter& router() { return *router_; }
@@ -144,6 +145,11 @@ class TreeNode {
     unique_ptr<SchedulerBase> scheduler_;
 
     void exec_route();
+
+    template <typename T>
+    T recursive(int depth,
+                T function(const TreeNode&),
+                T collect(const vector<T>&)) const;
 };
 
 class Dora : public Greedy {

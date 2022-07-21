@@ -54,21 +54,53 @@ void TreeNode::exec_route() {
     assert(std::find(gates.begin(), gates.end(), gate_idx_) == gates.end());
 }
 
-// Cost recursively calls children's cost, and selects the best one.
-size_t TreeNode::cost(int depth) const {
-    // The leaf node contains the scheduling results.
-    if (depth <= 0 || is_leaf()) {
-        return scheduler_->ops_cost();
-    }
+// Size calcuates the tree size.
+size_t TreeNode::tree_size(int depth) const {
+    auto size_fn = [](const TreeNode&) -> size_t { return 1; };
 
-    // Recursively calculates costs and returns the best cost.
-    vector<size_t> costs{children_.size(), 0};
-    transform(children_.begin(), children_.end(), costs.begin(),
-              [depth](const TreeNode& child) { return child.cost(depth - 1); });
-    return *min_element(costs.begin(), costs.end());
+    auto sum = [](const vector<size_t>& sizes) -> size_t {
+        return accumulate(sizes.begin(), sizes.end(), 0);
+    };
+
+    return recursive<size_t>(depth, size_fn, sum);
 }
 
+// Cost recursively calls children's cost, and selects the best one.
+size_t TreeNode::best_cost(int depth) const {
+    auto cost_fn = [](const TreeNode& node) -> size_t {
+        return node.scheduler_->ops_cost();
+    };
+
+    auto select_best = [](const vector<size_t>& costs) -> size_t {
+        return *min_element(costs.begin(), costs.end());
+    };
+
+    return recursive<size_t>(depth, cost_fn, select_best);
+}
+
+template <typename T>
+T TreeNode::recursive(int depth,
+                      T leaf_function(const TreeNode&),
+                      T collect(const vector<T>&)) const {
+    // Terminates on leaf nodes.
+    if (depth <= 0 || is_leaf()) {
+        return leaf_function(*this);
+    }
+
+    // Apply transformations recursively.
+    vector<size_t> transforms{children_.size(), 0};
+    transform(children_.begin(), children_.end(), transforms.begin(),
+              [depth, leaf_function, collect](const TreeNode& child) {
+                  return child.recursive(depth - 1, leaf_function, collect);
+              });
+
+    // Collect tranformations.
+    return collect(transforms);
+}
+
+// Grow by adding availalble gates to children.
 void TreeNode::grow() {
+    assert(children_.empty());
     const auto& avail_gates = scheduler_->get_avail_gates();
     for (size_t gate_idx : avail_gates) {
         children_.push_back(
@@ -99,13 +131,14 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 
         // Generate heuristic trees if not present.
         // Since router and this both outlive update_next_trees,
-        // this function is safe.
+        // this usage is safe.
         update_next_trees(*router, *this, avail_gates, next_trees);
 
         // Calcuate each tree's costs and find the best one (smallest cost).
         vector<size_t> costs{next_trees.size(), 0};
-        transform(next_trees.begin(), next_trees.end(), costs.begin(),
-                  [this](const TreeNode& root) { return root.cost(depth); });
+        transform(
+            next_trees.begin(), next_trees.end(), costs.begin(),
+            [this](const TreeNode& root) { return root.best_cost(depth); });
         auto argmin = min_element(costs.begin(), costs.end()) - costs.begin();
 
         // Update the candidates.
