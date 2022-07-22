@@ -30,19 +30,16 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
     // assert(total_size == num_gates);
 
     while (gen_to_gates.size()) {
-        auto youngest =
-            conf_.cost_typ
-                ? max_element(gen_to_gates.begin(), gen_to_gates.end(),
-                              [](const pair<size_t, vector<size_t>>& a,
-                                 const pair<size_t, vector<size_t>>& b) {
-                                  return a.first < b.first;
-                              })
-                : min_element(gen_to_gates.begin(), gen_to_gates.end(),
-                              [](const pair<size_t, vector<size_t>>& a,
-                                 const pair<size_t, vector<size_t>>& b) {
-                                  return a.first < b.first;
-                              });
+        using gen_pair = const pair<size_t, vector<size_t>>&;
+        auto select =
+            first_mode_
+                ? [](gen_pair a, gen_pair b) { return a.first < b.first; }
+                : [](gen_pair a, gen_pair b) { return a.first > b.first; };
 
+        auto youngest =
+            min_element(gen_to_gates.begin(), gen_to_gates.end(), select);
+
+        auto distance = youngest->first;
         auto& wait_list = youngest->second;
         const auto wait_list_size = wait_list.size();
         for (size_t jj = 0; jj < wait_list_size; ++jj, bar.add()) {
