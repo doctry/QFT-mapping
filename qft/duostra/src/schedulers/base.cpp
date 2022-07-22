@@ -28,7 +28,7 @@ void SchedulerBase::write_assembly(ostream& out) const {
 
     for (size_t i = 0; i < ops_.size(); ++i) {
         const auto& op = ops_.at(i);
-        auto operator_name = operator_get_name(op.get_operator());
+        auto operator_name{operator_get_name(op.get_operator())};
         out << operator_name << " ";
         tuple<size_t, size_t> qubits = op.get_qubits();
         out << "Q[" << std::get<0>(qubits) << "] Q[" << std::get<1>(qubits)

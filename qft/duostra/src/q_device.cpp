@@ -9,42 +9,14 @@ ostream& device::operator<<(ostream& os, device::Operation& op) {
     os << left;
     size_t from = get<0>(op.duration_);
     size_t to = get<1>(op.duration_);
-    switch (op.oper_) {
-        case Operator::Single:
-            os << setw(20) << "Operation: Single";
-            break;
-        case Operator::Swap:
-            os << setw(20) << "Operation: Swap";
-            break;
-        case Operator::CX:
-            os << setw(20) << "Operation: CX";
-            break;
-        default:
-            assert(0);
-            break;
-    }
+    os << setw(20) << "Operation: " + operator_get_name(op.oper_);
     os << "Q" << get<0>(op.qubits_) << " Q" << get<1>(op.qubits_)
        << "    from: " << left << setw(10) << from << "to: " << to;
     return os;
 }
 
 void device::to_json(json& j, const device::Operation& op) {
-    string oper;
-    switch (op.oper_) {
-        case Operator::Single: {
-            oper = "Single";
-            break;
-        }
-        case Operator::Swap: {
-            oper = "Swap";
-            break;
-        }
-        case Operator::CX: {
-            oper = "CX";
-            break;
-        }
-        default: { assert(false); }
-    }
+    string oper{operator_get_name(op.oper_)};
 
     j["Operator"] = oper;
     j["Qubits"] = {get<0>(op.qubits_), get<1>(op.qubits_)};

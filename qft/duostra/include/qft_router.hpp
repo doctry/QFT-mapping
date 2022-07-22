@@ -7,8 +7,8 @@
 class QFTRouter {
    public:
     QFTRouter(device::Device&& device,
-              std::string& typ,
-              std::string& cost,
+              const std::string& typ,
+              const std::string& cost,
               bool orient) noexcept;
     QFTRouter(const QFTRouter& other) noexcept;
     QFTRouter(QFTRouter&& other) noexcept;
@@ -32,6 +32,7 @@ class QFTRouter {
     device::Device device_;
     std::vector<size_t> topo_to_dev_;
 
+    void init(const std::string& typ, const std::string& cost);
     std::tuple<size_t, size_t> get_device_qubits_idx(
         const topo::Gate& gate) const;
 };

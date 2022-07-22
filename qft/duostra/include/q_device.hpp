@@ -22,6 +22,7 @@ class Operation {
     friend std::ostream& operator<<(std::ostream&, Operation&);
     friend std::ostream& operator<<(std::ostream&, const Operation&);
     friend void to_json(json& j, const Operation& op);
+
     Operation(Operator oper,
               std::tuple<size_t, size_t> qs,
               std::tuple<size_t, size_t> du)

@@ -96,15 +96,19 @@ unordered_map<size_t, vector<size_t>> Topology::gate_by_generation(
 }
 
 void AlgoTopology::update_avail_gates(size_t executed) {
+#ifdef DEBUG
+    cout << "Available gates: " << avail_gates_;
+    cout << ", Executed: " << executed << "\n";
+#endif
     assert(find(avail_gates_.begin(), avail_gates_.end(), executed) !=
            avail_gates_.end());
-    Gate& g_exec = gates_[executed];
+    const Gate& g_exec = gates_[executed];
     avail_gates_.erase(
         std::remove(avail_gates_.begin(), avail_gates_.end(), executed),
         avail_gates_.end());
     assert(g_exec.get_id() == executed);
 
-    vector<size_t> nexts = g_exec.get_nexts();
+    vector<size_t> nexts{g_exec.get_nexts()};
 
     for (size_t i = 0; i < nexts.size(); i++) {
         size_t n = nexts[i];
