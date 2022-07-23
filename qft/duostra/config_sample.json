@@ -9,7 +9,7 @@
     "output": "/home/QFT-mapping/output/washington_127.json",
     "mapper": {
         "placer": "dfs",
-        "scheduler": "greedy",
+        "scheduler": "cks",
         "router": "duostra",
         "orientation": true,
         "cost": "end",
@@ -18,10 +18,11 @@
             "apsp_coef": 1,
             "avail": "max",
             "cost": "min",
-            "layer_from_first": true
+            "layer_from_first": true,
+            "depth": 5
         }
     },
-    "IBM_Gate":false,
+    "IBM_Gate": false,
     "stdio": false,
     "dump": false
 }

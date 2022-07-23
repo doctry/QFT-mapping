@@ -45,7 +45,7 @@ class SchedulerBase {
     vector<device::Operation> ops_;
     bool sorted_ = false;
 
-    size_t get_executable(QFTRouter& router, vector<size_t> wait_list) const;
+    size_t get_executable(QFTRouter& router, const vector<size_t>& wait_list) const;
 };
 
 class Random : public SchedulerBase {
@@ -129,8 +129,8 @@ class TreeNode {
     size_t best_cost(int depth) const;
     size_t gate_idx() const { return gate_idx_; }
 
-    QFTRouter& router() { return *router_; }
-    SchedulerBase& scheduler() { return *scheduler_; }
+    const QFTRouter& router() const { return *router_; }
+    const SchedulerBase& scheduler() const { return *scheduler_; }
 
     vector<TreeNode>& children() { return children_; }
     const vector<TreeNode>& children() const { return children_; }

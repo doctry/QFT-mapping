@@ -88,7 +88,7 @@ T TreeNode::recursive(int depth,
     }
 
     // Apply transformations recursively.
-    vector<size_t> transforms{children_.size(), 0};
+    vector<size_t> transforms(children_.size(), 0);
     transform(children_.begin(), children_.end(), transforms.begin(),
               [depth, leaf_function, collect](const TreeNode& child) {
                   return child.recursive(depth - 1, leaf_function, collect);
@@ -104,7 +104,7 @@ void TreeNode::grow() {
     const auto& avail_gates = scheduler_->get_avail_gates();
     for (size_t gate_idx : avail_gates) {
         children_.push_back(
-            TreeNode{gate_idx, router_->clone(), scheduler_->clone()});
+            TreeNode{gate_idx, router().clone(), scheduler().clone()});
     }
 }
 
@@ -135,16 +135,31 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         update_next_trees(*router, *this, avail_gates, next_trees);
 
         // Calcuate each tree's costs and find the best one (smallest cost).
-        vector<size_t> costs{next_trees.size(), 0};
+        vector<size_t> costs(next_trees.size(), 0);
         transform(
             next_trees.begin(), next_trees.end(), costs.begin(),
             [this](const TreeNode& root) { return root.best_cost(depth); });
+
+#ifdef DEBUG
+        cout << "1\n";
+        cout << "costs sizes and tree sizes: " << costs.size() << " "
+             << next_trees.size() << "\n";
+#endif
+
+        assert(costs.size() == next_trees.size());
         auto argmin = min_element(costs.begin(), costs.end()) - costs.begin();
+        assert(costs.size() != 0);
+
+#ifdef DEBUG
+        cout << "2\n";
+        cout << "Argmin: " << argmin << "\n";
+        cout << "Costs: " << costs << "\n";
+#endif
 
         // Update the candidates.
-        size_t gate_idx = avail_gates[argmin];
-        auto selectd_tree{next_trees[argmin]};
-        next_trees = selectd_tree.children();
+        size_t gate_idx = avail_gates.at(argmin);
+        auto selected_tree{move(next_trees.at(argmin))};
+        next_trees = move(selected_tree.children());
 
         route_one_gate(*router, gate_idx);
     }
