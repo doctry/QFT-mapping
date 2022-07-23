@@ -88,8 +88,11 @@ T TreeNode::recursive(int depth,
     }
 
     // Apply transformations recursively.
-    vector<size_t> transforms(children_.size(), 0);
-    transform(children_.begin(), children_.end(), transforms.begin(),
+    // https://stackoverflow.com/questions/27144054/why-is-the-stdinitializer-list-constructor-preferred-when-using-a-braced-initi
+    // Initializer should never be used here as it gets confused with a list of
+    // 2 elements.
+    vector<size_t> transforms;
+    transform(children_.begin(), children_.end(), back_inserter(transforms),
               [depth, leaf_function, collect](const TreeNode& child) {
                   return child.recursive(depth - 1, leaf_function, collect);
               });
@@ -135,9 +138,9 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         update_next_trees(*router, *this, avail_gates, next_trees);
 
         // Calcuate each tree's costs and find the best one (smallest cost).
-        vector<size_t> costs(next_trees.size(), 0);
+        vector<size_t> costs;
         transform(
-            next_trees.begin(), next_trees.end(), costs.begin(),
+            next_trees.begin(), next_trees.end(), back_inserter(costs),
             [this](const TreeNode& root) { return root.best_cost(depth); });
 
 #ifdef DEBUG
@@ -147,7 +150,8 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 #endif
 
         assert(costs.size() == next_trees.size());
-        auto argmin = min_element(costs.begin(), costs.end()) - costs.begin();
+        auto min = min_element(costs.begin(), costs.end());
+        size_t argmin = min - costs.begin();
         assert(costs.size() != 0);
 
 #ifdef DEBUG
@@ -187,7 +191,7 @@ static void root_match_avail_gates(const SchedulerBase& scheduler,
 void Dora::update_next_trees(const QFTRouter& router,
                              const SchedulerBase& scheduler,
                              const vector<size_t>& next_ids,
-                             vector<TreeNode>& next_trees) {
+                             vector<TreeNode>& next_trees) const {
     if (next_trees.empty()) {
         for (size_t idx : next_ids) {
             next_trees.push_back(
@@ -204,7 +208,7 @@ void Dora::update_next_trees(const QFTRouter& router,
 // Update and grow the trees given by the root recursively.
 // If `remaining_depth` is reached but there are still available gates,
 // the tree is extended.
-void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) {
+void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) const {
     const auto& avail_gates = root.scheduler().get_avail_gates();
 
     if (remaining_depth <= 0 || avail_gates.empty()) {

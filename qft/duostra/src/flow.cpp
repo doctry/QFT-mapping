@@ -80,8 +80,7 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
 
     // routing
     cout << "routing..." << endl;
-    sched->assign_gates(move(router));
-    sched->sort();
+    sched->assign_gates_and_sort(move(router));
 
     // dump
     bool dump = json_get<bool>(conf, "dump");

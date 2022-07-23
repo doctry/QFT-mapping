@@ -23,9 +23,11 @@ class SchedulerBase {
     const topo::Topology& topo() const { return *topo_; }
 
     virtual unique_ptr<SchedulerBase> clone() const;
-    virtual void assign_gates(unique_ptr<QFTRouter> router);
 
-    void sort();
+    void assign_gates_and_sort(unique_ptr<QFTRouter> router) {
+        assign_gates(std::move(router));
+        sort();
+    }
 
     void write_assembly(ostream& out) const;
     void to_json(json& j) const;
@@ -33,9 +35,11 @@ class SchedulerBase {
     size_t get_final_cost() const;
     size_t get_total_time() const;
     size_t get_swap_num() const;
-    const vector<size_t>& get_avail_gates() const;
+    const vector<size_t>& get_avail_gates() const {
+        return topo_->get_avail_gates();
+    }
 
-    const vector<device::Operation>& get_operations() const;
+    const vector<device::Operation>& get_operations() const { return ops_; }
     size_t ops_cost() const;
 
     void route_one_gate(QFTRouter& router, size_t gate_idx);
@@ -45,7 +49,10 @@ class SchedulerBase {
     vector<device::Operation> ops_;
     bool sorted_ = false;
 
-    size_t get_executable(QFTRouter& router, const vector<size_t>& wait_list) const;
+    virtual void assign_gates(unique_ptr<QFTRouter> router);
+    void sort();
+    size_t get_executable(QFTRouter& router,
+                          const vector<size_t>& wait_list) const;
 };
 
 class Random : public SchedulerBase {
@@ -57,6 +64,7 @@ class Random : public SchedulerBase {
 
     unique_ptr<SchedulerBase> clone() const override;
 
+   protected:
     void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
@@ -68,11 +76,13 @@ class Static : public SchedulerBase {
     ~Static() override {}
 
     unique_ptr<SchedulerBase> clone() const override;
+
+   protected:
     void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
-struct Conf {
-    Conf()
+struct GreedyConf {
+    GreedyConf()
         : avail_typ(true),
           cost_typ(false),
           candidates(size_t(-1)),
@@ -91,13 +101,14 @@ class Greedy : public SchedulerBase {
     ~Greedy() override {}
 
     unique_ptr<SchedulerBase> clone() const override;
-    void assign_gates(unique_ptr<QFTRouter> router) override;
     size_t greedy_fallback(const QFTRouter& router,
                            const std::vector<size_t>& wait_list,
                            size_t gate_idx) const;
 
    protected:
-    Conf conf_;
+    GreedyConf conf_;
+
+    void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
 class Onion : public Greedy {
@@ -108,10 +119,11 @@ class Onion : public Greedy {
     ~Onion() override {}
 
     unique_ptr<SchedulerBase> clone() const override;
-    void assign_gates(unique_ptr<QFTRouter> router) override;
 
-   private:
+   protected:
     bool first_mode_;
+
+    void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
 // This is a node of the heuristic search tree.
@@ -122,6 +134,7 @@ class TreeNode {
              unique_ptr<SchedulerBase> scheduler);
     TreeNode(const TreeNode& other);
     TreeNode(TreeNode&& other);
+
     TreeNode& operator=(const TreeNode& other);
     TreeNode& operator=(TreeNode&& other);
 
@@ -162,14 +175,16 @@ class Dora : public Greedy {
     const size_t depth;
 
     unique_ptr<SchedulerBase> clone() const override;
-    void assign_gates(unique_ptr<QFTRouter> router) override;
 
    protected:
+    void assign_gates(unique_ptr<QFTRouter> router) override;
+
     void update_next_trees(const QFTRouter& router,
                            const SchedulerBase& scheduler,
                            const vector<size_t>& next_ids,
-                           vector<TreeNode>& next_trees);
-    void update_tree_recursive(int remaining_depth, TreeNode& root);
+                           vector<TreeNode>& next_trees) const;
+
+    void update_tree_recursive(int remaining_depth, TreeNode& root) const;
 };
 
 unique_ptr<SchedulerBase> get(const string& typ,
