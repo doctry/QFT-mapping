@@ -49,7 +49,10 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
             auto erase_idx =
                 std::find(wait_list.begin(), wait_list.end(), gate_idx);
             assert(erase_idx != wait_list.end());
-            wait_list.erase(erase_idx);
+
+            swap(*erase_idx, *wait_list.rbegin());
+            wait_list.pop_back();
+
             // --total_size;
             route_one_gate(*router, gate_idx);
         }
