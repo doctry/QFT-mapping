@@ -45,7 +45,7 @@ TreeNode& TreeNode::operator=(TreeNode&& other) {
 }
 
 void TreeNode::exec_route() {
-    const auto& gates = scheduler_->get_avail_gates();
+    [[maybe_unused]] const auto& gates = scheduler_->get_avail_gates();
 
     assert(std::find(gates.begin(), gates.end(), gate_idx_) != gates.end());
 
@@ -108,6 +108,12 @@ void TreeNode::grow() {
     for (size_t gate_idx : avail_gates) {
         children_.push_back(
             TreeNode{gate_idx, router().clone(), scheduler().clone()});
+    }
+}
+
+void TreeNode::grow_if_needed() {
+    if (is_leaf()) {
+        grow();
     }
 }
 
@@ -175,7 +181,7 @@ static void children_match_ids(const vector<size_t>& ids,
     unordered_set<size_t> all_children{ids.begin(), ids.end()};
 
     assert(all_children.size() == children.size());
-    for (const auto& child : children) {
+    for ([[maybe_unused]] const auto& child : children) {
         assert(all_children.find(child.gate_idx()) != all_children.end());
     }
 }
@@ -192,7 +198,7 @@ void Dora::update_next_trees(const QFTRouter& router,
                              const SchedulerBase& scheduler,
                              const vector<size_t>& next_ids,
                              vector<TreeNode>& next_trees) const {
-    if (next_trees.empty()) {
+    if (next_trees.empty()) [[unlikely]] {
         for (size_t idx : next_ids) {
             next_trees.push_back(
                 TreeNode{idx, router.clone(), scheduler.clone()});
@@ -216,9 +222,7 @@ void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) const {
     }
 
     // If the heuristic tree has reached the leaf, extend it.
-    if (root.is_leaf()) {
-        root.grow();
-    }
+    root.grow_if_needed();
 
     // Update children heuristic search tree.
     root_match_avail_gates(root.scheduler(), root);

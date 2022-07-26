@@ -124,6 +124,15 @@ class Onion : public Greedy {
     bool first_mode_;
 
     void assign_gates(unique_ptr<QFTRouter> router) override;
+
+    void assign_generation(
+        QFTRouter& router,
+        std::unordered_map<size_t, std::vector<size_t>>& gen_to_gates,
+        Tqdm& bar,
+        size_t& total_size);
+    void assign_from_wait_list(QFTRouter& router,
+                               vector<size_t>& wait_list,
+                               size_t& total_size);
 };
 
 // This is a node of the heuristic search tree.
@@ -149,7 +158,7 @@ class TreeNode {
     const vector<TreeNode>& children() const { return children_; }
 
     bool is_leaf() const { return children_.empty(); }
-    void grow();
+    void grow_if_needed();
 
    private:
     size_t gate_idx_;
@@ -157,6 +166,7 @@ class TreeNode {
     unique_ptr<QFTRouter> router_;
     unique_ptr<SchedulerBase> scheduler_;
 
+    void grow();
     void exec_route();
 
     template <typename T>

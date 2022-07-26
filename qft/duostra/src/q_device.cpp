@@ -396,7 +396,7 @@ tuple<bool, size_t> Device::touch_adj(Qubit& qubit,
     return make_tuple(false, size_t(-1));
 }
 
-vector<device::Operation> Device::traceback(Operator op,
+vector<device::Operation> Device::traceback([[maybe_unused]] Operator op,
                                             Qubit& q0,
                                             Qubit& q1,
                                             Qubit& t0,
@@ -449,7 +449,7 @@ vector<device::Operation> Device::traceback(Operator op,
     return ops;
 }
 
-vector<device::Operation> Device::apsp_routing(Operator op,
+vector<device::Operation> Device::apsp_routing([[maybe_unused]] Operator op,
                                                tuple<size_t, size_t> qs,
                                                bool orient) {
     vector<device::Operation> ops;
@@ -556,7 +556,9 @@ void Device::apply_gate(const Operation& op) {
             break;
         }
 
-        default: { assert(false); }
+        default: {
+            assert(false);
+        }
     }
 }
 

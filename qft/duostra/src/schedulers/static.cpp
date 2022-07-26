@@ -9,7 +9,7 @@ Static::Static(Static&& other) : SchedulerBase(move(other)) {}
 void Static::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Static scheduler running..." << endl;
 
-    // size_t count = 0;
+    [[maybe_unused]] size_t count = 0;
 
     for (Tqdm bar{topo_->get_num_gates()}; !topo_->get_avail_gates().empty();
          bar.add()) {
@@ -23,9 +23,9 @@ void Static::assign_gates(unique_ptr<QFTRouter> router) {
 
         route_one_gate(*router, gate_idx);
 
-        // count++;
+        ++count;
     }
-    // assert(count == topo_->get_num_gates());
+    assert(count == topo_->get_num_gates());
 }
 
 unique_ptr<SchedulerBase> Static::clone() const {

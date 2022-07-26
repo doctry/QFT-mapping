@@ -60,7 +60,7 @@ Greedy::Greedy(Greedy&& other)
 void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Greedy scheduler running..." << endl;
 
-    // size_t count = 0;
+    [[maybe_unused]] size_t count = 0;
     auto topo_wrap = TopologyCandidate(*topo_, conf_.candidates);
 
     for (Tqdm bar{topo_->get_num_gates()}; !topo_wrap.get_avail_gates().empty();
@@ -71,10 +71,12 @@ void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
         size_t gate_idx = get_executable(*router, wait_list);
         gate_idx = greedy_fallback(*router, wait_list, gate_idx);
         route_one_gate(*router, gate_idx);
-        // cout << "waitlist: " << wait_list << " " << gate_idx << "\n\n";
-        // count++;
+#ifdef DEBUG
+        cout << "waitlist: " << wait_list << " " << gate_idx << "\n\n";
+#endif
+        ++count;
     }
-    // assert(count == topo_->get_num_gates());
+    assert(count == topo_->get_num_gates());
 }
 
 size_t Greedy::greedy_fallback(const QFTRouter& router,

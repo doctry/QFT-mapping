@@ -13,7 +13,7 @@ Random::Random(Random&& other) : SchedulerBase(move(other)) {}
 void Random::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Random scheduler running..." << endl;
 
-    // size_t count = 0;
+    [[maybe_unused]] size_t count = 0;
 
     for (Tqdm bar{topo_->get_num_gates()}; !topo_->get_avail_gates().empty();
          bar.add()) {
@@ -24,12 +24,13 @@ void Random::assign_gates(unique_ptr<QFTRouter> router) {
         size_t choose = rand() % wait_list.size();
 
         route_one_gate(*router, wait_list[choose]);
-
-        // cout << wait_list << " " << wait_list[choose] << "\n\n";
-        // count++;
+#ifdef DEBUG
+        cout << wait_list << " " << wait_list[choose] << "\n\n";
+#endif
+        ++count;
     }
 
-    // assert(count == topo_->get_num_gates());
+    assert(count == topo_->get_num_gates());
 }
 
 unique_ptr<SchedulerBase> Random::clone() const {
