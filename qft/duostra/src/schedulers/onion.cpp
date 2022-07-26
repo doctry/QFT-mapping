@@ -41,8 +41,8 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
 
         auto distance = youngest->first;
         auto& wait_list = youngest->second;
-        const auto wait_list_size = wait_list.size();
-        for (size_t jj = 0; jj < wait_list_size; ++jj, bar.add()) {
+
+        for (; wait_list.size() > 0; bar.add()) {
             size_t gate_idx = get_executable(*router, wait_list);
             gate_idx = greedy_fallback(*router, wait_list, gate_idx);
 
