@@ -87,6 +87,9 @@ struct GreedyConf {
           cost_typ(false),
           candidates(size_t(-1)),
           apsp_coef(1) {}
+
+    GreedyConf(const json& conf);
+
     bool avail_typ;  // true is max, false is min
     bool cost_typ;   // true is max, false is min
     size_t candidates;
@@ -95,7 +98,7 @@ struct GreedyConf {
 
 class Greedy : public SchedulerBase {
    public:
-    Greedy(unique_ptr<topo::Topology> topo, json& conf);
+    Greedy(unique_ptr<topo::Topology> topo, const json& conf);
     Greedy(const Greedy& other);
     Greedy(Greedy&& other);
     ~Greedy() override {}
@@ -113,7 +116,7 @@ class Greedy : public SchedulerBase {
 
 class Onion : public Greedy {
    public:
-    Onion(unique_ptr<Topology> topo, json& conf);
+    Onion(unique_ptr<Topology> topo, const json& conf);
     Onion(const Onion& other);
     Onion(Onion&& other);
     ~Onion() override {}
@@ -177,7 +180,7 @@ class TreeNode {
 
 class Dora : public Greedy {
    public:
-    Dora(unique_ptr<Topology> topo, json& conf);
+    Dora(unique_ptr<Topology> topo, const json& conf);
     Dora(const Dora& other);
     Dora(Dora&& other);
     ~Dora() override {}

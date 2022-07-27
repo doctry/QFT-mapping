@@ -24,32 +24,34 @@ class TopologyCandidate {
     size_t cands_;
 };
 
-Greedy::Greedy(unique_ptr<topo::Topology> topo, json& conf)
-    : SchedulerBase(move(topo)), conf_({}) {
+GreedyConf::GreedyConf(const json& conf) : GreedyConf() {
     int candidates = json_get<int>(conf, "candidates");
     if (candidates > 0) {
-        conf_.candidates = candidates;
+        this->candidates = candidates;
     }
-    conf_.apsp_coef = json_get<size_t>(conf, "apsp_coef");
+    this->apsp_coef = json_get<size_t>(conf, "apsp_coef");
     string avail_typ = json_get<string>(conf, "avail");
     if (avail_typ == "min") {
-        conf_.avail_typ = false;
+        this->avail_typ = false;
     } else if (avail_typ == "max") {
-        conf_.avail_typ = true;
+        this->avail_typ = true;
     } else {
         cerr << "\"min_max\" can only be \"min\" or \"max\"." << endl;
         abort();
     }
     string cost_typ = json_get<string>(conf, "cost");
     if (cost_typ == "min") {
-        conf_.cost_typ = false;
+        this->cost_typ = false;
     } else if (cost_typ == "max") {
-        conf_.cost_typ = true;
+        this->cost_typ = true;
     } else {
         cerr << "\"min_max\" can only be \"min\" or \"max\"." << endl;
         abort();
     }
 }
+
+Greedy::Greedy(unique_ptr<topo::Topology> topo, const json& conf)
+    : SchedulerBase(move(topo)), conf_(conf) {}
 
 Greedy::Greedy(const Greedy& other)
     : SchedulerBase(other), conf_(other.conf_) {}

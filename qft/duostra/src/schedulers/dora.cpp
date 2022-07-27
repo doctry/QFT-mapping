@@ -117,7 +117,7 @@ void TreeNode::grow_if_needed() {
     }
 }
 
-Dora::Dora(unique_ptr<Topology> topo, json& conf)
+Dora::Dora(unique_ptr<Topology> topo,const json& conf)
     : Greedy(move(topo), conf), depth(json_get<int>(conf, "depth")) {}
 
 Dora::Dora(const Dora& other) : Greedy(other), depth(other.depth) {}
