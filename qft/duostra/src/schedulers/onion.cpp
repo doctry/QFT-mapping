@@ -2,7 +2,7 @@
 
 using namespace scheduler;
 
-Onion::Onion(unique_ptr<Topology> topo,const json& conf)
+Onion::Onion(unique_ptr<Topology> topo, const json& conf)
     : Greedy(move(topo), conf),
       first_mode_(json_get<bool>(conf, "layer_from_first")) {}
 
