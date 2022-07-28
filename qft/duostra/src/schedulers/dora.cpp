@@ -106,23 +106,22 @@ void TreeNode::grow() {
     assert(children_.empty());
     const auto& avail_gates = scheduler_->get_avail_gates();
     for (size_t gate_idx : avail_gates) {
-        children_.push_back(
-            TreeNode{gate_idx, router().clone(), scheduler().clone()});
+        children_.emplace_back(gate_idx, router().clone(), scheduler().clone());
     }
 }
 
-void TreeNode::grow_if_needed() {
+inline void TreeNode::grow_if_needed() {
     if (is_leaf()) {
         grow();
     }
 }
 
-Dora::Dora(unique_ptr<Topology> topo,const json& conf)
-    : Greedy(move(topo), conf), depth(json_get<int>(conf, "depth")) {}
+Dora::Dora(unique_ptr<Topology> topo, const json& conf)
+    : Greedy(move(topo), conf), look_ahead(json_get<int>(conf, "depth")) {}
 
-Dora::Dora(const Dora& other) : Greedy(other), depth(other.depth) {}
+Dora::Dora(const Dora& other) : Greedy(other), look_ahead(other.look_ahead) {}
 
-Dora::Dora(Dora&& other) : Greedy(other), depth(other.depth) {}
+Dora::Dora(Dora&& other) : Greedy(other), look_ahead(other.look_ahead) {}
 
 unique_ptr<SchedulerBase> Dora::clone() const {
     return make_unique<Dora>(*this);
@@ -145,9 +144,10 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 
         // Calcuate each tree's costs and find the best one (smallest cost).
         vector<size_t> costs;
-        transform(
-            next_trees.begin(), next_trees.end(), back_inserter(costs),
-            [this](const TreeNode& root) { return root.best_cost(depth); });
+        transform(next_trees.begin(), next_trees.end(), back_inserter(costs),
+                  [this](const TreeNode& root) {
+                      return root.best_cost(look_ahead);
+                  });
 
 #ifdef DEBUG
         cout << "1\n";
@@ -198,16 +198,15 @@ void Dora::update_next_trees(const QFTRouter& router,
                              const SchedulerBase& scheduler,
                              const vector<size_t>& next_ids,
                              vector<TreeNode>& next_trees) const {
-    if (next_trees.empty()) [[unlikely]] {
+    if (next_trees.empty()) {
         for (size_t idx : next_ids) {
-            next_trees.push_back(
-                TreeNode{idx, router.clone(), scheduler.clone()});
+            next_trees.emplace_back(idx, router.clone(), scheduler.clone());
         }
     }
 
     assert(next_trees.size() == next_ids.size());
     for (auto& tree : next_trees) {
-        update_tree_recursive(depth, tree);
+        update_tree_recursive(look_ahead, tree);
     }
 }
 

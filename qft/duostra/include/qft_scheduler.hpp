@@ -185,7 +185,7 @@ class Dora : public Greedy {
     Dora(Dora&& other);
     ~Dora() override {}
 
-    const size_t depth;
+    const size_t look_ahead;
 
     unique_ptr<SchedulerBase> clone() const override;
 
