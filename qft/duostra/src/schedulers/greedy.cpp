@@ -70,7 +70,7 @@ void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
         auto wait_list = topo_wrap.get_avail_gates();
         assert(wait_list.size() > 0);
 
-        size_t gate_idx = get_executable(*router, wait_list);
+        size_t gate_idx = get_executable(*router);
         gate_idx = greedy_fallback(*router, wait_list, gate_idx);
         route_one_gate(*router, gate_idx);
 #ifdef DEBUG

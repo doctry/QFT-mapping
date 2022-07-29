@@ -94,9 +94,8 @@ size_t SchedulerBase::ops_cost() const {
         ->get_cost();
 }
 
-size_t SchedulerBase::get_executable(QFTRouter& router,
-                                     const vector<size_t>& wait_list) const {
-    for (size_t gate_idx : wait_list) {
+size_t SchedulerBase::get_executable(QFTRouter& router) const {
+    for (size_t gate_idx : topo_->get_avail_gates()) {
         if (router.is_executable(topo_->get_gate(gate_idx))) {
             return gate_idx;
         }
