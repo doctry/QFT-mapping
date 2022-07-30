@@ -45,6 +45,8 @@ class SchedulerBase {
 
     void route_one_gate(QFTRouter& router, size_t gate_idx);
 
+    size_t get_executable(QFTRouter& router) const;
+    
    protected:
     unique_ptr<topo::Topology> topo_;
     vector<device::Operation> ops_;
@@ -52,8 +54,6 @@ class SchedulerBase {
 
     virtual void assign_gates(unique_ptr<QFTRouter> router);
     void sort();
-    size_t get_executable(QFTRouter& router,
-                          const vector<size_t>& wait_list) const;
 };
 
 class Random : public SchedulerBase {

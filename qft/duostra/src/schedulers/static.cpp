@@ -16,7 +16,7 @@ void Static::assign_gates(unique_ptr<QFTRouter> router) {
         auto& wait_list = topo_->get_avail_gates();
         assert(wait_list.size() > 0);
 
-        size_t gate_idx = get_executable(*router, wait_list);
+        size_t gate_idx = get_executable(*router);
         if (gate_idx == size_t(-1)) {
             gate_idx = wait_list[0];
         }

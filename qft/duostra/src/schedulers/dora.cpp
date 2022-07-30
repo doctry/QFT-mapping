@@ -39,6 +39,12 @@ void TreeNode::exec_route() {
     scheduler_->route_one_gate(*router_, gate_idx_);
 
     assert(std::find(gates.begin(), gates.end(), gate_idx_) == gates.end());
+
+    for (size_t gate_idx = scheduler_->get_executable(*router_);
+         gate_idx != size_t(-1);
+         gate_idx = scheduler_->get_executable(*router_)) {
+        scheduler_->route_one_gate(*router_, gate_idx);
+    }
 }
 
 // Size calcuates the tree size.
@@ -134,6 +140,7 @@ T TreeNode::recursive(int depth,
 void TreeNode::grow() {
     assert(children_.empty());
     const auto& avail_gates = scheduler_->get_avail_gates();
+    children_.reserve(avail_gates.size());
     for (size_t gate_idx : avail_gates) {
         auto ptr = make_unique<TreeNode>(gate_idx, router().clone(),
                                          scheduler().clone());
