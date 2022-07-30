@@ -286,7 +286,7 @@ void Dora::update_tree_recursive_parallel(int total_depth,
     vector<reference_wrapper<TreeNode>> leafs = root.leafs(depth);
 
     // Update sub trees in parallel.
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for
     for (size_t idx = 0; idx < leafs.size(); ++idx) {
         TreeNode& leaf = leafs[idx];
         update_tree_recursive(total_depth - depth, leaf);
