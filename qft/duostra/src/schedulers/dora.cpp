@@ -240,11 +240,11 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 #endif
 
         // Update the candidates.
-        size_t gate_idx = avail_gates.at(argmin);
-        auto selected_tree{move(next_trees.at(argmin))};
-        next_trees = move(selected_tree->children());
+        auto selected_node{move(next_trees[argmin])};
 
-        route_one_gate(*router, gate_idx);
+        route_node_gates(*router, *selected_node);
+
+        next_trees = move(selected_node->children());
     }
 }
 
@@ -329,5 +329,11 @@ void Dora::update_tree_recursive_parallel(int total_depth,
     for (size_t idx = 0; idx < leafs.size(); ++idx) {
         TreeNode& leaf = leafs[idx];
         update_tree_recursive(total_depth - depth, leaf);
+    }
+}
+
+void Dora::route_node_gates(QFTRouter& router, const TreeNode& node) {
+    for (size_t gate_idx : node.executed_gates()) {
+        route_one_gate(router, gate_idx);
     }
 }

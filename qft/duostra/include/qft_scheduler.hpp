@@ -162,6 +162,8 @@ class TreeNode {
     const QFTRouter& router() const { return *router_; }
     const SchedulerBase& scheduler() const { return *scheduler_; }
 
+    const vector<size_t>& executed_gates() const { return gate_indices_; }
+
     vector<unique_ptr<TreeNode>>& children() { return children_; }
     const vector<unique_ptr<TreeNode>>& children() const { return children_; }
 
@@ -216,6 +218,8 @@ class Dora : public Greedy {
 
     void update_tree_recursive(int remaining_depth, TreeNode& root) const;
     void update_tree_recursive_parallel(int total_depth, TreeNode& root) const;
+
+    void route_node_gates(QFTRouter& router, const TreeNode& node);
 };
 
 unique_ptr<SchedulerBase> get(const string& typ,
