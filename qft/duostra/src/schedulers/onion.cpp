@@ -55,15 +55,19 @@ void Onion::assign_generation(
     auto youngest =
         min_element(gen_to_gates.begin(), gen_to_gates.end(), select);
 
+    assert(youngest != gen_to_gates.end());
+
     // Distance is only for debugging use.
-    [[maybe_unused]] auto distance = youngest->first;
-    auto& wait_list = youngest->second;
+    auto& [distance, wait_list] = *youngest;
+    // [[maybe_unused]] auto distance = youngest->first;
+    // auto& wait_list = youngest->second;
 
     for (; wait_list.size() > 0; bar.add()) {
         assign_from_wait_list(router, wait_list, total_size);
     }
-    assert(youngest->second.empty());
-    gen_to_gates.erase(youngest->first);
+
+    assert(wait_list.empty());
+    gen_to_gates.erase(distance);
 }
 
 void Onion::assign_from_wait_list(QFTRouter& router,

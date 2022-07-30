@@ -1,6 +1,7 @@
 #include "qft_scheduler.hpp"
 
 #include <vector>
+#include "util.hpp"
 
 using namespace scheduler;
 
@@ -84,7 +85,7 @@ void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
 size_t Greedy::greedy_fallback(const QFTRouter& router,
                                const std::vector<size_t>& wait_list,
                                size_t gate_idx) const {
-    if (gate_idx != size_t(-1)) {
+    if (gate_idx != ERROR_CODE) {
         return gate_idx;
     }
     vector<size_t> cost_list(wait_list.size(), 0);

@@ -1,4 +1,5 @@
 #include "qft_scheduler.hpp"
+#include "util.hpp"
 
 using namespace scheduler;
 
@@ -17,7 +18,7 @@ void Static::assign_gates(unique_ptr<QFTRouter> router) {
         assert(wait_list.size() > 0);
 
         size_t gate_idx = get_executable(*router);
-        if (gate_idx == size_t(-1)) {
+        if (gate_idx == ERROR_CODE) {
             gate_idx = wait_list[0];
         }
 

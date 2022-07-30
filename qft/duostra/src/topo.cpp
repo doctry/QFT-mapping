@@ -1,5 +1,6 @@
 #include "topo.hpp"
 #include "qft_topo.hpp"
+#include "util.hpp"
 
 using namespace topo;
 
@@ -9,10 +10,10 @@ QFTTopology::QFTTopology(size_t num) noexcept {
 
     for (size_t i = 0, count = 0; i < num; ++i) {
         for (size_t j = 0; j < i; ++j, ++count) {
-            size_t prev_up = (j == i - 1) ? size_t(-1) : count + 1 - i;
-            size_t prev_left = (j == 0) ? size_t(-1) : count - 1;
-            size_t next_down = (i == num - 1) ? size_t(-1) : count + i;
-            size_t next_right = (j == i - 1) ? size_t(-1) : count + 1;
+            size_t prev_up = (j == i - 1) ? ERROR_CODE : count + 1 - i;
+            size_t prev_left = (j == 0) ? ERROR_CODE : count - 1;
+            size_t next_down = (i == num - 1) ? ERROR_CODE : count + i;
+            size_t next_right = (j == i - 1) ? ERROR_CODE : count + 1;
 
             Gate gate{count, Operator::CX, std::make_tuple(j, i)};
             gate.set_prev(prev_up, prev_left);

@@ -13,6 +13,7 @@ set(CMAKE_CXX_FLAGS_DEBUG
     "${CMAKE_CXX_FLAGS_DEBUG} \
     -Wall -Wextra \
     -Weffc++ \
+    -Wno-c++17-extensions \
     -fstack-protector-all \
     -DDEBUG"
 )
@@ -22,7 +23,8 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE 
     "${CMAKE_CXX_FLAGS_RELEASE} \
     -Wall -Wextra \
-    -Weffc++"
+    -Weffc++ \
+    -Wno-c++17-extensions"
 )
 if(CMAKE_BUILD_TYPE MATCHES "Release")
 cmake_print_variables(CMAKE_CXX_FLAGS_RELEASE)

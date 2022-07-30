@@ -1,4 +1,5 @@
 #include "qft_router.hpp"
+#include "util.hpp"
 
 using namespace std;
 
@@ -68,7 +69,7 @@ size_t QFTRouter::get_gate_cost(topo::Gate& gate,
     tuple<size_t, size_t> device_qubits_idx = get_device_qubits_idx(gate);
 
     if (gate.get_type() == Operator::Single) {
-        assert(get<1>(device_qubits_idx) == size_t(-1));
+        assert(get<1>(device_qubits_idx) == ERROR_CODE);
         return device_.get_qubit(get<0>(device_qubits_idx)).get_avail_time();
     }
 
@@ -90,7 +91,7 @@ vector<device::Operation> QFTRouter::assign_gate(const topo::Gate& gate) {
     tuple<size_t, size_t> device_qubits_idx = get_device_qubits_idx(gate);
 
     if (gate.get_type() == Operator::Single) {
-        assert(get<1>(device_qubits_idx) == size_t(-1));
+        assert(get<1>(device_qubits_idx) == ERROR_CODE);
         device::Operation op =
             device_.execute_single(gate.get_type(), get<0>(device_qubits_idx));
         return vector<device::Operation>(1, op);
@@ -106,7 +107,7 @@ vector<device::Operation> QFTRouter::assign_gate(const topo::Gate& gate) {
     // i is the idx of device qubit
     for (size_t i = 0; i < change_list.size(); ++i) {
         size_t topo_qubit_id = change_list[i];
-        if (topo_qubit_id == size_t(-1)) {
+        if (topo_qubit_id == ERROR_CODE) {
             continue;
         }
         // assert(checker[i] == false);
@@ -124,12 +125,12 @@ vector<device::Operation> QFTRouter::assign_gate(const topo::Gate& gate) {
 
 bool QFTRouter::is_executable(topo::Gate& gate) const {
     if (gate.get_type() == Operator::Single) {
-        assert(get<1>(gate.get_qubits()) == size_t(-1));
+        assert(get<1>(gate.get_qubits()) == ERROR_CODE);
         return true;
     }
 
     tuple<size_t, size_t> device_qubits_idx{get_device_qubits_idx(gate)};
-    assert(get<1>(device_qubits_idx) != size_t(-1));
+    assert(get<1>(device_qubits_idx) != ERROR_CODE);
     const auto& q0 = device_.get_qubit(get<0>(device_qubits_idx));
     const auto& q1 = device_.get_qubit(get<1>(device_qubits_idx));
     return q0.is_adj(q1);
@@ -147,13 +148,13 @@ tuple<size_t, size_t> QFTRouter::get_device_qubits_idx(
     size_t device_idx_q0 =
         topo_to_dev_[topo_idx_q0];  // get device qubit index of the gate
 
-    size_t device_idx_q1 = size_t(-1);
+    size_t device_idx_q1 = ERROR_CODE;
 
     if (gate.get_type() != Operator::Single) {
         // get operation qubit index of
         size_t topo_idx_q1 = get<1>(gate.get_qubits());
         // gate in topology
-        assert(topo_idx_q1 != size_t(-1));
+        assert(topo_idx_q1 != ERROR_CODE);
         device_idx_q1 = topo_to_dev_[topo_idx_q1];  // get device qubit
                                                     // index of the gate
     }

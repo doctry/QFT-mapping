@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <functional>
 #include <vector>
+#include "util.hpp"
 
 using namespace std;
 using namespace scheduler;
@@ -11,39 +12,70 @@ using namespace scheduler;
 TreeNode::TreeNode(size_t gate_idx,
                    unique_ptr<QFTRouter> router,
                    unique_ptr<SchedulerBase> scheduler)
-    : gate_idx_(gate_idx), router_(move(router)), scheduler_(move(scheduler)) {
-    exec_route();
+    : gate_indices_({gate_idx}),
+      router_(move(router)),
+      scheduler_(move(scheduler)) {
+    route_internal_gates();
 }
 
+TreeNode::TreeNode(vector<size_t>&& gate_indices,
+                   unique_ptr<QFTRouter> router,
+                   unique_ptr<SchedulerBase> scheduler)
+    : gate_indices_(move(gate_indices)),
+      router_(move(router)),
+      scheduler_(move(scheduler)) {}
+
 TreeNode::TreeNode(TreeNode&& other)
-    : gate_idx_(other.gate_idx_),
+    : gate_indices_(move(other.gate_indices_)),
       children_(move(other.children_)),
       router_(move(other.router_)),
       scheduler_(move(other.scheduler_)) {}
 
 TreeNode& TreeNode::operator=(TreeNode&& other) {
-    gate_idx_ = other.gate_idx_;
+    gate_indices_ = move(other.gate_indices_);
     children_ = move(other.children_);
     router_ = move(other.router_);
     scheduler_ = move(other.scheduler_);
     return *this;
 }
 
-void TreeNode::exec_route() {
+size_t TreeNode::immediate_next() const {
+    size_t gate_idx = scheduler_->get_executable(*router_);
+    const auto& avail_gates = scheduler_->get_avail_gates();
+
+    if (gate_idx != ERROR_CODE) {
+        return gate_idx;
+    }
+
+    if (avail_gates.size() == 1) {
+        return avail_gates[0];
+    }
+
+    return ERROR_CODE;
+}
+
+void TreeNode::route_internal_gates() {
     assert(children_.empty());
 
-    [[maybe_unused]] const auto& gates = scheduler_->get_avail_gates();
+    // Execute the initial gates.
+    for (size_t gate_idx : gate_indices_) {
+        [[maybe_unused]] const auto& avail_gates =
+            scheduler_->get_avail_gates();
 
-    assert(std::find(gates.begin(), gates.end(), gate_idx_) != gates.end());
+        assert(std::find(avail_gates.begin(), avail_gates.end(), gate_idx) !=
+               avail_gates.end());
 
-    scheduler_->route_one_gate(*router_, gate_idx_);
-
-    assert(std::find(gates.begin(), gates.end(), gate_idx_) == gates.end());
-
-    for (size_t gate_idx = scheduler_->get_executable(*router_);
-         gate_idx != size_t(-1);
-         gate_idx = scheduler_->get_executable(*router_)) {
         scheduler_->route_one_gate(*router_, gate_idx);
+
+        assert(std::find(avail_gates.begin(), avail_gates.end(), gate_idx) ==
+               avail_gates.end());
+    }
+
+    // Execute additional gates.
+    size_t gate_idx;
+    while ((gate_idx = immediate_next()) != ERROR_CODE) {
+        scheduler_->route_one_gate(*router_, gate_idx);
+        gate_indices_.push_back(gate_idx);
     }
 }
 
@@ -51,7 +83,7 @@ void TreeNode::exec_route() {
 size_t TreeNode::num_leafs(int depth) const {
     auto size_fn = [](const TreeNode&) -> size_t { return 1; };
 
-    auto sum = [](const vector<size_t>& sizes) -> size_t {
+    auto sum = [](const TreeNode&, const vector<size_t>& sizes) -> size_t {
         return accumulate(sizes.begin(), sizes.end(), 0);
     };
 
@@ -64,7 +96,8 @@ size_t TreeNode::best_cost(int depth) const {
         return node.scheduler_->ops_cost();
     };
 
-    auto select_best = [](const vector<size_t>& costs) -> size_t {
+    auto select_best = [](const TreeNode&,
+                          const vector<size_t>& costs) -> size_t {
         return *min_element(costs.begin(), costs.end());
     };
 
@@ -75,7 +108,8 @@ vector<reference_wrapper<TreeNode>> TreeNode::leafs(int depth) {
     using vec_nodes = vector<reference_wrapper<TreeNode>>;
     auto as_reference = [](TreeNode& node) -> vec_nodes { return {ref(node)}; };
 
-    auto collect_all = [](const vector<vec_nodes>& vec_of_leafs) -> vec_nodes {
+    auto collect_all = [](const TreeNode&,
+                          const vector<vec_nodes>& vec_of_leafs) -> vec_nodes {
         size_t total_sizes =
             accumulate(vec_of_leafs.begin(), vec_of_leafs.end(), 0,
                        [](size_t total_so_far, const vec_nodes& second) {
@@ -96,9 +130,10 @@ vector<reference_wrapper<TreeNode>> TreeNode::leafs(int depth) {
 }
 
 template <typename T>
-T TreeNode::recursive(int depth,
-                      function<T(const TreeNode&)> func,
-                      function<T(const vector<T>&)> collect) const {
+T TreeNode::recursive(
+    int depth,
+    function<T(const TreeNode&)> func,
+    function<T(const TreeNode&, const vector<T>&)> collect) const {
     auto wrapped_func = [func](TreeNode& node) -> T {
         // Since TreeNode isn't actually modified in the template
         // the casting is safe.
@@ -113,7 +148,7 @@ T TreeNode::recursive(int depth,
 template <typename T>
 T TreeNode::recursive(int depth,
                       function<T(TreeNode&)> func,
-                      function<T(const vector<T>&)> collect) {
+                      function<T(const TreeNode&, const vector<T>&)> collect) {
     // Terminates on leaf nodes.
     if (depth <= 0 || is_leaf()) {
         return func(*this);
@@ -133,7 +168,7 @@ T TreeNode::recursive(int depth,
               });
 
     // Collect tranformations.
-    return collect(transforms);
+    return collect(*this, transforms);
 }
 
 // Grow by adding availalble gates to children.
@@ -214,14 +249,11 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 }
 
 // Check if ids are matched with chidren's ids.
-static void children_match_ids(const vector<size_t>& ids,
-                               const vector<unique_ptr<TreeNode>>& children) {
+static void children_size_match(const vector<size_t>& ids,
+                                const vector<unique_ptr<TreeNode>>& children) {
     unordered_set<size_t> all_children{ids.begin(), ids.end()};
 
     assert(all_children.size() == children.size());
-    for ([[maybe_unused]] const auto& child : children) {
-        assert(all_children.find(child->gate_idx()) != all_children.end());
-    }
 }
 
 // If a tree is already present, the children of the root nodes must match.
@@ -229,7 +261,7 @@ static void root_match_avail_gates(const SchedulerBase& scheduler,
                                    const TreeNode& root) {
     assert(!root.is_leaf());
 
-    children_match_ids(scheduler.get_avail_gates(), root.children());
+    children_size_match(scheduler.get_avail_gates(), root.children());
 }
 
 void Dora::update_next_trees(const QFTRouter& router,

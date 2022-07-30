@@ -8,6 +8,7 @@
 #include "q_device.hpp"
 #include "qft_router.hpp"
 #include "topo.hpp"
+#include "util.hpp"
 
 namespace scheduler {
 using namespace std;
@@ -20,7 +21,7 @@ class SchedulerBase {
     SchedulerBase(SchedulerBase&& other);
     virtual ~SchedulerBase() {}
 
-    topo::Topology& topo() { return *topo_; }
+    Topology& topo() { return *topo_; }
     const topo::Topology& topo() const { return *topo_; }
 
     virtual unique_ptr<SchedulerBase> clone() const;
@@ -46,7 +47,7 @@ class SchedulerBase {
     void route_one_gate(QFTRouter& router, size_t gate_idx);
 
     size_t get_executable(QFTRouter& router) const;
-    
+
    protected:
     unique_ptr<topo::Topology> topo_;
     vector<device::Operation> ops_;
@@ -86,7 +87,7 @@ struct GreedyConf {
     GreedyConf()
         : avail_typ(true),
           cost_typ(false),
-          candidates(size_t(-1)),
+          candidates(ERROR_CODE),
           apsp_coef(1) {}
 
     GreedyConf(const json& conf);
@@ -145,6 +146,9 @@ class TreeNode {
     TreeNode(size_t gate_idx,
              unique_ptr<QFTRouter> router,
              unique_ptr<SchedulerBase> scheduler);
+    TreeNode(vector<size_t>&& gate_indices,
+             unique_ptr<QFTRouter> router,
+             unique_ptr<SchedulerBase> scheduler);
     TreeNode(const TreeNode& other) = delete;
     TreeNode(TreeNode&& other);
 
@@ -154,8 +158,6 @@ class TreeNode {
     size_t num_leafs(int depth) const;
     size_t best_cost(int depth) const;
     vector<reference_wrapper<TreeNode>> leafs(int depth);
-
-    size_t gate_idx() const { return gate_idx_; }
 
     const QFTRouter& router() const { return *router_; }
     const SchedulerBase& scheduler() const { return *scheduler_; }
@@ -168,7 +170,7 @@ class TreeNode {
 
    private:
     // The head of the node.
-    size_t gate_idx_;
+    vector<size_t> gate_indices_;
 
     // Using vector to pointer so that frequent cache misses
     // won't be as bad in parallel code.
@@ -179,17 +181,18 @@ class TreeNode {
     unique_ptr<SchedulerBase> scheduler_;
 
     void grow();
-    void exec_route();
+    void route_internal_gates();
+    size_t immediate_next() const;
 
     template <typename T>
     T recursive(int depth,
                 function<T(TreeNode&)> func,
-                function<T(const vector<T>&)> collect);
+                function<T(const TreeNode&, const vector<T>&)> collect);
 
     template <typename T>
     T recursive(int depth,
                 function<T(const TreeNode&)> func,
-                function<T(const vector<T>&)> collect) const;
+                function<T(const TreeNode&, const vector<T>&)> collect) const;
 };
 
 class Dora : public Greedy {

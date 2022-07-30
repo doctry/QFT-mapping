@@ -42,7 +42,7 @@ class Gate {
     void set_prev(size_t a, size_t b);
 
     void add_next(size_t n) {
-        if (n != size_t(-1)) {
+        if (n != ERROR_CODE) {
             nexts_.push_back(n);
         }
     }

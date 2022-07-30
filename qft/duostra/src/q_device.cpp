@@ -1,6 +1,7 @@
 #include "q_device.hpp"
 #include <assert.h>
 #include <algorithm>
+#include "util.hpp"
 
 using namespace device;
 using namespace std;
@@ -26,7 +27,7 @@ void device::to_json(json& j, const device::Operation& op) {
 Qubit::Qubit(const size_t i)
     : id_(i),
       adj_list_({}),
-      topo_qubit_(size_t(-1)),
+      topo_qubit_(ERROR_CODE),
       occupied_until_(0),
       marked_(false),
       pred_(0),
@@ -268,7 +269,7 @@ device::Operation Device::execute_single(Operator oper, size_t q) {
     size_t endtime = starttime + SINGLE_CYCLE;
     qubit.set_occupied_time(endtime);
     qubit.reset();
-    Operation op(oper, make_tuple(q, size_t(-1)),
+    Operation op(oper, make_tuple(q, ERROR_CODE),
                  make_tuple(starttime, endtime));
 #ifdef DEBUG
     cout << op << "\n";
@@ -357,7 +358,7 @@ vector<device::Operation> Device::duostra_routing(Operator op,
         qubit.reset();
         assert(qubit.get_topo_qubit() < qubits_.size());
 #ifdef DEBUG
-        if (i != size_t(-1)) {
+        if (i != ERROR_CODE) {
             assert(checker[i] == false);
             checker[i] = true;
         }
@@ -393,7 +394,7 @@ tuple<bool, size_t> Device::touch_adj(Qubit& qubit,
 
         pq.push(device::AStarNode(heuristic_cost, adj.get_id(), swtch));
     }
-    return make_tuple(false, size_t(-1));
+    return make_tuple(false, ERROR_CODE);
 }
 
 vector<device::Operation> Device::traceback([[maybe_unused]] Operator op,
@@ -510,7 +511,7 @@ tuple<size_t, size_t> Device::next_swap_cost(size_t source, size_t target) {
 void Device::place(vector<size_t>& assign) {
     for (size_t i = 0; i < assign.size(); ++i) {
         Qubit& q = qubits_[assign[i]];
-        assert(q.get_topo_qubit() == size_t(-1));
+        assert(q.get_topo_qubit() == ERROR_CODE);
         q.set_topo_qubit(i);
     }
 }

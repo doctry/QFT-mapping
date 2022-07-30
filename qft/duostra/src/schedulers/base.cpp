@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include "util.hpp"
 
 using namespace scheduler;
 
@@ -100,7 +101,7 @@ size_t SchedulerBase::get_executable(QFTRouter& router) const {
             return gate_idx;
         }
     }
-    return size_t(-1);
+    return ERROR_CODE;
 }
 
 void SchedulerBase::route_one_gate(QFTRouter& router, size_t gate_idx) {

@@ -3,6 +3,8 @@
 #include <vector>
 #include "nlohmann/json.hpp"
 
+constexpr size_t ERROR_CODE = (size_t)-1;
+
 using json = nlohmann::json;
 
 template <class T>

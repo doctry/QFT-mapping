@@ -28,18 +28,18 @@ unordered_map<size_t, size_t> Topology::dist_to() const {
         const auto& gate = get_gate(gate_idx);
 
         if (first) {
-            for (auto prev : gate.get_prevs()) {
-                if (prev.first == size_t(-1)) {
+            for (auto [idx, _] : gate.get_prevs()) {
+                if (idx == ERROR_CODE) {
                     continue;
                 }
-                if (dist.find(prev.first) == dist.end()) {
+                if (dist.find(idx) == dist.end()) {
                     return false;
                 }
             }
             return true;
         } else {
             for (auto next : gate.get_nexts()) {
-                if (next == size_t(-1)) {
+                if (next == ERROR_CODE) {
                     continue;
                 }
                 if (dist.find(next) == dist.end()) {

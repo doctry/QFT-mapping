@@ -1,6 +1,7 @@
 #include <gsl/gsl_siman.h>
 #include <thread>
 #include "flow.hpp"
+#include "util.hpp"
 
 class SAData {
    public:
@@ -15,7 +16,7 @@ class SAData {
             topo_to_dev_.push_back(i);
         }
         for (size_t i = topo_num_; i < dev_num_; ++i) {
-            dev_to_topo_.push_back(size_t(-1));
+            dev_to_topo_.push_back(ERROR_CODE);
         }
     }
 
@@ -57,7 +58,7 @@ class SAData {
     }
 
     void assign_q(size_t topo, size_t device) {
-        if (topo == size_t(-1)) {
+        if (topo == ERROR_CODE) {
             return;
         }
         assert(topo_to_dev_[topo] != device);

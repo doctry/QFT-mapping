@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <vector>
 #include "tqdm.hpp"
+#include "util.hpp"
 
 using namespace std;
 
@@ -17,29 +18,27 @@ void Gate::set_prev(size_t a, size_t b) {
     pair<size_t, bool> first(a, false);
     pair<size_t, bool> second(b, false);
 
-    if (a != size_t(-1)) {
+    if (a != ERROR_CODE) {
         prevs_.push_back(first);
     }
 
-    if (a != b && b != size_t(-1)) {
+    if (a != b && b != ERROR_CODE) {
         prevs_.push_back(second);
     }
 }
 
 bool Gate::is_avail() const {
-    bool avail = true;
-    for (size_t i = 0; i < prevs_.size(); i++) {
-        if (!prevs_[i].second) {
-            avail = false;
-            break;
+    for (auto [_, done] : prevs_) {
+        if (!done) {
+            return false;
         }
     }
-    return avail;
+    return true;
 }
 
 bool Gate::is_first() const {
-    for (auto& elem : prevs_) {
-        if (elem.first != size_t(-1)) {
+    for (auto& [idx, _] : prevs_) {
+        if (idx != ERROR_CODE) {
             return false;
         }
     }
@@ -49,7 +48,7 @@ bool Gate::is_first() const {
 
 bool Gate::is_last() const {
     for (auto& elem : nexts_) {
-        if (elem != size_t(-1)) {
+        if (elem != ERROR_CODE) {
             return false;
         }
     }
@@ -66,9 +65,9 @@ void Gate::finished(size_t prev) {
     }
     assert(check);
 #endif
-    for (size_t i = 0; i < prevs_.size(); i++) {
-        if (prevs_[i].first == prev) {
-            prevs_[i].second = true;
+    for (auto& [idx, done] : prevs_) {
+        if (idx == prev) {
+            done = true;
         }
     }
 }
@@ -79,16 +78,13 @@ unordered_map<size_t, vector<size_t>> Topology::gate_by_generation(
     const unordered_map<size_t, size_t>& map) {
     unordered_map<size_t, vector<size_t>> gen_map;
 
-    for (auto pair : map) {
-        size_t gate_id = pair.first;
-        size_t generation = pair.second;
-
+    for (auto [gate_id, generation] : map) {
         gen_map[generation].push_back(gate_id);
     }
 
     size_t count = 0;
-    for (const auto& gen_ids : gen_map) {
-        count += gen_ids.second.size();
+    for (const auto& [_, gen_ids] : gen_map) {
+        count += gen_ids.size();
     }
     assert(count == map.size() &&
            "Resulting map doesn't have the same size as original.");
@@ -154,11 +150,11 @@ void AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
 
                 size_t q = stoul(singleQubitId);
 
-                tuple<size_t, size_t> temp(q, size_t(-1));
+                tuple<size_t, size_t> temp(q, ERROR_CODE);
                 Gate tempGate(gateId, Operator::Single, temp);
                 tempGate.set_prev(last_gate_[q], last_gate_[q]);
 
-                if (last_gate_[q] != size_t(-1))
+                if (last_gate_[q] != ERROR_CODE)
                     gates_[last_gate_[q]].add_next(gateId);
 
                 // update Id
@@ -196,12 +192,12 @@ void AlgoTopology::parse(fstream& qasmFile, bool IBMGate) {
             Gate tempGate(gateId, Operator::CX, temp);
             tempGate.set_prev(last_gate_[q1], last_gate_[q2]);
 
-            if (last_gate_[q1] != size_t(-1)) {
+            if (last_gate_[q1] != ERROR_CODE) {
                 gates_[last_gate_[q1]].add_next(gateId);
             }
 
             if (last_gate_[q1] != last_gate_[q2] &&
-                last_gate_[q2] != size_t(-1)) {
+                last_gate_[q2] != ERROR_CODE) {
                 gates_[last_gate_[q2]].add_next(gateId);
             }
 
