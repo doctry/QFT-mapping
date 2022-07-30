@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <utility>
@@ -150,8 +151,10 @@ class TreeNode {
     TreeNode& operator=(const TreeNode& other);
     TreeNode& operator=(TreeNode&& other);
 
-    size_t tree_size(int depth) const;
+    size_t num_leafs(int depth) const;
     size_t best_cost(int depth) const;
+    vector<reference_wrapper<const TreeNode>> leafs(int depth) const;
+
     size_t gate_idx() const { return gate_idx_; }
 
     const QFTRouter& router() const { return *router_; }
@@ -198,6 +201,7 @@ class Dora : public Greedy {
                            vector<TreeNode>& next_trees) const;
 
     void update_tree_recursive(int remaining_depth, TreeNode& root) const;
+    void update_tree_recursive_parallel(int total_depth, TreeNode& root) const;
 };
 
 unique_ptr<SchedulerBase> get(const string& typ,

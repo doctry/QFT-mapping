@@ -1,6 +1,8 @@
 #include "qft_scheduler.hpp"
 
+#include <omp.h>
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 using namespace std;
@@ -55,7 +57,7 @@ void TreeNode::exec_route() {
 }
 
 // Size calcuates the tree size.
-size_t TreeNode::tree_size(int depth) const {
+size_t TreeNode::num_leafs(int depth) const {
     auto size_fn = [](const TreeNode&) -> size_t { return 1; };
 
     auto sum = [](const vector<size_t>& sizes) -> size_t {
@@ -78,6 +80,32 @@ size_t TreeNode::best_cost(int depth) const {
     return recursive<size_t>(depth, cost_fn, select_best);
 }
 
+vector<reference_wrapper<const TreeNode>> TreeNode::leafs(int depth) const {
+    using vec_nodes = vector<reference_wrapper<const TreeNode>>;
+    auto as_reference = [](const TreeNode& node) -> vec_nodes {
+        return {ref(node)};
+    };
+
+    auto collect_all = [](const vector<vec_nodes>& vec_of_leafs) -> vec_nodes {
+        size_t total_sizes =
+            accumulate(vec_of_leafs.begin(), vec_of_leafs.end(), 0,
+                       [](size_t total_so_far, const vec_nodes& second) {
+                           return total_so_far + second.size();
+                       });
+
+        vec_nodes result;
+        result.reserve(total_sizes);
+
+        for (const auto& leafs : vec_of_leafs) {
+            result.insert(result.end(), leafs.begin(), leafs.end());
+        }
+
+        return result;
+    };
+
+    return recursive<vec_nodes>(depth, as_reference, collect_all);
+}
+
 template <typename T>
 T TreeNode::recursive(int depth,
                       T leaf_function(const TreeNode&),
@@ -91,7 +119,10 @@ T TreeNode::recursive(int depth,
     // https://stackoverflow.com/questions/27144054/why-is-the-stdinitializer-list-constructor-preferred-when-using-a-braced-initi
     // Initializer should never be used here as it gets confused with a list of
     // 2 elements.
-    vector<size_t> transforms;
+    vector<T> transforms;
+    transforms.reserve(children_.size());
+
+    // Transform from TreeNode to collected data from leafs of each TreeNode.
     transform(children_.begin(), children_.end(), back_inserter(transforms),
               [depth, leaf_function, collect](const TreeNode& child) {
                   return child.recursive(depth - 1, leaf_function, collect);
@@ -225,7 +256,39 @@ void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) const {
 
     // Update children heuristic search tree.
     root_match_avail_gates(root.scheduler(), root);
+
+    bool use_omp = getenv("OMP_NUM_THREADS") != NULL;
     for (auto& child_node : root.children()) {
-        update_tree_recursive(remaining_depth - 1, child_node);
+        if (use_omp) {
+            update_tree_recursive_parallel(remaining_depth - 1, child_node);
+        } else {
+            update_tree_recursive(remaining_depth - 1, child_node);
+        }
+    }
+}
+
+void Dora::update_tree_recursive_parallel(int total_depth,
+                                          TreeNode& root) const {
+    const size_t threads = static_cast<size_t>(omp_get_thread_num());
+
+    // Using update_tree_recursive to grow the tree.
+    // Since calling update_tree_recursive on nodes that have children doesn't
+    // modify the node, it should be ok.
+    int depth;
+    for (depth = 0;
+         update_tree_recursive(depth, root), root.num_leafs(depth) < threads;
+         ++depth)
+        ;
+    assert(root.num_leafs(depth) >= threads);
+
+    vector<reference_wrapper<const TreeNode>> leafs = root.leafs(depth);
+
+    // Update sub trees in parallel.
+#pragma omp parallel for
+    for (size_t idx = 0; idx < leafs.size(); ++idx) {
+        const TreeNode& const_leaf = leafs[idx];
+        TreeNode& leaf = const_cast<TreeNode&>(const_leaf);
+
+        update_tree_recursive(total_depth - depth, leaf);
     }
 }

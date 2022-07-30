@@ -52,6 +52,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 target_link_libraries(Duostra "${TORCH_LIBRARIES}")
 set_property(TARGET Duostra PROPERTY CXX_STANDARD 14)
 
+# Open MP
+find_package(OpenMP REQUIRED)
+target_link_libraries(Duostra OpenMP::OpenMP_CXX)
+
 # GSL
 find_package(GSL REQUIRED)
 target_link_libraries(Duostra GSL::gsl GSL::gslcblas)
