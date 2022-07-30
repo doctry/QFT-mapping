@@ -11,32 +11,15 @@ using namespace scheduler;
 TreeNode::TreeNode(size_t gate_idx,
                    unique_ptr<QFTRouter> router,
                    unique_ptr<SchedulerBase> scheduler)
-    : gate_idx_(gate_idx),
-      children_({}),
-      router_(move(router)),
-      scheduler_(move(scheduler)) {
+    : gate_idx_(gate_idx), router_(move(router)), scheduler_(move(scheduler)) {
     exec_route();
 }
-
-TreeNode::TreeNode(const TreeNode& other)
-    : gate_idx_(other.gate_idx_),
-      children_(other.children_),
-      router_(other.router_->clone()),
-      scheduler_(other.scheduler_->clone()) {}
 
 TreeNode::TreeNode(TreeNode&& other)
     : gate_idx_(other.gate_idx_),
       children_(move(other.children_)),
       router_(move(other.router_)),
       scheduler_(move(other.scheduler_)) {}
-
-TreeNode& TreeNode::operator=(const TreeNode& other) {
-    gate_idx_ = other.gate_idx_;
-    children_ = other.children_;
-    router_ = other.router_->clone();
-    scheduler_ = other.scheduler_->clone();
-    return *this;
-}
 
 TreeNode& TreeNode::operator=(TreeNode&& other) {
     gate_idx_ = other.gate_idx_;
@@ -47,6 +30,8 @@ TreeNode& TreeNode::operator=(TreeNode&& other) {
 }
 
 void TreeNode::exec_route() {
+    assert(children_.empty());
+
     [[maybe_unused]] const auto& gates = scheduler_->get_avail_gates();
 
     assert(std::find(gates.begin(), gates.end(), gate_idx_) != gates.end());
@@ -80,11 +65,9 @@ size_t TreeNode::best_cost(int depth) const {
     return recursive<size_t>(depth, cost_fn, select_best);
 }
 
-vector<reference_wrapper<const TreeNode>> TreeNode::leafs(int depth) const {
-    using vec_nodes = vector<reference_wrapper<const TreeNode>>;
-    auto as_reference = [](const TreeNode& node) -> vec_nodes {
-        return {ref(node)};
-    };
+vector<reference_wrapper<TreeNode>> TreeNode::leafs(int depth) {
+    using vec_nodes = vector<reference_wrapper<TreeNode>>;
+    auto as_reference = [](TreeNode& node) -> vec_nodes { return {ref(node)}; };
 
     auto collect_all = [](const vector<vec_nodes>& vec_of_leafs) -> vec_nodes {
         size_t total_sizes =
@@ -108,11 +91,26 @@ vector<reference_wrapper<const TreeNode>> TreeNode::leafs(int depth) const {
 
 template <typename T>
 T TreeNode::recursive(int depth,
-                      T leaf_function(const TreeNode&),
-                      T collect(const vector<T>&)) const {
+                      function<T(const TreeNode&)> func,
+                      function<T(const vector<T>&)> collect) const {
+    auto wrapped_func = [func](TreeNode& node) -> T {
+        // Since TreeNode isn't actually modified in the template
+        // the casting is safe.
+        const TreeNode& cnode = const_cast<const TreeNode&>(node);
+        return func(cnode);
+    };
+
+    return const_cast<TreeNode*>(this)->recursive<T>(depth, wrapped_func,
+                                                     collect);
+}
+
+template <typename T>
+T TreeNode::recursive(int depth,
+                      function<T(TreeNode&)> func,
+                      function<T(const vector<T>&)> collect) {
     // Terminates on leaf nodes.
     if (depth <= 0 || is_leaf()) {
-        return leaf_function(*this);
+        return func(*this);
     }
 
     // Apply transformations recursively.
@@ -124,8 +122,8 @@ T TreeNode::recursive(int depth,
 
     // Transform from TreeNode to collected data from leafs of each TreeNode.
     transform(children_.begin(), children_.end(), back_inserter(transforms),
-              [depth, leaf_function, collect](const TreeNode& child) {
-                  return child.recursive(depth - 1, leaf_function, collect);
+              [depth, func, collect](unique_ptr<TreeNode>& child) {
+                  return child->recursive<T>(depth - 1, func, collect);
               });
 
     // Collect tranformations.
@@ -137,7 +135,9 @@ void TreeNode::grow() {
     assert(children_.empty());
     const auto& avail_gates = scheduler_->get_avail_gates();
     for (size_t gate_idx : avail_gates) {
-        children_.emplace_back(gate_idx, router().clone(), scheduler().clone());
+        auto ptr = make_unique<TreeNode>(gate_idx, router().clone(),
+                                         scheduler().clone());
+        children_.push_back(move(ptr));
     }
 }
 
@@ -162,7 +162,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     auto total_gates = topo_->get_num_gates();
 
     Tqdm bar{total_gates};
-    vector<TreeNode> next_trees;
+    vector<unique_ptr<TreeNode>> next_trees;
 
     // For each step.
     for (size_t idx = 0; idx < total_gates; ++idx, bar.add()) {
@@ -176,8 +176,8 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         // Calcuate each tree's costs and find the best one (smallest cost).
         vector<size_t> costs;
         transform(next_trees.begin(), next_trees.end(), back_inserter(costs),
-                  [this](const TreeNode& root) {
-                      return root.best_cost(look_ahead);
+                  [this](const unique_ptr<TreeNode>& root) {
+                      return root->best_cost(look_ahead);
                   });
 
 #ifdef DEBUG
@@ -200,7 +200,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         // Update the candidates.
         size_t gate_idx = avail_gates.at(argmin);
         auto selected_tree{move(next_trees.at(argmin))};
-        next_trees = move(selected_tree.children());
+        next_trees = move(selected_tree->children());
 
         route_one_gate(*router, gate_idx);
     }
@@ -208,12 +208,12 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 
 // Check if ids are matched with chidren's ids.
 static void children_match_ids(const vector<size_t>& ids,
-                               const vector<TreeNode>& children) {
+                               const vector<unique_ptr<TreeNode>>& children) {
     unordered_set<size_t> all_children{ids.begin(), ids.end()};
 
     assert(all_children.size() == children.size());
     for ([[maybe_unused]] const auto& child : children) {
-        assert(all_children.find(child.gate_idx()) != all_children.end());
+        assert(all_children.find(child->gate_idx()) != all_children.end());
     }
 }
 
@@ -228,16 +228,18 @@ static void root_match_avail_gates(const SchedulerBase& scheduler,
 void Dora::update_next_trees(const QFTRouter& router,
                              const SchedulerBase& scheduler,
                              const vector<size_t>& next_ids,
-                             vector<TreeNode>& next_trees) const {
+                             vector<unique_ptr<TreeNode>>& next_trees) const {
     if (next_trees.empty()) {
         for (size_t idx : next_ids) {
-            next_trees.emplace_back(idx, router.clone(), scheduler.clone());
+            auto ptr =
+                make_unique<TreeNode>(idx, router.clone(), scheduler.clone());
+            next_trees.push_back(move(ptr));
         }
     }
 
     assert(next_trees.size() == next_ids.size());
     for (auto& tree : next_trees) {
-        update_tree_recursive(look_ahead, tree);
+        update_tree_recursive(look_ahead, *tree);
     }
 }
 
@@ -260,9 +262,9 @@ void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) const {
     bool use_omp = getenv("OMP_NUM_THREADS") != NULL;
     for (auto& child_node : root.children()) {
         if (use_omp) {
-            update_tree_recursive_parallel(remaining_depth - 1, child_node);
+            update_tree_recursive_parallel(remaining_depth - 1, *child_node);
         } else {
-            update_tree_recursive(remaining_depth - 1, child_node);
+            update_tree_recursive(remaining_depth - 1, *child_node);
         }
     }
 }
@@ -281,14 +283,12 @@ void Dora::update_tree_recursive_parallel(int total_depth,
         ;
     assert(root.num_leafs(depth) >= threads);
 
-    vector<reference_wrapper<const TreeNode>> leafs = root.leafs(depth);
+    vector<reference_wrapper<TreeNode>> leafs = root.leafs(depth);
 
     // Update sub trees in parallel.
 #pragma omp parallel for
     for (size_t idx = 0; idx < leafs.size(); ++idx) {
-        const TreeNode& const_leaf = leafs[idx];
-        TreeNode& leaf = const_cast<TreeNode&>(const_leaf);
-
+        TreeNode& leaf = leafs[idx];
         update_tree_recursive(total_depth - depth, leaf);
     }
 }

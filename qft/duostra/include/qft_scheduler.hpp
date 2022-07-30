@@ -145,30 +145,36 @@ class TreeNode {
     TreeNode(size_t gate_idx,
              unique_ptr<QFTRouter> router,
              unique_ptr<SchedulerBase> scheduler);
-    TreeNode(const TreeNode& other);
+    TreeNode(const TreeNode& other) = delete;
     TreeNode(TreeNode&& other);
 
-    TreeNode& operator=(const TreeNode& other);
+    TreeNode& operator=(const TreeNode& other) = delete;
     TreeNode& operator=(TreeNode&& other);
 
     size_t num_leafs(int depth) const;
     size_t best_cost(int depth) const;
-    vector<reference_wrapper<const TreeNode>> leafs(int depth) const;
+    vector<reference_wrapper<TreeNode>> leafs(int depth);
 
     size_t gate_idx() const { return gate_idx_; }
 
     const QFTRouter& router() const { return *router_; }
     const SchedulerBase& scheduler() const { return *scheduler_; }
 
-    vector<TreeNode>& children() { return children_; }
-    const vector<TreeNode>& children() const { return children_; }
+    vector<unique_ptr<TreeNode>>& children() { return children_; }
+    const vector<unique_ptr<TreeNode>>& children() const { return children_; }
 
     bool is_leaf() const { return children_.empty(); }
     void grow_if_needed();
 
    private:
+    // The head of the node.
     size_t gate_idx_;
-    vector<TreeNode> children_;
+
+    // Using vector to pointer so that frequent cache misses
+    // won't be as bad in parallel code.
+    vector<unique_ptr<TreeNode>> children_;
+
+    // The state of duostra.
     unique_ptr<QFTRouter> router_;
     unique_ptr<SchedulerBase> scheduler_;
 
@@ -177,8 +183,13 @@ class TreeNode {
 
     template <typename T>
     T recursive(int depth,
-                T function(const TreeNode&),
-                T collect(const vector<T>&)) const;
+                function<T(TreeNode&)> func,
+                function<T(const vector<T>&)> collect);
+
+    template <typename T>
+    T recursive(int depth,
+                function<T(const TreeNode&)> func,
+                function<T(const vector<T>&)> collect) const;
 };
 
 class Dora : public Greedy {
@@ -198,7 +209,7 @@ class Dora : public Greedy {
     void update_next_trees(const QFTRouter& router,
                            const SchedulerBase& scheduler,
                            const vector<size_t>& next_ids,
-                           vector<TreeNode>& next_trees) const;
+                           vector<unique_ptr<TreeNode>>& next_trees) const;
 
     void update_tree_recursive(int remaining_depth, TreeNode& root) const;
     void update_tree_recursive_parallel(int total_depth, TreeNode& root) const;
