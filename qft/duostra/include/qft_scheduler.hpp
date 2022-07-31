@@ -218,8 +218,6 @@ class Dora : public Greedy {
 
     void update_tree_recursive(int remaining_depth, TreeNode& root) const;
     void update_tree_recursive_parallel(int total_depth, TreeNode& root) const;
-
-    void route_node_gates(QFTRouter& router, const TreeNode& node);
 };
 
 unique_ptr<SchedulerBase> get(const string& typ,

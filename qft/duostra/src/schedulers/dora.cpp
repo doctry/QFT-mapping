@@ -177,9 +177,8 @@ void TreeNode::grow() {
     const auto& avail_gates = scheduler_->get_avail_gates();
     children_.reserve(avail_gates.size());
     for (size_t gate_idx : avail_gates) {
-        auto ptr = make_unique<TreeNode>(gate_idx, router().clone(),
-                                         scheduler().clone());
-        children_.push_back(move(ptr));
+        children_.emplace_back(
+            new TreeNode{gate_idx, router().clone(), scheduler().clone()});
     }
 }
 
@@ -207,7 +206,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     vector<unique_ptr<TreeNode>> next_trees;
 
     // For each step.
-    for (size_t idx = 0; idx < total_gates; ++idx, bar.add()) {
+    for (size_t idx = 0; idx < total_gates; ++idx) {
         auto avail_gates = topo_->get_avail_gates();
 
         // Generate heuristic trees if not present.
@@ -242,7 +241,10 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         // Update the candidates.
         auto selected_node{move(next_trees[argmin])};
 
-        route_node_gates(*router, *selected_node);
+        for (size_t gate_idx : selected_node->executed_gates()) {
+            route_one_gate(*router, gate_idx);
+            bar.add();
+        }
 
         next_trees = move(selected_node->children());
     }
@@ -269,10 +271,10 @@ void Dora::update_next_trees(const QFTRouter& router,
                              const vector<size_t>& next_ids,
                              vector<unique_ptr<TreeNode>>& next_trees) const {
     if (next_trees.empty()) {
+        next_trees.reserve(next_ids.size());
         for (size_t idx : next_ids) {
-            auto ptr =
-                make_unique<TreeNode>(idx, router.clone(), scheduler.clone());
-            next_trees.push_back(move(ptr));
+            next_trees.emplace_back(
+                new TreeNode{idx, router.clone(), scheduler.clone()});
         }
     }
 
@@ -329,11 +331,5 @@ void Dora::update_tree_recursive_parallel(int total_depth,
     for (size_t idx = 0; idx < leafs.size(); ++idx) {
         TreeNode& leaf = leafs[idx];
         update_tree_recursive(total_depth - depth, leaf);
-    }
-}
-
-void Dora::route_node_gates(QFTRouter& router, const TreeNode& node) {
-    for (size_t gate_idx : node.executed_gates()) {
-        route_one_gate(router, gate_idx);
     }
 }
