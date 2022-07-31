@@ -43,59 +43,59 @@ void tqdm::hsv_to_rgb(float h, float s, float v, int& r, int& g, int& b) const {
 }
 
 void tqdm::progress(int curr, int tot) {
-    if (is_tty && (curr % period == 0)) {
+    if (is_tty_ && (curr % period_ == 0)) {
         total_ = tot;
-        nupdates++;
+        nupdates_++;
         auto now = std::chrono::system_clock::now();
-        double dt = ((std::chrono::duration<double>)(now - t_old)).count();
+        double dt = ((std::chrono::duration<double>)(now - t_old_)).count();
         double dt_tot =
-            ((std::chrono::duration<double>)(now - t_first)).count();
-        int dn = curr - n_old;
-        n_old = curr;
-        t_old = now;
-        if (deq_n.size() >= smoothing)
-            deq_n.erase(deq_n.begin());
-        if (deq_t.size() >= smoothing)
-            deq_t.erase(deq_t.begin());
-        deq_t.push_back(dt);
-        deq_n.push_back(dn);
+            ((std::chrono::duration<double>)(now - t_first_)).count();
+        int dn = curr - n_old_;
+        n_old_ = curr;
+        t_old_ = now;
+        if (deq_n_.size() >= smoothing_)
+            deq_n_.erase(deq_n_.begin());
+        if (deq_t_.size() >= smoothing_)
+            deq_t_.erase(deq_t_.begin());
+        deq_t_.push_back(dt);
+        deq_n_.push_back(dn);
 
         double avgrate = 0.;
-        if (use_ema) {
-            avgrate = deq_n[0] / deq_t[0];
-            for (size_t i = 1; i < deq_t.size(); i++) {
-                double r = 1.0 * deq_n[i] / deq_t[i];
-                avgrate = alpha_ema * r + (1.0 - alpha_ema) * avgrate;
+        if (use_ema_) {
+            avgrate = deq_n_[0] / deq_t_[0];
+            for (size_t i = 1; i < deq_t_.size(); i++) {
+                double r = 1.0 * deq_n_[i] / deq_t_[i];
+                avgrate = alpha_ema_ * r + (1.0 - alpha_ema_) * avgrate;
             }
         } else {
-            double dtsum = std::accumulate(deq_t.begin(), deq_t.end(), 0.);
-            int dnsum = std::accumulate(deq_n.begin(), deq_n.end(), 0.);
+            double dtsum = std::accumulate(deq_t_.begin(), deq_t_.end(), 0.);
+            int dnsum = std::accumulate(deq_n_.begin(), deq_n_.end(), 0.);
             avgrate = dnsum / dtsum;
         }
 
         // learn an appropriate period length to avoid spamming stdout
         // and slowing down the loop, shoot for ~25Hz and smooth over 3
         // seconds
-        if (nupdates > 10) {
-            period =
+        if (nupdates_ > 10) {
+            period_ =
                 (int)(std::min(std::max((1.0 / 25) * curr / dt_tot, 1.0), 5e5));
-            smoothing = 25 * 3;
+            smoothing_ = 25 * 3;
         }
         double peta = (tot - curr) / avgrate;
         double pct = (double)curr / (tot * 0.01);
-        if ((tot - curr) <= period) {
+        if ((tot - curr) <= period_) {
             pct = 100.0;
             avgrate = tot / dt_tot;
             curr = tot;
             peta = 0;
         }
 
-        double fills = ((double)curr / tot * width);
+        double fills = ((double)curr / tot * width_);
         int ifills = (int)fills;
 
         printf("\015 ");
-        if (use_colors) {
-            if (color_transition) {
+        if (use_colors_) {
+            if (color_transition_) {
                 // red (hue=0) to green (hue=1/3)
                 int r = 255, g = 255, b = 255;
                 hsv_to_rgb(0.0 + 0.01 * pct / 3, 0.65, 1.0, r, g, b);
@@ -105,16 +105,16 @@ void tqdm::progress(int curr, int tot) {
             }
         }
         for (int i = 0; i < ifills; i++)
-            std::cout << bars[8];
-        if (!in_screen and (curr != tot))
-            printf("%s", bars[(int)(8.0 * (fills - ifills))]);
-        for (int i = 0; i < width - ifills - 1; i++)
-            std::cout << bars[0];
-        printf("%s ", right_pad.c_str());
-        if (use_colors)
+            std::cout << bars_[8];
+        if (!in_screen_ and (curr != tot))
+            printf("%s", bars_[(int)(8.0 * (fills - ifills))]);
+        for (int i = 0; i < width_ - ifills - 1; i++)
+            std::cout << bars_[0];
+        printf("%s ", right_pad_.c_str());
+        if (use_colors_)
             printf("\033[1m\033[31m");
         printf("%4.1f%% ", pct);
-        if (use_colors)
+        if (use_colors_)
             printf("\033[34m");
 
         std::string unit = "Hz";
@@ -128,11 +128,11 @@ void tqdm::progress(int curr, int tot) {
         }
         printf("[%4d/%4d | %3.1f %s | %.0fs<%.0fs] ", curr, tot, avgrate / div,
                unit.c_str(), dt_tot, peta);
-        printf("%s ", label.c_str());
-        if (use_colors)
+        printf("%s ", label_.c_str());
+        if (use_colors_)
             printf("\033[0m\033[32m\033[0m\015 ");
 
-        if ((tot - curr) > period)
+        if ((tot - curr) > period_)
             fflush(stdout);
     }
 }

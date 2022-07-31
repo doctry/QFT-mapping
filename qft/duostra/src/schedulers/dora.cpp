@@ -208,7 +208,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     vector<POINTER_TYPE(TreeNode)> next_trees;
 
     // For each step.
-    for (size_t idx = 0; idx < total_gates;) {
+    while (!bar.done()) {
         auto avail_gates = topo_->get_avail_gates();
 
         // Generate heuristic trees if not present.
@@ -246,7 +246,6 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         for (size_t gate_idx : POINTER_CALL(selected_node, executed_gates)()) {
             route_one_gate(*router, gate_idx);
             bar.add();
-            ++idx;
         }
 
         next_trees = move(POINTER_CALL(selected_node, children)());
@@ -256,7 +255,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 // Check if ids are matched with chidren's ids.
 static void children_size_match(
     const vector<size_t>& ids,
-    [[maybe_unused]]const vector<POINTER_TYPE(TreeNode)>& children) {
+    [[maybe_unused]] const vector<POINTER_TYPE(TreeNode)>& children) {
     unordered_set<size_t> all_children{ids.begin(), ids.end()};
 
     assert(all_children.size() == children.size());
