@@ -15,7 +15,8 @@ set(CMAKE_CXX_FLAGS_DEBUG
     -Weffc++ \
     -Wno-c++17-extensions \
     -fstack-protector-all \
-    -DDEBUG"
+    -DDEBUG \
+    -DUSE_POINTER_AS_CHILD"
 )
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
 cmake_print_variables(CMAKE_CXX_FLAGS_DEBUG)
