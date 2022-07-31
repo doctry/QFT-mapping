@@ -217,7 +217,9 @@ class Dora : public Greedy {
                            vector<unique_ptr<TreeNode>>& next_trees) const;
 
     void update_tree_recursive(int remaining_depth, TreeNode& root) const;
-    void update_tree_recursive_parallel(int total_depth, TreeNode& root) const;
+    void update_tree_recursive(int remaining_depth,
+                               TreeNode& root,
+                               size_t threads) const;
 };
 
 unique_ptr<SchedulerBase> get(const string& typ,

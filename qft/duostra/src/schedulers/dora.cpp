@@ -300,20 +300,21 @@ void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) const {
     // Update children heuristic search tree.
     root_match_avail_gates(root.scheduler(), root);
 
-    bool use_omp = getenv("OMP_NUM_THREADS") != NULL;
+    const char* const omp_num_threads = getenv("OMP_NUM_THREADS");
     for (auto& child_node : root.children()) {
-        if (use_omp) {
-            update_tree_recursive_parallel(remaining_depth - 1, *child_node);
+        if (omp_num_threads != nullptr) {
+            int threads = stoi(omp_num_threads);
+            assert(threads > 0);
+            update_tree_recursive(remaining_depth - 1, *child_node, threads);
         } else {
             update_tree_recursive(remaining_depth - 1, *child_node);
         }
     }
 }
 
-void Dora::update_tree_recursive_parallel(int total_depth,
-                                          TreeNode& root) const {
-    const size_t threads = static_cast<size_t>(omp_get_thread_num());
-
+void Dora::update_tree_recursive(int total_depth,
+                                 TreeNode& root,
+                                 size_t threads) const {
     // Using update_tree_recursive to grow the tree.
     // Since calling update_tree_recursive on nodes that have children doesn't
     // modify the node, it should be ok.
@@ -327,7 +328,7 @@ void Dora::update_tree_recursive_parallel(int total_depth,
     vector<reference_wrapper<TreeNode>> leafs = root.leafs(depth);
 
     // Update sub trees in parallel.
-#pragma omp parallel for
+#pragma omp parallel for num_threads(threads)
     for (size_t idx = 0; idx < leafs.size(); ++idx) {
         TreeNode& leaf = leafs[idx];
         update_tree_recursive(total_depth - depth, leaf);
