@@ -163,8 +163,9 @@ T TreeNode::recursive(int depth,
 
     // Transform from TreeNode to collected data from leafs of each TreeNode.
     transform(children_.begin(), children_.end(), back_inserter(transforms),
-              [depth, func, collect](unique_ptr<TreeNode>& child) {
-                  return child->recursive<T>(depth - 1, func, collect);
+              [depth, func, collect](POINTER_TYPE(TreeNode) & child) {
+                  return POINTER_CALL(child, recursive)<T>(depth - 1, func,
+                                                           collect);
               });
 
     // Collect tranformations.
@@ -177,8 +178,9 @@ void TreeNode::grow() {
     const auto& avail_gates = scheduler_->get_avail_gates();
     children_.reserve(avail_gates.size());
     for (size_t gate_idx : avail_gates) {
-        children_.emplace_back(
-            new TreeNode{gate_idx, router().clone(), scheduler().clone()});
+        auto ptr = POINTER_MAKE(
+            TreeNode, (gate_idx, router().clone(), scheduler().clone()));
+        children_.push_back(move(ptr));
     }
 }
 
@@ -203,7 +205,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     auto total_gates = topo_->get_num_gates();
 
     Tqdm bar{total_gates};
-    vector<unique_ptr<TreeNode>> next_trees;
+    vector<POINTER_TYPE(TreeNode)> next_trees;
 
     // For each step.
     for (size_t idx = 0; idx < total_gates; ++idx) {
@@ -217,8 +219,8 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         // Calcuate each tree's costs and find the best one (smallest cost).
         vector<size_t> costs;
         transform(next_trees.begin(), next_trees.end(), back_inserter(costs),
-                  [this](const unique_ptr<TreeNode>& root) {
-                      return root->best_cost(look_ahead);
+                  [this](const POINTER_TYPE(TreeNode) & root) {
+                      return POINTER_CALL(root, best_cost)(look_ahead);
                   });
 
 #ifdef DEBUG
@@ -241,18 +243,19 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
         // Update the candidates.
         auto selected_node{move(next_trees[argmin])};
 
-        for (size_t gate_idx : selected_node->executed_gates()) {
+        for (size_t gate_idx : POINTER_CALL(selected_node, executed_gates)()) {
             route_one_gate(*router, gate_idx);
             bar.add();
         }
 
-        next_trees = move(selected_node->children());
+        next_trees = move(POINTER_CALL(selected_node, children)());
     }
 }
 
 // Check if ids are matched with chidren's ids.
-static void children_size_match(const vector<size_t>& ids,
-                                const vector<unique_ptr<TreeNode>>& children) {
+static void children_size_match(
+    const vector<size_t>& ids,
+    const vector<POINTER_TYPE(TreeNode)>& children) {
     unordered_set<size_t> all_children{ids.begin(), ids.end()};
 
     assert(all_children.size() == children.size());
@@ -269,18 +272,27 @@ static void root_match_avail_gates(const SchedulerBase& scheduler,
 void Dora::update_next_trees(const QFTRouter& router,
                              const SchedulerBase& scheduler,
                              const vector<size_t>& next_ids,
-                             vector<unique_ptr<TreeNode>>& next_trees) const {
+                             vector<POINTER_TYPE(TreeNode)>& next_trees) const {
     if (next_trees.empty()) {
         next_trees.reserve(next_ids.size());
         for (size_t idx : next_ids) {
-            next_trees.emplace_back(
-                new TreeNode{idx, router.clone(), scheduler.clone()});
+            auto ptr = POINTER_MAKE(TreeNode,
+                                    (idx, router.clone(), scheduler.clone()));
+            next_trees.push_back(move(ptr));
         }
     }
 
     assert(next_trees.size() == next_ids.size());
+
+    const char* const omp_num_threads = getenv("OMP_NUM_THREADS");
     for (auto& tree : next_trees) {
-        update_tree_recursive(look_ahead, *tree);
+        if (omp_num_threads != nullptr) {
+            int threads = stoi(omp_num_threads);
+            assert(threads > 0);
+            update_tree_recursive(look_ahead, POINTER_DEREF(tree), threads);
+        } else {
+            update_tree_recursive(look_ahead, POINTER_DEREF(tree));
+        }
     }
 }
 
@@ -300,15 +312,8 @@ void Dora::update_tree_recursive(int remaining_depth, TreeNode& root) const {
     // Update children heuristic search tree.
     root_match_avail_gates(root.scheduler(), root);
 
-    const char* const omp_num_threads = getenv("OMP_NUM_THREADS");
     for (auto& child_node : root.children()) {
-        if (omp_num_threads != nullptr) {
-            int threads = stoi(omp_num_threads);
-            assert(threads > 0);
-            update_tree_recursive(remaining_depth - 1, *child_node, threads);
-        } else {
-            update_tree_recursive(remaining_depth - 1, *child_node);
-        }
+        update_tree_recursive(remaining_depth - 1, POINTER_DEREF(child_node));
     }
 }
 

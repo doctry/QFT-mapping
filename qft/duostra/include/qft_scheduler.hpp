@@ -140,6 +140,18 @@ class Onion : public Greedy {
                                size_t& total_size);
 };
 
+#ifdef USE_POINTER_AS_CHILD
+#define POINTER_TYPE(TYP) std::unique_ptr<TYP>
+#define POINTER_CALL(OBJ, MEMBER) OBJ->MEMBER
+#define POINTER_DEREF(OBJ) *OBJ
+#define POINTER_MAKE(TYP, ARGS) (std::make_unique<TYP> ARGS)
+#else
+#define POINTER_TYPE(TYP) TYP
+#define POINTER_CALL(OBJ, MEMBER) OBJ.MEMBER
+#define POINTER_DEREF(OBJ) OBJ
+#define POINTER_MAKE(TYP, ARGS) (TYP ARGS)
+#endif
+
 // This is a node of the heuristic search tree.
 class TreeNode {
    public:
@@ -164,8 +176,8 @@ class TreeNode {
 
     const vector<size_t>& executed_gates() const { return gate_indices_; }
 
-    vector<unique_ptr<TreeNode>>& children() { return children_; }
-    const vector<unique_ptr<TreeNode>>& children() const { return children_; }
+    vector<POINTER_TYPE(TreeNode)>& children() { return children_; }
+    const vector<POINTER_TYPE(TreeNode)>& children() const { return children_; }
 
     bool is_leaf() const { return children_.empty(); }
     void grow_if_needed();
@@ -176,7 +188,7 @@ class TreeNode {
 
     // Using vector to pointer so that frequent cache misses
     // won't be as bad in parallel code.
-    vector<unique_ptr<TreeNode>> children_;
+    vector<POINTER_TYPE(TreeNode)> children_;
 
     // The state of duostra.
     unique_ptr<QFTRouter> router_;
@@ -214,7 +226,7 @@ class Dora : public Greedy {
     void update_next_trees(const QFTRouter& router,
                            const SchedulerBase& scheduler,
                            const vector<size_t>& next_ids,
-                           vector<unique_ptr<TreeNode>>& next_trees) const;
+                           vector<POINTER_TYPE(TreeNode)>& next_trees) const;
 
     void update_tree_recursive(int remaining_depth, TreeNode& root) const;
     void update_tree_recursive(int remaining_depth,
