@@ -1,3 +1,5 @@
+#include "tqdm_wrapper.hpp"
+
 namespace topo {
 
 template <bool first>
@@ -56,8 +58,8 @@ unordered_map<size_t, size_t> Topology::dist_to() const {
     }
 
     size_t counter = 0;
-    for (Tqdm bar{get_num_gates()}; waiting.size() != 0; ++counter) {
-        auto cloned_waiting{waiting};
+    for (TqdmWrapper bar{get_num_gates()}; waiting.size() != 0; ++counter) {
+        const auto cloned_waiting{waiting};
 
         vector<size_t> visited_this_cycle;
         for (size_t idx : cloned_waiting) {
@@ -81,7 +83,7 @@ unordered_map<size_t, size_t> Topology::dist_to() const {
 
         for (auto vtc : visited_this_cycle) {
             dist[vtc] = counter;
-            bar.add();
+            ++bar;
         }
     }
 

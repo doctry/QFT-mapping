@@ -21,7 +21,7 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
 
     size_t num_gates = topo_->get_num_gates();
 
-    Tqdm bar{num_gates};
+    TqdmWrapper bar{num_gates};
 
     // Used for debugging.
     size_t total_size = 0;
@@ -45,7 +45,7 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
 void Onion::assign_generation(
     QFTRouter& router,
     std::unordered_map<size_t, std::vector<size_t>>& gen_to_gates,
-    Tqdm& bar,
+    TqdmWrapper& bar,
     size_t& total_size) {
     using gen_pair = const pair<size_t, vector<size_t>>&;
     auto select =
@@ -62,7 +62,7 @@ void Onion::assign_generation(
     // [[maybe_unused]] auto distance = youngest->first;
     // auto& wait_list = youngest->second;
 
-    for (; wait_list.size() > 0; bar.add()) {
+    for (; wait_list.size() > 0; ++bar) {
         assign_from_wait_list(router, wait_list, total_size);
     }
 

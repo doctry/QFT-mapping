@@ -53,10 +53,8 @@ void SchedulerBase::to_json(json& j) const {
 void SchedulerBase::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Default scheduler running..." << endl;
 
-    Tqdm bar{topo_->get_num_gates()};
-    for (size_t i = 0; i < topo_->get_num_gates(); ++i) {
-        bar.add();
-        route_one_gate(*router, i);
+    for (TqdmWrapper bar{topo_->get_num_gates()}; !bar.done(); ++bar) {
+        route_one_gate(*router, bar.idx());
     }
 }
 

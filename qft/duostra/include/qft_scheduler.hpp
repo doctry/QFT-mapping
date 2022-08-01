@@ -133,7 +133,7 @@ class Onion : public Greedy {
     void assign_generation(
         QFTRouter& router,
         std::unordered_map<size_t, std::vector<size_t>>& gen_to_gates,
-        Tqdm& bar,
+        TqdmWrapper& bar,
         size_t& total_size);
     void assign_from_wait_list(QFTRouter& router,
                                vector<size_t>& wait_list,

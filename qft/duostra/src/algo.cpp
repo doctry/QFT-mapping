@@ -7,7 +7,7 @@
 #include <tuple>
 #include <unordered_set>
 #include <vector>
-#include "tqdm.hpp"
+#include "tqdm_wrapper.hpp"
 #include "util.hpp"
 
 using namespace std;

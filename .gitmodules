@@ -1,3 +1,6 @@
 [submodule "qft/duostra/externals/json"]
 	path = qft/duostra/externals/json
 	url = https://github.com/nlohmann/json
+[submodule "qft/duostra/externals/cpptqdm"]
+	path = qft/duostra/externals/cpptqdm
+	url = https://github.com/aminnj/cpptqdm

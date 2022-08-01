@@ -14,5 +14,5 @@
 #include "qft_router.hpp"
 #include "qft_scheduler.hpp"
 #include "topo.hpp"
-#include "tqdm.hpp"
+#include "tqdm_wrapper.hpp"
 #include "util.hpp"

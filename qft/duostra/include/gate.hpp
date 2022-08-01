@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include <vector>
 #include "operator.hpp"
-#include "tqdm.hpp"
+#include "tqdm_wrapper.hpp"
 #include "util.hpp"
 
 namespace topo {

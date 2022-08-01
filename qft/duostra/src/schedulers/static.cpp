@@ -12,8 +12,7 @@ void Static::assign_gates(unique_ptr<QFTRouter> router) {
 
     [[maybe_unused]] size_t count = 0;
 
-    for (Tqdm bar{topo_->get_num_gates()}; !topo_->get_avail_gates().empty();
-         bar.add()) {
+    for (TqdmWrapper bar{topo_->get_num_gates()}; !bar.done(); ++bar) {
         auto& wait_list = topo_->get_avail_gates();
         assert(wait_list.size() > 0);
 

@@ -15,7 +15,8 @@ set(CMAKE_CXX_FLAGS_DEBUG
     -Weffc++ \
     -Wno-c++17-extensions \
     -fstack-protector-all \
-    -DDEBUG"
+    -DDEBUG \
+    -g -rdynamic"
 )
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
 cmake_print_variables(CMAKE_CXX_FLAGS_DEBUG)
@@ -38,15 +39,18 @@ endif()
 include(CTest)
 enable_testing()
 
+
 # source files
 file (GLOB DUOSTRA_DEP
-    "src/*.cpp"
-    "src/schedulers/*.cpp"
-    "include/*.hpp"
+"src/*.cpp"
+"src/schedulers/*.cpp"
+"include/*.hpp"
 )
 add_executable(Duostra ${DUOSTRA_DEP})
-include_directories(include/)
-include_directories(externals/json/include/)
+include_directories(${CMAKE_SOURCE_DIR}/include/)
+include_directories(${CMAKE_SOURCE_DIR}/externals/json/include/)
+include_directories(${CMAKE_SOURCE_DIR}/externals/cpptqdm/)
+
 
 # pytorch
 find_package(Torch REQUIRED)

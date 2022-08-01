@@ -66,8 +66,8 @@ void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
     [[maybe_unused]] size_t count = 0;
     auto topo_wrap = TopologyCandidate(*topo_, conf_.candidates);
 
-    for (Tqdm bar{topo_->get_num_gates()}; !topo_wrap.get_avail_gates().empty();
-         bar.add()) {
+    for (TqdmWrapper bar{topo_->get_num_gates()};
+         !topo_wrap.get_avail_gates().empty(); ++bar) {
         auto wait_list = topo_wrap.get_avail_gates();
         assert(wait_list.size() > 0);
 

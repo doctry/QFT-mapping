@@ -4,7 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <utility>
-#include "tqdm.hpp"
+#include "tqdm_wrapper.hpp"
 
 using namespace std;
 using namespace torch::indexing;
@@ -43,9 +43,8 @@ static ShortestPath floyd_warshall(torch::Tensor adj_mat) {
         torch::where(adj_mat != 0, adj_mat.clone().to(torch::kFloat32),
                      torch::full_like(adj_mat, INFINITY, floatOpts));
 
-    Tqdm bar(dimensions);
-    for (int i = 0; i < dimensions; ++i) {
-        bar.add();
+    TqdmWrapper bar{dimensions};
+    for (int i = 0; i < dimensions; ++i, ++bar) {
         auto alt_path = cost_mat.index({None, i, Slice()}) +
                         cost_mat.index({Slice(), i, None});
 
@@ -56,6 +55,7 @@ static ShortestPath floyd_warshall(torch::Tensor adj_mat) {
                                pointer.index({Slice(), i, None}));
         cost_mat = new_cost;
     }
+
     for (int i = 0; i < dimensions; ++i) {
         cost_mat.index({i, i}) = 0;
         pointer.index({i, i}) = -1;

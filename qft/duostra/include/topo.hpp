@@ -11,7 +11,7 @@
 #include <vector>
 #include "gate.hpp"
 #include "operator.hpp"
-#include "tqdm.hpp"
+#include "tqdm_wrapper.hpp"
 #include "util.hpp"
 
 namespace topo {
