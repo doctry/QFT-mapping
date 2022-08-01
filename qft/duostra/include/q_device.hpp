@@ -1,202 +1,203 @@
 #pragma once
 
-#include "apsp.hpp"
-#include "nlohmann/json.hpp"
-#include "operator.hpp"
-#include "util.hpp"
 #include <assert.h>
+#include <limits.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <limits.h>
 #include <queue>
 #include <string>
 #include <tuple>
 #include <vector>
+#include "apsp.hpp"
+#include "nlohmann/json.hpp"
+#include "operator.hpp"
+#include "util.hpp"
+
 using nlohmann::json;
 
 namespace device {
 class Operation {
-  public:
-    friend std::ostream &operator<<(std::ostream &, Operation &);
-    friend std::ostream &operator<<(std::ostream &, const Operation &);
-    friend void to_json(json &j, const Operation &op);
-    Operation(Operator oper, std::tuple<unsigned, unsigned> qs,
-              std::tuple<unsigned, unsigned> du)
-        : _oper(oper), _qubits(qs), _duration(du) {
+   public:
+    friend std::ostream& operator<<(std::ostream&, Operation&);
+    friend std::ostream& operator<<(std::ostream&, const Operation&);
+    friend void to_json(json& j, const Operation& op);
+
+    Operation(Operator oper,
+              std::tuple<size_t, size_t> qs,
+              std::tuple<size_t, size_t> du)
+        : oper_(oper), qubits_(qs), duration_(du) {
         // sort qs
-        unsigned a = std::get<0>(qs);
-        unsigned b = std::get<1>(qs);
+        size_t a = std::get<0>(qs);
+        size_t b = std::get<1>(qs);
         assert(a != b);
         if (a > b) {
-            _qubits = std::make_tuple(b, a);
+            qubits_ = std::make_tuple(b, a);
         }
     }
-    Operation(const Operation &other)
-        : _oper(other._oper), _qubits(other._qubits),
-          _duration(other._duration) {}
+    Operation(const Operation& other)
+        : oper_(other.oper_),
+          qubits_(other.qubits_),
+          duration_(other.duration_) {}
 
-    Operation &operator=(const Operation &other) {
-        _oper = other._oper;
-        _qubits = other._qubits;
-        _duration = other._duration;
+    Operation& operator=(const Operation& other) {
+        oper_ = other.oper_;
+        qubits_ = other.qubits_;
+        duration_ = other.duration_;
         return *this;
     }
 
-    unsigned get_cost() const { return std::get<1>(_duration); }
-    unsigned get_op_time() const { return std::get<0>(_duration); }
-    std::tuple<unsigned, unsigned> get_duration() const { return _duration; }
-    Operator get_operator() const { return _oper; }
-    std::string get_operator_name() const {
-        switch (_oper) {
-        case Operator::Single:
-            return "Single";
-        case Operator::Swap:
-            return "Swap";
-        case Operator::CX:
-            return "CX";
-        default:
-            return "Error";
-        }
-    }
-    std::tuple<unsigned, unsigned> get_qubits() const { return _qubits; }
+    size_t get_cost() const { return std::get<1>(duration_); }
+    size_t get_op_time() const { return std::get<0>(duration_); }
+    std::tuple<size_t, size_t> get_duration() const { return duration_; }
+    Operator get_operator() const { return oper_; }
+    std::string get_operator_name() const { return operator_get_name(oper_); }
+    std::tuple<size_t, size_t> get_qubits() const { return qubits_; }
 
-  private:
-    Operator _oper;
-    std::tuple<unsigned, unsigned> _qubits;
-    std::tuple<unsigned, unsigned> _duration; // <from, to>
+   private:
+    Operator oper_;
+    std::tuple<size_t, size_t> qubits_;
+    std::tuple<size_t, size_t> duration_;  // <from, to>
 };
 
-std::ostream &operator<<(std::ostream &, Operation &);
-std::ostream &operator<<(std::ostream &, const Operation &);
-void to_json(json &j, const Operation &op);
+std::ostream& operator<<(std::ostream&, Operation&);
+std::ostream& operator<<(std::ostream&, const Operation&);
+void to_json(json& j, const Operation& op);
 
-bool op_order(const Operation &a, const Operation &b);
+bool op_order(const Operation& a, const Operation& b);
 class AStarNode {
-  public:
+   public:
     friend class AStarComp;
-    AStarNode(unsigned cost, unsigned id, bool swtch)
-        : _estimated_cost(cost), _id(id), _swtch(swtch) {}
-    AStarNode(const AStarNode &other)
-        : _estimated_cost(other._estimated_cost), _id(other._id),
-          _swtch(other._swtch) {}
+    AStarNode(size_t cost, size_t id, bool swtch)
+        : est_cost_(cost), id_(id), swtch_(swtch) {}
+    AStarNode(const AStarNode& other)
+        : est_cost_(other.est_cost_), id_(other.id_), swtch_(other.swtch_) {}
 
-    AStarNode &operator=(const AStarNode &other) {
-        _estimated_cost = other._estimated_cost;
-        _id = other._id;
-        _swtch = other._swtch;
+    AStarNode& operator=(const AStarNode& other) {
+        est_cost_ = other.est_cost_;
+        id_ = other.id_;
+        swtch_ = other.swtch_;
         return *this;
     }
 
-    bool get_swtch() const { return _swtch; }
-    unsigned get_id() const { return _id; }
-    unsigned get_cost() const { return _estimated_cost; }
+    bool get_swtch() const { return swtch_; }
+    size_t get_id() const { return id_; }
+    size_t get_cost() const { return est_cost_; }
 
-  private:
-    unsigned _estimated_cost;
-    unsigned _id;
-    bool _swtch; // false q0 propagate, true q1 propagate
+   private:
+    size_t est_cost_;
+    size_t id_;
+    bool swtch_;  // false q0 propagate, true q1 propagate
 };
 
 class AStarComp {
-  public:
-    bool operator()(const AStarNode &a, const AStarNode &b) {
-        return a._estimated_cost > b._estimated_cost;
+   public:
+    bool operator()(const AStarNode& a, const AStarNode& b) {
+        return a.est_cost_ > b.est_cost_;
     }
 };
 
 class Qubit {
-  public:
-    friend std::ostream &operator<<(std::ostream &os, const device::Qubit &q);
-    Qubit(const unsigned i);
-    Qubit(const Qubit &other);
-    Qubit(Qubit &&other);
+   public:
+    friend std::ostream& operator<<(std::ostream& os, const device::Qubit& q);
+    Qubit(const size_t i);
+    Qubit(const Qubit& other);
+    Qubit(Qubit&& other);
 
-    unsigned get_id() const;
-    unsigned get_avail_time() const;
-    bool is_adj(Qubit &other) const;
-    unsigned get_topo_qubit() const;
+    size_t get_id() const;
+    size_t get_avail_time() const;
+    bool is_adj(const Qubit& other) const;
+    size_t get_topo_qubit() const;
 
-    void add_adj(unsigned i);
-    void set_topo_qubit(const unsigned i);
-    void set_occupied_time(const unsigned t);
-    const std::vector<unsigned> &get_adj_list() const;
+    void add_adj(size_t i);
+    void set_topo_qubit(size_t i);
+    void set_occupied_time(size_t t);
+    const std::vector<size_t>& get_adj_list() const;
 
     // A*
-    unsigned get_cost() const;
+    size_t get_cost() const;
     bool is_marked() const;
     bool is_taken() const;
     bool get_swtch() const;
-    unsigned get_pred() const;
-    unsigned get_swap_time() const;
-    void mark(bool swtch, unsigned pred);
+    size_t get_pred() const;
+    size_t get_swap_time() const;
+    void mark(bool swtch, size_t pred);
     void reset();
-    void take_route(unsigned cost, unsigned swap_time);
+    void take_route(size_t cost, size_t swap_time);
 
-  private:
-    unsigned _id;
-    std::vector<unsigned> _adj_list;
-    unsigned _topo_qubit;
-    unsigned _occupied_until;
+   private:
+    size_t id_;
+    std::vector<size_t> adj_list_;
+    size_t topo_qubit_;
+    size_t occupied_until_;
 
     // for A*
-    bool _marked;
-    unsigned _pred;
-    unsigned _cost;
-    unsigned _swap_time;
-    bool _swtch;
-    bool _taken;
+    bool marked_;
+    size_t pred_;
+    size_t cost_;
+    size_t swap_time_;
+    bool swtch_;
+    bool taken_;
 };
 
-std::ostream &operator<<(std::ostream &os, const device::Qubit &q);
+std::ostream& operator<<(std::ostream& os, const device::Qubit& q);
 
 class Device {
-  public:
-    Device(std::fstream &file, unsigned r, unsigned s, unsigned cx);
-    Device(std::vector<std::vector<unsigned>> &, unsigned r, unsigned s,
-           unsigned cx);
-    Device(const Device &other) = delete;
-    Device(Device &&other);
+   public:
+    Device(std::fstream& file, size_t r, size_t s, size_t cx) noexcept;
+    Device(std::vector<std::vector<size_t>>&,
+           size_t r,
+           size_t s,
+           size_t cx) noexcept;
+    Device(const Device& other) noexcept;
+    Device(Device&& other) noexcept;
 
-    unsigned get_num_qubits() const;
-    std::vector<unsigned> mapping() const;
-    unsigned get_shortest_cost(unsigned i, unsigned j) const;
-    Qubit &get_qubit(const unsigned i);
-    Operation execute_single(Operator op, unsigned q);
-    std::vector<Operation>
-    duostra_routing(Operator op, std::tuple<unsigned, unsigned> qs, bool orient);
-    std::vector<Operation>
-    apsp_routing(Operator op, std::tuple<unsigned, unsigned> qs, bool orient);
+    const size_t SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE;
 
-    void print_device_state(std::ostream &out);
-    void place(std::vector<unsigned> &assign); // topo2device
-    std::vector<Operation> &get_operations();
+    size_t get_num_qubits() const;
+    std::vector<size_t> mapping() const;
+    size_t get_shortest_cost(size_t i, size_t j) const;
+
+    Qubit& get_qubit(size_t i);
+    const Qubit& get_qubit(size_t i) const;
+
+    Operation execute_single(Operator op, size_t q);
+    std::vector<Operation> duostra_routing(Operator op,
+                                           std::tuple<size_t, size_t> qs,
+                                           bool orient);
+    std::vector<Operation> apsp_routing(Operator op,
+                                        std::tuple<size_t, size_t> qs,
+                                        bool orient);
+
+    void print_device_state(std::ostream& out);
+    void place(std::vector<size_t>& assign);  // topo2device
+    std::vector<Operation>& get_operations();
     void init_apsp();
     void reset();
 
-  private:
+   private:
     // A*
-    std::tuple<bool, unsigned> touch_adj(
-        device::Qubit &qubit,
-        std::priority_queue<device::AStarNode, std::vector<device::AStarNode>,
-                            device::AStarComp> &pq,
-        bool swtch); // return <if touch target, target id>, swtch: false q0
-                     // propagate, true q1 propagate
-    std::vector<Operation> traceback(Operator op, device::Qubit &q0,
-                                     device::Qubit &q1, device::Qubit &t0,
-                                     device::Qubit &t1); // standalone
+    std::tuple<bool, size_t> touch_adj(
+        device::Qubit& qubit,
+        std::priority_queue<device::AStarNode,
+                            std::vector<device::AStarNode>,
+                            device::AStarComp>& pq,
+        bool swtch);  // return <if touch target, target id>, swtch: false q0
+                      // propagate, true q1 propagate
+    std::vector<Operation> traceback(Operator op,
+                                     device::Qubit& q0,
+                                     device::Qubit& q1,
+                                     device::Qubit& t0,
+                                     device::Qubit& t1);  // standalone
 
     // apsp
-    std::tuple<unsigned, unsigned> next_swap_cost(unsigned source, unsigned target);
+    std::tuple<size_t, size_t> next_swap_cost(size_t source, size_t target);
 
     // general
-    void apply_gate(const Operation &op);
-
+    void apply_gate(const Operation& op);
 
     // data member
-    std::vector<Qubit> _qubits;
-    unsigned _SINGLE_CYCLE, _SWAP_CYCLE, _CX_CYCLE;
-    std::vector<std::vector<unsigned>> _shortest_path, _shortest_cost;
-
+    std::vector<Qubit> qubits_;
+    std::vector<std::vector<size_t>> shortest_path_, shortest_cost_;
 };
-} // namespace device
+}  // namespace device

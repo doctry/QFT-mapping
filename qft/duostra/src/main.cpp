@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     if (json_get<std::string>(mapper_conf, "placer") == "sa") {
         sa_place(conf);
     } else {
-        std::vector<unsigned> dummy;
+        std::vector<size_t> dummy;
         flow(conf, dummy, true);
     }
     return 0;

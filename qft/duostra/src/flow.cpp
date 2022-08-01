@@ -2,50 +2,51 @@
 
 #include "qft_mapper.hpp"
 
-unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
+using namespace std;
+
+size_t flow(json& conf, vector<size_t> assign, bool io) {
     if (!io) {
-        std::cout.setstate(std::ios_base::failbit);
+        cout.setstate(ios_base::failbit);
     }
     // create topology
-    std::cout << "creating topology..." << std::endl;
-    std::unique_ptr<topo::Topology> topo;
+    cout << "creating topology..." << endl;
+    unique_ptr<topo::Topology> topo;
     if (conf["algo"].type() == json::value_t::null) {
-        std::cerr << "Necessary key \"algo\" does not exist." << std::endl;
+        cerr << "Necessary key \"algo\" does not exist." << endl;
         abort();
     } else if (conf["algo"].type() == json::value_t::number_unsigned) {
-        unsigned num_qubit = json_get<unsigned>(conf, "algo");
-        topo = std::make_unique<topo::QFTTopology>(num_qubit);
+        size_t num_qubit = json_get<size_t>(conf, "algo");
+        topo = make_unique<topo::QFTTopology>(num_qubit);
     } else {
-        std::fstream algo_file;
-        auto algo_filename = json_get<std::string>(conf, "algo");
-        std::cout << algo_filename << std::endl;
-        algo_file.open(algo_filename, std::fstream::in);
+        fstream algo_file;
+        auto algo_filename = json_get<string>(conf, "algo");
+        cout << algo_filename << endl;
+        algo_file.open(algo_filename, fstream::in);
         if (!algo_file.is_open()) {
-            std::cerr << "There is no file" << algo_filename << std::endl;
+            cerr << "There is no file" << algo_filename << endl;
             abort();
         }
-        bool onlyIBM = json_get<unsigned>(conf, "IBM_Gate");
-        topo = std::make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
+        bool onlyIBM = json_get<bool>(conf, "IBM_Gate");
+        topo = make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
     }
 
     // create device
-    std::cout << "creating device..." << std::endl;
+    cout << "creating device..." << endl;
     json cycle_conf = json_get<json>(conf, "cycle");
-    unsigned SINGLE_CYCLE = json_get<unsigned>(cycle_conf, "SINGLE_CYCLE");
-    unsigned SWAP_CYCLE = json_get<unsigned>(cycle_conf, "SWAP_CYCLE");
-    unsigned CX_CYCLE = json_get<unsigned>(cycle_conf, "CX_CYCLE");
-    std::fstream device_file;
-    std::string device_filename = json_get<std::string>(conf, "device");
-    device_file.open(device_filename, std::fstream::in);
+    size_t SINGLE_CYCLE = json_get<size_t>(cycle_conf, "SINGLE_CYCLE");
+    size_t SWAP_CYCLE = json_get<size_t>(cycle_conf, "SWAP_CYCLE");
+    size_t CX_CYCLE = json_get<size_t>(cycle_conf, "CX_CYCLE");
+    fstream device_file;
+    string device_filename = json_get<string>(conf, "device");
+    device_file.open(device_filename, fstream::in);
     if (!device_file.is_open()) {
-        std::cerr << "There is no file" << device_filename << std::endl;
+        cerr << "There is no file" << device_filename << endl;
         abort();
     }
-    device::Device device(device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE);
+    device::Device device{device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE};
 
     if (topo->get_num_qubits() > device.get_num_qubits()) {
-        std::cerr << "You cannot assign more QFT qubits than the device."
-                  << std::endl;
+        cerr << "You cannot assign more QFT qubits than the device." << endl;
         abort();
     }
 
@@ -53,9 +54,9 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
     json conf_mapper = json_get<json>(conf, "mapper");
 
     // place
-    std::cout << "creating placer..." << std::endl;
-    if (assign.size() == 0) {
-        std::string placer_typ = json_get<std::string>(conf_mapper, "placer");
+    cout << "creating placer..." << endl;
+    if (assign.empty()) {
+        string placer_typ = json_get<string>(conf_mapper, "placer");
         QFTPlacer placer;
         assign = placer.place(device, placer_typ);
     }
@@ -63,91 +64,89 @@ unsigned flow(json& conf, std::vector<unsigned> assign, bool io) {
 
     // scheduler
     json greedy_conf = json_get<json>(conf_mapper, "greedy_conf");
-    std::cout << "creating scheduler..." << std::endl;
-    std::string scheduler_typ = json_get<std::string>(conf_mapper, "scheduler");
-    auto sched = scheduler::get(scheduler_typ, std::move(topo), greedy_conf);
+    cout << "creating scheduler..." << endl;
+    string scheduler_typ = json_get<string>(conf_mapper, "scheduler");
+    auto sched = scheduler::get(scheduler_typ, move(topo), greedy_conf);
 
     // router
-    std::cout << "creating router..." << std::endl;
-    std::string router_typ = json_get<std::string>(conf_mapper, "router");
+    cout << "creating router..." << endl;
+    string router_typ = json_get<string>(conf_mapper, "router");
     bool orient = json_get<bool>(conf_mapper, "orientation");
-    std::string cost = (scheduler_typ == "greedy")
-                           ? json_get<std::string>(conf_mapper, "cost")
-                           : "start";
-    auto router = std::make_unique<QFTRouter>(device, router_typ, cost, orient);
+    string cost = (scheduler_typ == "greedy" || scheduler_typ == "onion")
+                      ? json_get<string>(conf_mapper, "cost")
+                      : "start";
+    auto router =
+        make_unique<QFTRouter>(move(device), router_typ, cost, orient);
 
     // routing
-    std::cout << "routing..." << std::endl;
-    sched->assign_gates(std::move(router));
+    cout << "routing..." << endl;
+    sched->assign_gates_and_sort(move(router));
 
     // dump
     bool dump = json_get<bool>(conf, "dump");
     if (dump) {
-        std::cout << "dumping..." << std::endl;
-        std::fstream out_file;
-        out_file.open(json_get<std::string>(conf, "output"), std::fstream::out);
-        // out_file << assign << "\n";
-        // device.write_assembly(out_file);
+        cout << "dumping..." << endl;
+        fstream out_file;
+        out_file.open(json_get<string>(conf, "output"), fstream::out);
         json jj;
         jj["initial"] = assign;
         sched->to_json(jj);
         jj["final_cost"] = sched->get_final_cost();
         out_file << jj;
-        // out_file << "final_cost: " << device.get_final_cost() << "\n";
     }
 
     if (json_get<bool>(conf, "stdio")) {
-        sched->write_assembly(std::cout);
+        sched->write_assembly(cout);
     }
 
-    std::cout << "final cost: " << sched->get_final_cost() << "\n";
-    std::cout << "total time: " << sched->get_total_time() << "\n";
-    std::cout << "total swaps: " << sched->get_swap_num() << "\n";
+    cout << "final cost: " << sched->get_final_cost() << "\n";
+    cout << "total time: " << sched->get_total_time() << "\n";
+    cout << "total swaps: " << sched->get_swap_num() << "\n";
 
-    std::cout.clear();
+    cout.clear();
     return sched->get_final_cost();
 }
 
-unsigned device_num(json& conf) {
+size_t device_num(json& conf) {
     // create device
-    std::cout << "creating device..." << std::endl;
+    cout << "creating device..." << endl;
     json cycle_conf = json_get<json>(conf, "cycle");
-    unsigned SINGLE_CYCLE = json_get<unsigned>(cycle_conf, "SINGLE_CYCLE");
-    unsigned SWAP_CYCLE = json_get<unsigned>(cycle_conf, "SWAP_CYCLE");
-    unsigned CX_CYCLE = json_get<unsigned>(cycle_conf, "CX_CYCLE");
-    std::fstream device_file;
-    std::string device_filename = json_get<std::string>(conf, "device");
-    device_file.open(device_filename, std::fstream::in);
+    size_t SINGLE_CYCLE = json_get<size_t>(cycle_conf, "SINGLE_CYCLE");
+    size_t SWAP_CYCLE = json_get<size_t>(cycle_conf, "SWAP_CYCLE");
+    size_t CX_CYCLE = json_get<size_t>(cycle_conf, "CX_CYCLE");
+    fstream device_file;
+    string device_filename = json_get<string>(conf, "device");
+    device_file.open(device_filename, fstream::in);
     if (!device_file.is_open()) {
-        std::cerr << "There is no file" << device_filename << std::endl;
+        cerr << "There is no file" << device_filename << endl;
         abort();
     }
-    device::Device device(device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE);
+    device::Device device{device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE};
 
     return device.get_num_qubits();
 }
 
-unsigned topo_num(json& conf) {
+size_t topo_num(json& conf) {
     // create topology
-    std::cout << "creating topology..." << std::endl;
-    std::unique_ptr<topo::Topology> topo;
+    cout << "creating topology..." << endl;
+    unique_ptr<topo::Topology> topo;
     if (conf["algo"].type() == json::value_t::null) {
-        std::cerr << "Necessary key \"algo\" does not exist." << std::endl;
+        cerr << "Necessary key \"algo\" does not exist." << endl;
         abort();
     } else if (conf["algo"].type() == json::value_t::number_unsigned) {
-        unsigned num_qubit = json_get<unsigned>(conf, "algo");
-        topo = std::make_unique<topo::QFTTopology>(num_qubit);
+        size_t num_qubit = json_get<size_t>(conf, "algo");
+        topo = make_unique<topo::QFTTopology>(num_qubit);
     } else {
-        std::fstream algo_file;
-        auto algo_filename = json_get<std::string>(conf, "algo");
-        std::cout << algo_filename << std::endl;
-        algo_file.open(algo_filename, std::fstream::in);
+        fstream algo_file;
+        auto algo_filename = json_get<string>(conf, "algo");
+        cout << algo_filename << endl;
+        algo_file.open(algo_filename, fstream::in);
         if (!algo_file.is_open()) {
-            std::cerr << "There is no file" << algo_filename << std::endl;
+            cerr << "There is no file" << algo_filename << endl;
             abort();
         }
-        bool onlyIBM = json_get<unsigned>(conf, "IBM_Gate");
-        topo = std::make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
+        bool onlyIBM = json_get<size_t>(conf, "IBM_Gate");
+        topo = make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
     }
 
     return topo->get_num_qubits();

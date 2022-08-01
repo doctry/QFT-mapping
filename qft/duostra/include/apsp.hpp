@@ -10,6 +10,6 @@ struct ShortestPath {
     torch::Tensor pointer;
 };
 
-std::ostream &operator<<(std::ostream &out, const ShortestPath sp);
+std::ostream& operator<<(std::ostream& out, const ShortestPath sp);
 
 ShortestPath apsp(torch::Tensor adj_mat);

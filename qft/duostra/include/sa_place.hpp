@@ -1,63 +1,68 @@
 #include <gsl/gsl_siman.h>
 #include <thread>
 #include "flow.hpp"
+#include "util.hpp"
 
 class SAData {
    public:
-    SAData(json& conf, unsigned t, unsigned d)
-        : _conf(conf), _topo_num(t), _device_num(d) {
-        for (unsigned i = 0; i < _topo_num; ++i) {
-            _device2topo.push_back(i);
-            _topo2device.push_back(i);
+    SAData(json& conf, size_t t, size_t d)
+        : conf_(conf),
+          topo_num_(t),
+          dev_num_(d),
+          dev_to_topo_({}),
+          topo_to_dev_({}) {
+        for (size_t i = 0; i < topo_num_; ++i) {
+            dev_to_topo_.push_back(i);
+            topo_to_dev_.push_back(i);
         }
-        for (unsigned i = _topo_num; i < _device_num; ++i) {
-            _device2topo.push_back(UINT_MAX);
+        for (size_t i = topo_num_; i < dev_num_; ++i) {
+            dev_to_topo_.push_back(ERROR_CODE);
         }
     }
 
-    void step(unsigned rand_num) {
-        unsigned choose_topo = rand_num % _topo_num;
-        unsigned choose_device = _topo2device[choose_topo];
+    void step(size_t rand_num) {
+        size_t choose_topo = rand_num % topo_num_;
+        size_t choose_device = topo_to_dev_[choose_topo];
 
-        if (choose_device == _device_num - 1) {
+        if (choose_device == dev_num_ - 1) {
             swap_q(choose_device, 0);
         } else {
             swap_q(choose_device, choose_device + 1);
         }
     }
 
-    json& get_conf() { return _conf; }
-    std::vector<unsigned>& get_topo2device() { return _topo2device; }
+    json& get_conf() { return conf_; }
+    std::vector<size_t>& get_topo2device() { return topo_to_dev_; }
 
-    unsigned get_distance(SAData& other) {
-        unsigned ret = 0;
-        assert(_device2topo.size() == other._device2topo.size());
-        for (unsigned i = 0; i < _device2topo.size(); ++i) {
-            ret += _device2topo[i] == other._device2topo[i] ? 0 : 1;
+    size_t get_distance(SAData& other) {
+        size_t ret = 0;
+        assert(dev_to_topo_.size() == other.dev_to_topo_.size());
+        for (size_t i = 0; i < dev_to_topo_.size(); ++i) {
+            ret += dev_to_topo_[i] == other.dev_to_topo_[i] ? 0 : 1;
         }
         return ret;
     }
 
    private:
-    json& _conf;
-    unsigned _topo_num;
-    unsigned _device_num;
-    std::vector<unsigned> _device2topo;
-    std::vector<unsigned> _topo2device;
+    json& conf_;
+    size_t topo_num_;
+    size_t dev_num_;
+    std::vector<size_t> dev_to_topo_;
+    std::vector<size_t> topo_to_dev_;
 
-    void swap_q(unsigned device0, unsigned device1) {
-        std::swap(_device2topo[device0], _device2topo[device1]);
+    void swap_q(size_t device0, size_t device1) {
+        std::swap(dev_to_topo_[device0], dev_to_topo_[device1]);
 
-        assign_q(_device2topo[device0], device0);
-        assign_q(_device2topo[device1], device1);
+        assign_q(dev_to_topo_[device0], device0);
+        assign_q(dev_to_topo_[device1], device1);
     }
 
-    void assign_q(unsigned topo, unsigned device) {
-        if (topo == UINT_MAX) {
+    void assign_q(size_t topo, size_t device) {
+        if (topo == ERROR_CODE) {
             return;
         }
-        assert(_topo2device[topo] != device);
-        _topo2device[topo] = device;
+        assert(topo_to_dev_[topo] != device);
+        topo_to_dev_[topo] = device;
     }
 };
 
@@ -89,7 +94,7 @@ double M(void* xp, void* yp) {
 }
 
 /* take a step space */
-void S(const gsl_rng* r, void* xp, double step_size) {
+void S(const gsl_rng* r, void* xp, [[maybe_unused]] double step_size) {
     SAData* sa_data = (SAData*)xp;
     sa_data->step(gsl_rng_get(r));
 }
@@ -101,8 +106,8 @@ void P(void* xp) {
 
 void sa_place(json& conf) {
     // init data
-    unsigned t_num = topo_num(conf);
-    unsigned d_num = device_num(conf);
+    size_t t_num = topo_num(conf);
+    size_t d_num = device_num(conf);
     SAData sa_data(conf, t_num, d_num);
 
     const gsl_rng* r = gsl_rng_alloc(gsl_rng_env_setup());

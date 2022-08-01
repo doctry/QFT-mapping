@@ -8,14 +8,32 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # set flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -DDEBUG")
+
+set(CMAKE_CXX_FLAGS_DEBUG 
+    "${CMAKE_CXX_FLAGS_DEBUG} \
+    -Wall -Wextra \
+    -Weffc++ \
+    -Wno-c++17-extensions \
+    -fstack-protector-all \
+    -DDEBUG"
+)
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-    cmake_print_variables(CMAKE_CXX_FLAGS_DEBUG)
+cmake_print_variables(CMAKE_CXX_FLAGS_DEBUG)
 endif()
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Wextra -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE 
+    "${CMAKE_CXX_FLAGS_RELEASE} \
+    -Wall -Wextra \
+    -Weffc++ \
+    -Wno-c++17-extensions"
+)
 if(CMAKE_BUILD_TYPE MATCHES "Release")
-    cmake_print_variables(CMAKE_CXX_FLAGS_RELEASE)
+cmake_print_variables(CMAKE_CXX_FLAGS_RELEASE)
 endif()
+
+# set(CMAKE_CXX_CLANG_TIDY
+#   clang-tidy;
+#   -checks=*;
+#   -warnings-as-errors=*;)
 
 include(CTest)
 enable_testing()
@@ -23,6 +41,7 @@ enable_testing()
 # source files
 file (GLOB DUOSTRA_DEP
     "src/*.cpp"
+    "src/schedulers/*.cpp"
     "include/*.hpp"
 )
 add_executable(Duostra ${DUOSTRA_DEP})
@@ -33,7 +52,11 @@ include_directories(externals/json/include/)
 find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 target_link_libraries(Duostra "${TORCH_LIBRARIES}")
-set_property(TARGET Duostra PROPERTY CXX_STANDARD 14)
+set_property(TARGET Duostra PROPERTY CXX_STANDARD 17)
+
+# Open MP
+find_package(OpenMP REQUIRED)
+target_link_libraries(Duostra OpenMP::OpenMP_CXX)
 
 # GSL
 find_package(GSL REQUIRED)

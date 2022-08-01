@@ -11,79 +11,38 @@
 namespace topo {
 class QFTTopology : public Topology {
    public:
-    QFTTopology(unsigned num) {
-        _num_qubits = num;
-        assert(num > 0);
+    QFTTopology(size_t num) noexcept;
+    QFTTopology(const QFTTopology& other) noexcept;
+    QFTTopology(QFTTopology&& other) noexcept;
+    ~QFTTopology() override {}
 
-        unsigned count = 0;
-        for (unsigned i = 0; i < num; ++i) {
-            for (unsigned j = 0; j < i; ++j) {
-                unsigned prev_up = (j == i - 1) ? UINT_MAX : count + 1 - i;
-                unsigned prev_left = (j == 0) ? UINT_MAX : count - 1;
-                unsigned next_down = (i == num - 1) ? UINT_MAX : count + i;
-                unsigned next_right = (j == i - 1) ? UINT_MAX : count + 1;
-                Gate gate(count, Operator::CX, std::make_tuple(j, i));
-                gate.set_prev(prev_up, prev_left);
-                gate.add_next(next_down);
-                gate.add_next(next_right);
-                _gates.push_back(std::move(gate));
-                ++count;
-            }
-        }
-        _avail_gates.push_back(0);
+    size_t get_num_qubits() const override { return num_qubits_; }
+    size_t get_num_gates() const override { return gates_.size(); }
+    const Gate& get_gate(size_t i) const { return gates_[i]; }
+    Gate& get_gate(size_t i) override { return gates_[i]; }
+    const std::vector<size_t>& get_avail_gates() const override {
+        return avail_gates_;
     }
-    QFTTopology(const QFTTopology& other) : Topology(other) {}
-    QFTTopology(QFTTopology&& other) : Topology(std::move(other)) {}
-    ~QFTTopology() {}
-
-    unsigned get_num_qubits() const override { return _num_qubits; }
-    unsigned get_num_gates() const override { return _gates.size(); }
-    const Gate& get_gate(unsigned i) const { return _gates[i]; }
-    Gate& get_gate(unsigned i) override { return _gates[i]; }
-    const std::vector<unsigned>& get_avail_gates() const override {
-        return _avail_gates;
-    }
-    unique_ptr<Topology> clone() const override{
+    unique_ptr<Topology> clone() const override {
         return make_unique<QFTTopology>(*this);
     }
 
-    void update_avail_gates(unsigned executed) override {
-        assert(std::find(_avail_gates.begin(), _avail_gates.end(), executed) !=
-               _avail_gates.end());
-        Gate& g_exec = _gates[executed];
-        _avail_gates.erase(
-            std::remove(_avail_gates.begin(), _avail_gates.end(), executed),
-            _avail_gates.end());
-        assert(g_exec.get_id() == executed);
+    void update_avail_gates(size_t executed) override;
 
-        std::vector<unsigned> nexts = g_exec.get_nexts();
-
-        for (unsigned i = 0; i < nexts.size(); ++i) {
-            unsigned n = nexts[i];
-            Gate& gate = _gates[n];
-            gate.finished(executed);
-            if (_gates[n].is_avail()) {
-                _avail_gates.push_back(n);
-            }
-        }
-    }
-
-    inline void print_gates() const {
-#ifdef DEBUG
-        std::vector<unsigned> prevs;
-        for (unsigned i = 0; i < _gates.size(); ++i) {
-            const Gate& gate = _gates[i];
-            const std::vector<std::pair<unsigned, bool>>& g_prevs =
+    void print_gates() const {
+        std::vector<size_t> prevs;
+        for (size_t i = 0; i < gates_.size(); ++i) {
+            const Gate& gate = gates_[i];
+            const std::vector<std::pair<size_t, bool>>& g_prevs =
                 gate.get_prevs();
-            const std::vector<unsigned>& nexts = gate.get_nexts();
-            std::vector<unsigned> prev;
-            for (unsigned j = 0; j < g_prevs.size(); ++j) {
+            const std::vector<size_t>& nexts = gate.get_nexts();
+            std::vector<size_t> prev;
+            for (size_t j = 0; j < g_prevs.size(); ++j) {
                 prev.push_back(g_prevs[j].first);
             }
             std::cout << "gate[" << i << "]: prev: " << prev
                       << "next: " << nexts << "\n";
         }
-#endif
     }
 };
 };  // namespace topo

@@ -21,6 +21,9 @@ cmake --build .
 
 # Run
 ./Duostra ../config.json
+
+# Profiling
+valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes ./Duostra ../config.json
 ```
 
 ## Settings

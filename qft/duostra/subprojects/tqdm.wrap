@@ -1,4 +1,0 @@
-[wrap-git]
-url = https://github.com/aminnj/cpptqdm
-revision = 04c733fd38cdc1763d7bc19f8ff3a8fb6e95e2e9
-patch_directory = tqdm
