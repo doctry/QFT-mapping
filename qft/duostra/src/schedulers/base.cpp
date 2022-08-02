@@ -6,25 +6,22 @@
 
 using namespace scheduler;
 
-SchedulerBase::SchedulerBase(unique_ptr<Topology> topo)
-    : topo_(move(topo)), ops_({}) {}
+Base::Base(unique_ptr<Topology> topo) : topo_(move(topo)), ops_({}) {}
 
-SchedulerBase::SchedulerBase(const SchedulerBase& other)
-    : topo_(other.topo_->clone()), ops_(other.ops_) {}
+Base::Base(const Base& other) : topo_(other.topo_->clone()), ops_(other.ops_) {}
 
-SchedulerBase::SchedulerBase(SchedulerBase&& other)
-    : topo_(move(other.topo_)), ops_(move(other.ops_)) {}
+Base::Base(Base&& other) : topo_(move(other.topo_)), ops_(move(other.ops_)) {}
 
-unique_ptr<SchedulerBase> SchedulerBase::clone() const {
-    return make_unique<SchedulerBase>(*this);
+unique_ptr<Base> Base::clone() const {
+    return make_unique<Base>(*this);
 }
 
-void SchedulerBase::sort() {
+void Base::sort() {
     std::sort(ops_.begin(), ops_.end(), device::op_order);
     sorted_ = true;
 }
 
-void SchedulerBase::write_assembly(ostream& out) const {
+void Base::write_assembly(ostream& out) const {
     assert(sorted_);
 
     for (size_t i = 0; i < ops_.size(); ++i) {
@@ -38,7 +35,7 @@ void SchedulerBase::write_assembly(ostream& out) const {
     }
 }
 
-void SchedulerBase::to_json(json& j) const {
+void Base::to_json(json& j) const {
     assert(sorted_);
 
     json o;
@@ -50,7 +47,7 @@ void SchedulerBase::to_json(json& j) const {
     j["Operations"] = o;
 }
 
-void SchedulerBase::assign_gates(unique_ptr<QFTRouter> router) {
+void Base::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Default scheduler running..." << endl;
 
     for (TqdmWrapper bar{topo_->get_num_gates()}; !bar.done(); ++bar) {
@@ -58,12 +55,12 @@ void SchedulerBase::assign_gates(unique_ptr<QFTRouter> router) {
     }
 }
 
-size_t SchedulerBase::get_final_cost() const {
+size_t Base::get_final_cost() const {
     assert(sorted_);
     return ops_.at(ops_.size() - 1).get_cost();
 }
 
-size_t SchedulerBase::get_total_time() const {
+size_t Base::get_total_time() const {
     assert(sorted_);
 
     size_t ret = 0;
@@ -74,7 +71,7 @@ size_t SchedulerBase::get_total_time() const {
     return ret;
 }
 
-size_t SchedulerBase::get_swap_num() const {
+size_t Base::get_swap_num() const {
     size_t ret = 0;
     for (size_t i = 0; i < ops_.size(); ++i) {
         if (ops_.at(i).get_operator() == Operator::Swap) {
@@ -84,7 +81,7 @@ size_t SchedulerBase::get_swap_num() const {
     return ret;
 }
 
-size_t SchedulerBase::ops_cost() const {
+size_t Base::ops_cost() const {
     return std::max_element(
                ops_.begin(), ops_.end(),
                [](const device::Operation& a, const device::Operation& b) {
@@ -93,7 +90,7 @@ size_t SchedulerBase::ops_cost() const {
         ->get_cost();
 }
 
-size_t SchedulerBase::get_executable(QFTRouter& router) const {
+size_t Base::get_executable(QFTRouter& router) const {
     for (size_t gate_idx : topo_->get_avail_gates()) {
         if (router.is_executable(topo_->get_gate(gate_idx))) {
             return gate_idx;
@@ -102,7 +99,7 @@ size_t SchedulerBase::get_executable(QFTRouter& router) const {
     return ERROR_CODE;
 }
 
-void SchedulerBase::route_one_gate(QFTRouter& router, size_t gate_idx) {
+void Base::route_one_gate(QFTRouter& router, size_t gate_idx) {
     const auto& gate = topo_->get_gate(gate_idx);
     auto ops{router.assign_gate(gate)};
     ops_.insert(ops_.end(), ops.begin(), ops.end());

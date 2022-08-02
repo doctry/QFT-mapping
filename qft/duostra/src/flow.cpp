@@ -57,10 +57,11 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
     cout << "creating placer..." << endl;
     if (assign.empty()) {
         string placer_typ = json_get<string>(conf_mapper, "placer");
-        QFTPlacer placer;
-        assign = placer.place(device, placer_typ);
+        auto plc = placer::get(placer_typ);
+        plc->place_and_assign(device);
+    } else {
+        device.place(assign);
     }
-    device.place(assign);
 
     // scheduler
     json greedy_conf = json_get<json>(conf_mapper, "greedy_conf");

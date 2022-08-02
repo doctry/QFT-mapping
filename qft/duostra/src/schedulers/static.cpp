@@ -3,9 +3,9 @@
 
 using namespace scheduler;
 
-Static::Static(unique_ptr<topo::Topology> topo) : SchedulerBase(move(topo)) {}
-Static::Static(const Static& other) : SchedulerBase(other) {}
-Static::Static(Static&& other) : SchedulerBase(move(other)) {}
+Static::Static(unique_ptr<topo::Topology> topo) : Base(move(topo)) {}
+Static::Static(const Static& other) : Base(other) {}
+Static::Static(Static&& other) : Base(move(other)) {}
 
 void Static::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Static scheduler running..." << endl;
@@ -28,6 +28,6 @@ void Static::assign_gates(unique_ptr<QFTRouter> router) {
     assert(count == topo_->get_num_gates());
 }
 
-unique_ptr<SchedulerBase> Static::clone() const {
+unique_ptr<Base> Static::clone() const {
     return make_unique<Static>(*this);
 }

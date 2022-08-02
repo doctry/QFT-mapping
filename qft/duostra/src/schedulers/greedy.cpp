@@ -52,13 +52,11 @@ GreedyConf::GreedyConf(const json& conf) : GreedyConf() {
 }
 
 Greedy::Greedy(unique_ptr<topo::Topology> topo, const json& conf)
-    : SchedulerBase(move(topo)), conf_(conf) {}
+    : Base(move(topo)), conf_(conf) {}
 
-Greedy::Greedy(const Greedy& other)
-    : SchedulerBase(other), conf_(other.conf_) {}
+Greedy::Greedy(const Greedy& other) : Base(other), conf_(other.conf_) {}
 
-Greedy::Greedy(Greedy&& other)
-    : SchedulerBase(move(other)), conf_(other.conf_) {}
+Greedy::Greedy(Greedy&& other) : Base(move(other)), conf_(other.conf_) {}
 
 void Greedy::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Greedy scheduler running..." << endl;
@@ -104,6 +102,6 @@ size_t Greedy::greedy_fallback(const QFTRouter& router,
     return wait_list[list_idx];
 }
 
-unique_ptr<SchedulerBase> Greedy::clone() const {
+unique_ptr<Base> Greedy::clone() const {
     return make_unique<Greedy>(*this);
 }

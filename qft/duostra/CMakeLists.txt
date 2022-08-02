@@ -15,8 +15,7 @@ set(CMAKE_CXX_FLAGS_DEBUG
     -Weffc++ \
     -Wno-c++17-extensions \
     -fstack-protector-all \
-    -DDEBUG \
-    -g -rdynamic"
+    -DDEBUG"
 )
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
 cmake_print_variables(CMAKE_CXX_FLAGS_DEBUG)
@@ -44,6 +43,7 @@ enable_testing()
 file (GLOB DUOSTRA_DEP
 "src/*.cpp"
 "src/schedulers/*.cpp"
+"src/placers/*.cpp"
 "include/*.hpp"
 )
 add_executable(Duostra ${DUOSTRA_DEP})

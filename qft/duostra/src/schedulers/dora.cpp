@@ -11,7 +11,7 @@ using namespace scheduler;
 
 TreeNode::TreeNode(size_t gate_idx,
                    unique_ptr<QFTRouter> router,
-                   unique_ptr<SchedulerBase> scheduler)
+                   unique_ptr<Base> scheduler)
     : gate_indices_({gate_idx}),
       router_(move(router)),
       scheduler_(move(scheduler)) {
@@ -20,7 +20,7 @@ TreeNode::TreeNode(size_t gate_idx,
 
 TreeNode::TreeNode(vector<size_t>&& gate_indices,
                    unique_ptr<QFTRouter> router,
-                   unique_ptr<SchedulerBase> scheduler)
+                   unique_ptr<Base> scheduler)
     : gate_indices_(move(gate_indices)),
       router_(move(router)),
       scheduler_(move(scheduler)) {}
@@ -197,7 +197,7 @@ Dora::Dora(const Dora& other) : Greedy(other), look_ahead(other.look_ahead) {}
 
 Dora::Dora(Dora&& other) : Greedy(other), look_ahead(other.look_ahead) {}
 
-unique_ptr<SchedulerBase> Dora::clone() const {
+unique_ptr<Base> Dora::clone() const {
     return make_unique<Dora>(*this);
 }
 
@@ -262,7 +262,7 @@ static void children_size_match(
 }
 
 // If a tree is already present, the children of the root nodes must match.
-static void root_match_avail_gates(const SchedulerBase& scheduler,
+static void root_match_avail_gates(const Base& scheduler,
                                    const TreeNode& root) {
     assert(!root.is_leaf());
 
@@ -270,7 +270,7 @@ static void root_match_avail_gates(const SchedulerBase& scheduler,
 }
 
 void Dora::update_next_trees(const QFTRouter& router,
-                             const SchedulerBase& scheduler,
+                             const Base& scheduler,
                              const vector<size_t>& next_ids,
                              vector<POINTER_TYPE(TreeNode)>& next_trees) const {
     if (next_trees.empty()) {

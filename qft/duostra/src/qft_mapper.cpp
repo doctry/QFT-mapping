@@ -2,9 +2,9 @@
 
 namespace scheduler {
 
-unique_ptr<SchedulerBase> get(const string& typ,
-                              unique_ptr<Topology> topo,
-                              json& conf) {
+ unique_ptr<Base> get(const string& typ,
+                            unique_ptr<Topology> topo,
+                            json& conf) {
     if (typ == "random") {
         return make_unique<Random>(move(topo));
     } else if (typ == "onion") {
@@ -16,7 +16,7 @@ unique_ptr<SchedulerBase> get(const string& typ,
     } else if (typ == "dora" || typ == "ChiangKaiShek" || typ == "cks") {
         return make_unique<Dora>(move(topo), conf);
     } else if (typ == "old") {
-        return make_unique<SchedulerBase>(move(topo));
+        return make_unique<Base>(move(topo));
     } else {
         cerr << typ << " is not a scheduler type" << endl;
         abort();

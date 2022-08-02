@@ -14,17 +14,17 @@ namespace scheduler {
 using namespace std;
 using namespace topo;
 
-class SchedulerBase {
+class Base {
    public:
-    SchedulerBase(const SchedulerBase& other);
-    SchedulerBase(unique_ptr<Topology> topo);
-    SchedulerBase(SchedulerBase&& other);
-    virtual ~SchedulerBase() {}
+    Base(const Base& other);
+    Base(unique_ptr<Topology> topo);
+    Base(Base&& other);
+    virtual ~Base() {}
 
     Topology& topo() { return *topo_; }
     const topo::Topology& topo() const { return *topo_; }
 
-    virtual unique_ptr<SchedulerBase> clone() const;
+    virtual unique_ptr<Base> clone() const;
 
     void assign_gates_and_sort(unique_ptr<QFTRouter> router) {
         assign_gates(std::move(router));
@@ -57,27 +57,27 @@ class SchedulerBase {
     void sort();
 };
 
-class Random : public SchedulerBase {
+class Random : public Base {
    public:
     Random(unique_ptr<topo::Topology> topo);
     Random(const Random& other);
     Random(Random&& other);
     ~Random() override {}
 
-    unique_ptr<SchedulerBase> clone() const override;
+    unique_ptr<Base> clone() const override;
 
    protected:
     void assign_gates(unique_ptr<QFTRouter> router) override;
 };
 
-class Static : public SchedulerBase {
+class Static : public Base {
    public:
     Static(unique_ptr<topo::Topology> topo);
     Static(const Static& other);
     Static(Static&& other);
     ~Static() override {}
 
-    unique_ptr<SchedulerBase> clone() const override;
+    unique_ptr<Base> clone() const override;
 
    protected:
     void assign_gates(unique_ptr<QFTRouter> router) override;
@@ -98,14 +98,14 @@ struct GreedyConf {
     size_t apsp_coef;
 };
 
-class Greedy : public SchedulerBase {
+class Greedy : public Base {
    public:
     Greedy(unique_ptr<topo::Topology> topo, const json& conf);
     Greedy(const Greedy& other);
     Greedy(Greedy&& other);
     ~Greedy() override {}
 
-    unique_ptr<SchedulerBase> clone() const override;
+    unique_ptr<Base> clone() const override;
     size_t greedy_fallback(const QFTRouter& router,
                            const std::vector<size_t>& wait_list,
                            size_t gate_idx) const;
@@ -123,7 +123,7 @@ class Onion : public Greedy {
     Onion(Onion&& other);
     ~Onion() override {}
 
-    unique_ptr<SchedulerBase> clone() const override;
+    unique_ptr<Base> clone() const override;
 
    protected:
     bool first_mode_;
@@ -157,10 +157,10 @@ class TreeNode {
    public:
     TreeNode(size_t gate_idx,
              unique_ptr<QFTRouter> router,
-             unique_ptr<SchedulerBase> scheduler);
+             unique_ptr<Base> scheduler);
     TreeNode(vector<size_t>&& gate_indices,
              unique_ptr<QFTRouter> router,
-             unique_ptr<SchedulerBase> scheduler);
+             unique_ptr<Base> scheduler);
     TreeNode(const TreeNode& other) = delete;
     TreeNode(TreeNode&& other);
 
@@ -172,7 +172,7 @@ class TreeNode {
     vector<reference_wrapper<TreeNode>> leafs(int depth);
 
     const QFTRouter& router() const { return *router_; }
-    const SchedulerBase& scheduler() const { return *scheduler_; }
+    const Base& scheduler() const { return *scheduler_; }
 
     const vector<size_t>& executed_gates() const { return gate_indices_; }
 
@@ -192,7 +192,7 @@ class TreeNode {
 
     // The state of duostra.
     unique_ptr<QFTRouter> router_;
-    unique_ptr<SchedulerBase> scheduler_;
+    unique_ptr<Base> scheduler_;
 
     void grow();
     void route_internal_gates();
@@ -218,13 +218,13 @@ class Dora : public Greedy {
 
     const size_t look_ahead;
 
-    unique_ptr<SchedulerBase> clone() const override;
+    unique_ptr<Base> clone() const override;
 
    protected:
     void assign_gates(unique_ptr<QFTRouter> router) override;
 
     void update_next_trees(const QFTRouter& router,
-                           const SchedulerBase& scheduler,
+                           const Base& scheduler,
                            const vector<size_t>& next_ids,
                            vector<POINTER_TYPE(TreeNode)>& next_trees) const;
 
@@ -234,7 +234,5 @@ class Dora : public Greedy {
                                size_t threads) const;
 };
 
-unique_ptr<SchedulerBase> get(const string& typ,
-                              unique_ptr<Topology> topo,
-                              json& conf);
+unique_ptr<Base> get(const string& typ, unique_ptr<Topology> topo, json& conf);
 }  // namespace scheduler

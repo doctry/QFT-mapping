@@ -4,11 +4,11 @@
 
 using namespace scheduler;
 
-Random::Random(unique_ptr<topo::Topology> topo) : SchedulerBase(move(topo)) {}
+Random::Random(unique_ptr<topo::Topology> topo) : Base(move(topo)) {}
 
-Random::Random(const Random& other) : SchedulerBase(other) {}
+Random::Random(const Random& other) : Base(other) {}
 
-Random::Random(Random&& other) : SchedulerBase(move(other)) {}
+Random::Random(Random&& other) : Base(move(other)) {}
 
 void Random::assign_gates(unique_ptr<QFTRouter> router) {
     cout << "Random scheduler running..." << endl;
@@ -32,6 +32,6 @@ void Random::assign_gates(unique_ptr<QFTRouter> router) {
     assert(count == topo_->get_num_gates());
 }
 
-unique_ptr<SchedulerBase> Random::clone() const {
+unique_ptr<Base> Random::clone() const {
     return make_unique<Random>(*this);
 }

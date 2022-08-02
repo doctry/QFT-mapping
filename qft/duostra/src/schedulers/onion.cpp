@@ -86,6 +86,6 @@ void Onion::assign_from_wait_list(QFTRouter& router,
     route_one_gate(router, gate_idx);
 }
 
-unique_ptr<SchedulerBase> Onion::clone() const {
+unique_ptr<Base> Onion::clone() const {
     return make_unique<Onion>(*this);
 }
