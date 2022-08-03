@@ -13,6 +13,7 @@ set(CMAKE_CXX_FLAGS_DEBUG
     "${CMAKE_CXX_FLAGS_DEBUG} \
     -Wall -Wextra \
     -Weffc++ \
+    -Wno-unused-variable \
     -fstack-protector-all -fsanitize=undefined \
     -g -rdynamic"
 )
@@ -23,6 +24,7 @@ set(CMAKE_CXX_FLAGS_RELEASE
     "${CMAKE_CXX_FLAGS_RELEASE} \
     -Wall -Wextra \
     -Weffc++ \
+    -Wno-unused-variable \
     -fstack-protector-all -fsanitize=undefined"
 )
 if(CMAKE_BUILD_TYPE MATCHES "Release")
