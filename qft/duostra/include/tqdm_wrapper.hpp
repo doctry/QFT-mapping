@@ -20,8 +20,8 @@ class TqdmWrapper {
     size_t total_;
 
     // Using a pointer so we don't need to know tqdm's size in advance.
-    // This way, no need to #include it in the header, which reduces warnings
-    // because althought tqdm works well, it's not expertly written
+    // This way, no need to #include it in the header
+    // because although tqdm works well, it's not expertly written
     // which leads to a lot of warnings.
     std::unique_ptr<tqdm> tqdm_;
 };
