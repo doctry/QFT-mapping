@@ -3,6 +3,7 @@
 #include <omp.h>
 #include <algorithm>
 #include <functional>
+#include <unordered_set>
 #include <vector>
 #include "util.hpp"
 
@@ -77,6 +78,9 @@ void TreeNode::route_internal_gates() {
         scheduler_->route_one_gate(*router_, gate_idx);
         gate_indices_.push_back(gate_idx);
     }
+
+    unordered_set<size_t> executed{gate_indices_.begin(), gate_indices_.end()};
+    assert(executed.size() == gate_indices_.size());
 }
 
 // Size calcuates the tree size.
@@ -328,6 +332,7 @@ void Dora::update_tree_recursive(int total_depth,
          update_tree_recursive(depth, root), root.num_leafs(depth) < threads;
          ++depth)
         ;
+    assert(depth <= total_depth);
     assert(root.num_leafs(depth) >= threads);
 
     vector<reference_wrapper<TreeNode>> leafs = root.leafs(depth);

@@ -1,11 +1,14 @@
 #include "flow.hpp"
 #include "sa_place.hpp"
+#include "stackoverflow_terminate.hpp"
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "Usage: ./qft_mapping <config.json>";
         return 1;
     }
+
+    std::set_terminate(on_terminate);
 
     // config file
     std::ifstream ifs(argv[1]);

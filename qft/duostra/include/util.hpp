@@ -7,7 +7,7 @@ constexpr size_t ERROR_CODE = (size_t)-1;
 
 using json = nlohmann::json;
 
-template <class T>
+template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
     os << "[";
     if (v.empty()) {
@@ -19,13 +19,15 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
     return os << v.back() << "]";
 }
 
-template <class T>
+template <typename T>
 T json_get(const json& j, const char* key) {
     if (!j.contains(key)) {
         std::cerr << "Necessary key \"" << key << "\" does not exist."
                   << std::endl;
         abort();
     }
+#ifdef DEBUG
     std::cout << "Reading: " << key << "\n";
+#endif
     return j.at(key).get<T>();
 }

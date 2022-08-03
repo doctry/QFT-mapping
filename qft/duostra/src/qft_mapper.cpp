@@ -2,9 +2,7 @@
 
 namespace scheduler {
 
- unique_ptr<Base> get(const string& typ,
-                            unique_ptr<Topology> topo,
-                            json& conf) {
+unique_ptr<Base> get(const string& typ, unique_ptr<Topology> topo, json& conf) {
     if (typ == "random") {
         return make_unique<Random>(move(topo));
     } else if (typ == "onion") {

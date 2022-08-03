@@ -13,9 +13,8 @@ set(CMAKE_CXX_FLAGS_DEBUG
     "${CMAKE_CXX_FLAGS_DEBUG} \
     -Wall -Wextra \
     -Weffc++ \
-    -Wno-c++17-extensions \
-    -fstack-protector-all \
-    -DDEBUG"
+    -fstack-protector-all -fsanitize=undefined \
+    -g -rdynamic"
 )
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
 cmake_print_variables(CMAKE_CXX_FLAGS_DEBUG)
@@ -24,7 +23,7 @@ set(CMAKE_CXX_FLAGS_RELEASE
     "${CMAKE_CXX_FLAGS_RELEASE} \
     -Wall -Wextra \
     -Weffc++ \
-    -Wno-c++17-extensions"
+    -fstack-protector-all -fsanitize=undefined"
 )
 if(CMAKE_BUILD_TYPE MATCHES "Release")
 cmake_print_variables(CMAKE_CXX_FLAGS_RELEASE)
@@ -65,6 +64,13 @@ target_link_libraries(Duostra OpenMP::OpenMP_CXX)
 # GSL
 find_package(GSL REQUIRED)
 target_link_libraries(Duostra GSL::gsl GSL::gslcblas)
+
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED OFF)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost REQUIRED) 
+include_directories(${Boost_INCLUDE_DIRS}) 
+target_link_libraries(Duostra ${Boost_LIBRARIES} pthread dl)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
