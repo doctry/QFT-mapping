@@ -167,8 +167,9 @@ class TreeNode {
     TreeNode& operator=(const TreeNode& other) = delete;
     TreeNode& operator=(TreeNode&& other);
 
-    size_t num_leafs(int depth) const;
-    size_t best_cost(int depth) const;
+    size_t num_leafs(int depth);
+    size_t best_cost(int depth);
+    size_t best_cost_1();
     vector<reference_wrapper<TreeNode>> leafs(int depth);
 
     const QFTRouter& router() const { return *router_; }
@@ -202,11 +203,6 @@ class TreeNode {
     T recursive(int depth,
                 function<T(TreeNode&)> func,
                 function<T(const TreeNode&, const vector<T>&)> collect);
-
-    template <typename T>
-    T recursive(int depth,
-                function<T(const TreeNode&)> func,
-                function<T(const TreeNode&, const vector<T>&)> collect) const;
 };
 
 class Dora : public Greedy {
@@ -223,15 +219,10 @@ class Dora : public Greedy {
    protected:
     void assign_gates(unique_ptr<QFTRouter> router) override;
 
-    void update_next_trees(const QFTRouter& router,
+    void insert_next_trees(const QFTRouter& router,
                            const Base& scheduler,
                            const vector<size_t>& next_ids,
                            vector<POINTER_TYPE(TreeNode)>& next_trees) const;
-
-    void update_tree_recursive(int remaining_depth, TreeNode& root) const;
-    void update_tree_recursive(int remaining_depth,
-                               TreeNode& root,
-                               size_t threads) const;
 };
 
 unique_ptr<Base> get(const string& typ, unique_ptr<Topology> topo, json& conf);
