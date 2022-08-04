@@ -157,7 +157,7 @@ class TreeNode {
              size_t gate_idx,
              unique_ptr<QFTRouter> router,
              unique_ptr<Base> scheduler);
-    TreeNode(TreeNodeConf,
+    TreeNode(TreeNodeConf conf,
              vector<size_t>&& gate_indices,
              unique_ptr<QFTRouter> router,
              unique_ptr<Base> scheduler);
@@ -177,6 +177,7 @@ class TreeNode {
 
     const vector<size_t>& executed_gates() const { return gate_indices_; }
 
+    bool done() const { return scheduler().get_avail_gates().empty(); }
     bool is_leaf() const { return children_.empty(); }
     void grow_if_needed();
 

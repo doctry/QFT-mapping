@@ -64,11 +64,7 @@ TreeNode& TreeNode::operator=(TreeNode&& other) {
 }
 
 vector<TreeNode>& TreeNode::children() {
-    if (conf_.never_cache) {
-        assert(is_leaf());
-        grow();
-    }
-
+    grow_if_needed();
     return children_;
 }
 
@@ -105,7 +101,7 @@ void TreeNode::route_internal_gates() {
     }
 
     // Execute additional gates if exec_single.
-    if (!conf_.exec_single) {
+    if (gate_indices_.empty() || !conf_.exec_single) {
         return;
     }
 
@@ -119,13 +115,22 @@ void TreeNode::route_internal_gates() {
     assert(executed.size() == gate_indices_.size());
 }
 
+template <>
+inline void std::swap<TreeNode>(TreeNode& a, TreeNode& b) {
+    TreeNode c{std::move(a)};
+    a = std::move(b);
+    b = std::move(c);
+}
+
 // Cost recursively calls children's cost, and selects the best one.
 size_t TreeNode::best_cost(int depth) {
     // Grow if remaining depth >= 2.
     // Terminates on leaf nodes.
     if (depth > 0) {
         grow_if_needed();
-    } else if (depth <= 0 || is_leaf()) {
+    }
+
+    if (depth <= 0 || is_leaf()) {
         return scheduler().ops_cost();
     }
 
@@ -209,11 +214,14 @@ TreeNode TreeNode::best_child(int depth) {
     auto& next_nodes = children();
     size_t best_idx = 0, best = (size_t)-1;
 
+#pragma omp parallel for
     for (size_t idx = 0; idx < next_nodes.size(); ++idx) {
         auto& node = next_nodes[idx];
 
+        assert(depth >= 1);
         size_t cost = node.best_cost(depth);
 
+#pragma omp critical
         if (cost < best) {
             best_idx = idx;
             best = cost;
@@ -256,26 +264,23 @@ void Dora::cache_only_when_necessary() {
 
 void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     auto total_gates = topo_->get_num_gates();
-    const auto& avail_gates = topo_->get_avail_gates();
 
-    assert(avail_gates.size() == 1);
     auto root = make_unique<TreeNode>(
         TreeNodeConf{never_cache_, exec_single_, conf_.candidates},
-        avail_gates[0], router->clone(), clone());
+        move(vector<size_t>()), router->clone(), clone());
 
-    // For each step.
-    for (TqdmWrapper bar{total_gates}; !bar.done();) {
-        auto avail_gates = topo_->get_avail_gates();
-
+    // For each step. (all nodes + 1 dummy)
+    TqdmWrapper bar{total_gates + 1};
+    do {
         // Update the candidates.
         auto selected_node =
             make_unique<TreeNode>(root->best_child(look_ahead));
 
-        for (size_t gate_idx : selected_node->executed_gates()) {
+        root = move(selected_node);
+
+        for (size_t gate_idx : root->executed_gates()) {
             route_one_gate(*router, gate_idx);
             ++bar;
         }
-
-        root = move(selected_node);
-    }
+    } while (!root->done());
 }
