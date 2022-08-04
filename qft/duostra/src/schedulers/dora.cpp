@@ -10,34 +10,49 @@
 using namespace std;
 using namespace scheduler;
 
-TreeNode::TreeNode(size_t gate_idx,
+TreeNode::TreeNode(bool never_cache,
+                   size_t gate_idx,
                    unique_ptr<QFTRouter> router,
                    unique_ptr<Base> scheduler)
-    : gate_indices_({gate_idx}),
+    : never_cache_(never_cache),
+      gate_indices_({gate_idx}),
       router_(move(router)),
       scheduler_(move(scheduler)) {
     route_internal_gates();
 }
 
-TreeNode::TreeNode(vector<size_t>&& gate_indices,
+TreeNode::TreeNode(bool never_cache,
+                   vector<size_t>&& gate_indices,
                    unique_ptr<QFTRouter> router,
                    unique_ptr<Base> scheduler)
-    : gate_indices_(move(gate_indices)),
+    : never_cache_(never_cache),
+      gate_indices_(move(gate_indices)),
       router_(move(router)),
       scheduler_(move(scheduler)) {}
 
 TreeNode::TreeNode(TreeNode&& other)
-    : gate_indices_(move(other.gate_indices_)),
+    : never_cache_(other.never_cache_),
+      gate_indices_(move(other.gate_indices_)),
       children_(move(other.children_)),
       router_(move(other.router_)),
       scheduler_(move(other.scheduler_)) {}
 
 TreeNode& TreeNode::operator=(TreeNode&& other) {
+    never_cache_ = other.never_cache_;
     gate_indices_ = move(other.gate_indices_);
     children_ = move(other.children_);
     router_ = move(other.router_);
     scheduler_ = move(other.scheduler_);
     return *this;
+}
+
+vector<POINTER_TYPE(TreeNode)>& TreeNode::children() {
+    if (never_cache_) {
+        assert(is_leaf());
+        grow();
+    }
+
+    return children_;
 }
 
 size_t TreeNode::immediate_next() const {
@@ -87,7 +102,7 @@ void TreeNode::route_internal_gates() {
 size_t TreeNode::num_leafs(int depth) {
     auto size_fn = [](const TreeNode&) -> size_t { return 1; };
 
-    auto sum = [](const TreeNode&, const vector<size_t>& sizes) -> size_t {
+    auto sum = [](const vector<size_t>& sizes) -> size_t {
         return accumulate(sizes.begin(), sizes.end(), 0);
     };
 
@@ -100,8 +115,7 @@ size_t TreeNode::best_cost(int depth) {
         return node.scheduler().ops_cost();
     };
 
-    auto select_best = [](const TreeNode&,
-                          const vector<size_t>& costs) -> size_t {
+    auto select_best = [](const vector<size_t>& costs) -> size_t {
         return *min_element(costs.begin(), costs.end());
     };
 
@@ -114,7 +128,7 @@ size_t TreeNode::best_cost_1() {
 
 #pragma omp parallel for
     for (size_t index = 0; index < avail_gates.size(); ++index) {
-        TreeNode child_node{avail_gates[index], router().clone(),
+        TreeNode child_node{never_cache_, avail_gates[index], router().clone(),
                             scheduler().clone()};
         size_t cost = child_node.scheduler().ops_cost();
 
@@ -127,10 +141,10 @@ size_t TreeNode::best_cost_1() {
         }
     }
 
-
     size_t gate_idx = avail_gates[best_index];
     auto child = POINTER_MAKE(
-        TreeNode, (gate_idx, router().clone(), scheduler().clone()));
+        TreeNode,
+        (never_cache_, gate_idx, router().clone(), scheduler().clone()));
     children_.push_back(move(child));
 
     return best;
@@ -140,8 +154,7 @@ vector<reference_wrapper<TreeNode>> TreeNode::leafs(int depth) {
     using vec_nodes = vector<reference_wrapper<TreeNode>>;
     auto as_reference = [](TreeNode& node) -> vec_nodes { return {ref(node)}; };
 
-    auto collect_all = [](const TreeNode&,
-                          const vector<vec_nodes>& vec_of_leafs) -> vec_nodes {
+    auto collect_all = [](const vector<vec_nodes>& vec_of_leafs) -> vec_nodes {
         size_t total_sizes =
             accumulate(vec_of_leafs.begin(), vec_of_leafs.end(), 0,
                        [](size_t total_so_far, const vec_nodes& second) {
@@ -164,7 +177,7 @@ vector<reference_wrapper<TreeNode>> TreeNode::leafs(int depth) {
 template <typename T>
 T TreeNode::recursive(int depth,
                       function<T(TreeNode&)> func,
-                      function<T(const TreeNode&, const vector<T>&)> collect) {
+                      function<T(const vector<T>&)> collect) {
     if (depth > 0) {
         grow_if_needed();
     }
@@ -190,8 +203,12 @@ T TreeNode::recursive(int depth,
                                                            collect);
               });
 
+    if (never_cache_) {
+        children_.clear();
+    }
+
     // Collect tranformations.
-    return collect(*this, transforms);
+    return collect(transforms);
 }
 
 // Grow by adding availalble gates to children.
@@ -201,7 +218,8 @@ void TreeNode::grow() {
     children_.reserve(avail_gates.size());
     for (size_t gate_idx : avail_gates) {
         auto ptr = POINTER_MAKE(
-            TreeNode, (gate_idx, router().clone(), scheduler().clone()));
+            TreeNode,
+            (never_cache_, gate_idx, router().clone(), scheduler().clone()));
         children_.push_back(move(ptr));
     }
 }
@@ -213,11 +231,19 @@ inline void TreeNode::grow_if_needed() {
 }
 
 Dora::Dora(unique_ptr<Topology> topo, const json& conf)
-    : Greedy(move(topo), conf), look_ahead(json_get<int>(conf, "depth")) {}
+    : Greedy(move(topo), conf),
+      look_ahead(json_get<int>(conf, "depth")),
+      never_cache_(json_get<bool>(conf, "never_cache")) {}
 
-Dora::Dora(const Dora& other) : Greedy(other), look_ahead(other.look_ahead) {}
+Dora::Dora(const Dora& other)
+    : Greedy(other),
+      look_ahead(other.look_ahead),
+      never_cache_(other.never_cache_) {}
 
-Dora::Dora(Dora&& other) : Greedy(other), look_ahead(other.look_ahead) {}
+Dora::Dora(Dora&& other)
+    : Greedy(other),
+      look_ahead(other.look_ahead),
+      never_cache_(other.never_cache_) {}
 
 unique_ptr<Base> Dora::clone() const {
     return make_unique<Dora>(*this);
@@ -292,8 +318,9 @@ void Dora::insert_next_trees(const QFTRouter& router,
     if (next_trees.empty()) {
         next_trees.reserve(next_ids.size());
         for (size_t idx : next_ids) {
-            auto ptr = POINTER_MAKE(TreeNode,
-                                    (idx, router.clone(), scheduler.clone()));
+            auto ptr = POINTER_MAKE(
+                TreeNode,
+                (never_cache_, idx, router.clone(), scheduler.clone()));
             next_trees.push_back(move(ptr));
         }
     }
