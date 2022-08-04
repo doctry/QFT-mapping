@@ -109,23 +109,28 @@ size_t TreeNode::best_cost(int depth) {
 }
 
 size_t TreeNode::best_cost_1() {
-    size_t index, best_index, best;
+    size_t best_index = 0, best = (size_t)-1;
     const auto& avail_gates = scheduler().get_avail_gates();
-    
-    for (index = best_index = 0, best = (size_t)-1;
-         index < avail_gates.size(); ++index) {
+
+#pragma omp parallel for
+    for (size_t index = 0; index < avail_gates.size(); ++index) {
         TreeNode child_node{avail_gates[index], router().clone(),
                             scheduler().clone()};
         size_t cost = child_node.scheduler().ops_cost();
 
-        if (cost < best) {
-            best = cost;
-            best_index = index;
+#pragma omp critical
+        {
+            if (cost < best) {
+                best = cost;
+                best_index = index;
+            }
         }
     }
 
+
     size_t gate_idx = avail_gates[best_index];
-    auto child = POINTER_MAKE(TreeNode, (gate_idx, router().clone(), scheduler().clone()));
+    auto child = POINTER_MAKE(
+        TreeNode, (gate_idx, router().clone(), scheduler().clone()));
     children_.push_back(move(child));
 
     return best;
