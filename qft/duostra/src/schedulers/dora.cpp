@@ -10,35 +10,52 @@
 using namespace std;
 using namespace scheduler;
 
-TreeNode::TreeNode(bool never_cache,
+TreeNode::TreeNode(TreeNodeConf conf,
                    size_t gate_idx,
                    unique_ptr<QFTRouter> router,
                    unique_ptr<Base> scheduler)
-    : never_cache_(never_cache),
-      gate_indices_({gate_idx}),
+    : TreeNode(conf,
+               move(vector<size_t>({gate_idx})),
+               move(router),
+               move(scheduler)) {}
+
+TreeNode::TreeNode(TreeNodeConf conf,
+                   vector<size_t>&& gate_indices,
+                   unique_ptr<QFTRouter> router,
+                   unique_ptr<Base> scheduler)
+    : conf_(conf),
+      gate_indices_(move(gate_indices)),
+      children_({}),
       router_(move(router)),
       scheduler_(move(scheduler)) {
     route_internal_gates();
 }
 
-TreeNode::TreeNode(bool never_cache,
-                   vector<size_t>&& gate_indices,
-                   unique_ptr<QFTRouter> router,
-                   unique_ptr<Base> scheduler)
-    : never_cache_(never_cache),
-      gate_indices_(move(gate_indices)),
-      router_(move(router)),
-      scheduler_(move(scheduler)) {}
+TreeNode::TreeNode(const TreeNode& other)
+    : conf_(other.conf_),
+      gate_indices_(other.gate_indices_),
+      children_(other.children_),
+      router_(other.router_->clone()),
+      scheduler_(other.scheduler_->clone()) {}
 
 TreeNode::TreeNode(TreeNode&& other)
-    : never_cache_(other.never_cache_),
+    : conf_(other.conf_),
       gate_indices_(move(other.gate_indices_)),
       children_(move(other.children_)),
       router_(move(other.router_)),
       scheduler_(move(other.scheduler_)) {}
 
+TreeNode& TreeNode::operator=(const TreeNode& other) {
+    conf_ = other.conf_;
+    gate_indices_ = other.gate_indices_;
+    children_ = other.children_;
+    router_ = other.router_->clone();
+    scheduler_ = other.scheduler_->clone();
+    return *this;
+}
+
 TreeNode& TreeNode::operator=(TreeNode&& other) {
-    never_cache_ = other.never_cache_;
+    conf_ = other.conf_;
     gate_indices_ = move(other.gate_indices_);
     children_ = move(other.children_);
     router_ = move(other.router_);
@@ -46,8 +63,8 @@ TreeNode& TreeNode::operator=(TreeNode&& other) {
     return *this;
 }
 
-vector<POINTER_TYPE(TreeNode)>& TreeNode::children() {
-    if (never_cache_) {
+vector<TreeNode>& TreeNode::children() {
+    if (conf_.never_cache) {
         assert(is_leaf());
         grow();
     }
@@ -87,7 +104,11 @@ void TreeNode::route_internal_gates() {
                avail_gates.end());
     }
 
-    // Execute additional gates.
+    // Execute additional gates if exec_single.
+    if (!conf_.exec_single) {
+        return;
+    }
+
     size_t gate_idx;
     while ((gate_idx = immediate_next()) != ERROR_CODE) {
         scheduler_->route_one_gate(*router_, gate_idx);
@@ -98,129 +119,83 @@ void TreeNode::route_internal_gates() {
     assert(executed.size() == gate_indices_.size());
 }
 
-// Size calcuates the tree size.
-size_t TreeNode::num_leafs(int depth) {
-    auto size_fn = [](const TreeNode&) -> size_t { return 1; };
-
-    auto sum = [](const vector<size_t>& sizes) -> size_t {
-        return accumulate(sizes.begin(), sizes.end(), 0);
-    };
-
-    return recursive<size_t>(depth, size_fn, sum);
-}
-
 // Cost recursively calls children's cost, and selects the best one.
 size_t TreeNode::best_cost(int depth) {
-    auto cost_fn = [](const TreeNode& node) -> size_t {
-        return node.scheduler().ops_cost();
-    };
+    // Grow if remaining depth >= 2.
+    // Terminates on leaf nodes.
+    if (depth > 0) {
+        grow_if_needed();
+    } else if (depth <= 0 || is_leaf()) {
+        return scheduler().ops_cost();
+    }
 
-    auto select_best = [](const vector<size_t>& costs) -> size_t {
-        return *min_element(costs.begin(), costs.end());
-    };
+    // Calls the more efficient best_cost() when depth is only 1.
+    if (depth == 1) {
+        return best_cost();
+    }
 
-    return recursive<size_t>(depth, cost_fn, select_best);
-}
+    assert(children_.size() != 0);
 
-size_t TreeNode::best_cost_1() {
-    size_t best_index = 0, best = (size_t)-1;
-    const auto& avail_gates = scheduler().get_avail_gates();
+    size_t best = (size_t)-1;
 
+    sort(children_.begin(), children_.end(),
+         [](const TreeNode& a, const TreeNode& b) {
+             return a.scheduler().ops_cost() < b.scheduler().ops_cost();
+         });
+
+    auto end = conf_.candidates < children_.size()
+                   ? children_.begin() + conf_.candidates
+                   : children_.end();
+
+// Calcualtes the best cost for each children.
 #pragma omp parallel for
-    for (size_t index = 0; index < avail_gates.size(); ++index) {
-        TreeNode child_node{never_cache_, avail_gates[index], router().clone(),
-                            scheduler().clone()};
-        size_t cost = child_node.scheduler().ops_cost();
+    for (auto child = children_.begin(); child < end; ++child) {
+        size_t cost = child->best_cost(depth - 1);
 
 #pragma omp critical
-        {
-            if (cost < best) {
-                best = cost;
-                best_index = index;
-            }
+        if (cost < best) {
+            best = cost;
         }
     }
 
-    size_t gate_idx = avail_gates[best_index];
-    auto child = POINTER_MAKE(
-        TreeNode,
-        (never_cache_, gate_idx, router().clone(), scheduler().clone()));
-    children_.push_back(move(child));
+    // Clear the cache if specified.
+    if (conf_.never_cache) {
+        children_.clear();
+    }
 
     return best;
 }
 
-vector<reference_wrapper<TreeNode>> TreeNode::leafs(int depth) {
-    using vec_nodes = vector<reference_wrapper<TreeNode>>;
-    auto as_reference = [](TreeNode& node) -> vec_nodes { return {ref(node)}; };
+size_t TreeNode::best_cost() const {
+    size_t best = (size_t)-1;
 
-    auto collect_all = [](const vector<vec_nodes>& vec_of_leafs) -> vec_nodes {
-        size_t total_sizes =
-            accumulate(vec_of_leafs.begin(), vec_of_leafs.end(), 0,
-                       [](size_t total_so_far, const vec_nodes& second) {
-                           return total_so_far + second.size();
-                       });
+    const auto& avail_gates = scheduler().get_avail_gates();
 
-        vec_nodes result;
-        result.reserve(total_sizes);
+#pragma omp parallel for
+    for (size_t idx = 0; idx < avail_gates.size(); ++idx) {
+        TreeNode child_node{conf_, avail_gates[idx], router().clone(),
+                            scheduler().clone()};
+        size_t cost = child_node.scheduler().ops_cost();
 
-        for (const auto& leafs : vec_of_leafs) {
-            result.insert(result.end(), leafs.begin(), leafs.end());
+#pragma omp critical
+        if (cost < best) {
+            best = cost;
         }
-
-        return result;
-    };
-
-    return recursive<vec_nodes>(depth, as_reference, collect_all);
-}
-
-template <typename T>
-T TreeNode::recursive(int depth,
-                      function<T(TreeNode&)> func,
-                      function<T(const vector<T>&)> collect) {
-    if (depth > 0) {
-        grow_if_needed();
     }
 
-    // Terminates on leaf nodes.
-    if (depth <= 0 || is_leaf()) {
-        return func(*this);
-    }
-
-    // Apply transformations recursively.
-    // https://stackoverflow.com/questions/27144054/why-is-the-stdinitializer-list-constructor-preferred-when-using-a-braced-initi
-    // Initializer should never be used here as it gets confused with a list of
-    // 2 elements.
-    assert(children_.size() != 0);
-
-    vector<T> transforms;
-    transforms.reserve(children_.size());
-
-    // Transform from TreeNode to collected data from leafs of each TreeNode.
-    transform(children_.begin(), children_.end(), back_inserter(transforms),
-              [depth, func, collect](POINTER_TYPE(TreeNode) & child) {
-                  return POINTER_CALL(child, recursive)<T>(depth - 1, func,
-                                                           collect);
-              });
-
-    if (never_cache_) {
-        children_.clear();
-    }
-
-    // Collect tranformations.
-    return collect(transforms);
+    return best;
 }
 
 // Grow by adding availalble gates to children.
 void TreeNode::grow() {
-    assert(children_.empty());
     const auto& avail_gates = scheduler().get_avail_gates();
+
+    assert(children_.empty());
     children_.reserve(avail_gates.size());
+
     for (size_t gate_idx : avail_gates) {
-        auto ptr = POINTER_MAKE(
-            TreeNode,
-            (never_cache_, gate_idx, router().clone(), scheduler().clone()));
-        children_.push_back(move(ptr));
+        children_.emplace_back(conf_, gate_idx, router().clone(),
+                               scheduler().clone());
     }
 }
 
@@ -230,98 +205,77 @@ inline void TreeNode::grow_if_needed() {
     }
 }
 
+TreeNode TreeNode::best_child(int depth) {
+    auto& next_nodes = children();
+    size_t best_idx = 0, best = (size_t)-1;
+
+    for (size_t idx = 0; idx < next_nodes.size(); ++idx) {
+        auto& node = next_nodes[idx];
+
+        size_t cost = node.best_cost(depth);
+
+        if (cost < best) {
+            best_idx = idx;
+            best = cost;
+        }
+    }
+
+    return next_nodes[best_idx];
+}
+
 Dora::Dora(unique_ptr<Topology> topo, const json& conf)
     : Greedy(move(topo), conf),
       look_ahead(json_get<int>(conf, "depth")),
-      never_cache_(json_get<bool>(conf, "never_cache")) {}
+      never_cache_(json_get<bool>(conf, "never_cache")),
+      exec_single_(json_get<bool>(conf, "exec_single")) {
+    cache_only_when_necessary();
+}
 
 Dora::Dora(const Dora& other)
     : Greedy(other),
       look_ahead(other.look_ahead),
-      never_cache_(other.never_cache_) {}
+      never_cache_(other.never_cache_),
+      exec_single_(other.exec_single_) {}
 
 Dora::Dora(Dora&& other)
     : Greedy(other),
       look_ahead(other.look_ahead),
-      never_cache_(other.never_cache_) {}
+      never_cache_(other.never_cache_),
+      exec_single_(other.exec_single_) {}
 
 unique_ptr<Base> Dora::clone() const {
     return make_unique<Dora>(*this);
 }
 
+void Dora::cache_only_when_necessary() {
+    if (!never_cache_ && look_ahead == 1) {
+        cerr << "When look_ahead = 1, 'never_cache' is used by default.\n";
+        never_cache_ = true;
+    }
+}
+
 void Dora::assign_gates(unique_ptr<QFTRouter> router) {
     auto total_gates = topo_->get_num_gates();
+    const auto& avail_gates = topo_->get_avail_gates();
 
-    TqdmWrapper bar{total_gates};
-    vector<POINTER_TYPE(TreeNode)> next_trees;
+    assert(avail_gates.size() == 1);
+    auto root = make_unique<TreeNode>(
+        TreeNodeConf{never_cache_, exec_single_, conf_.candidates},
+        avail_gates[0], router->clone(), clone());
 
     // For each step.
-    while (!bar.done()) {
+    for (TqdmWrapper bar{total_gates}; !bar.done();) {
         auto avail_gates = topo_->get_avail_gates();
 
-        // Generate heuristic trees if not present.
-        // Since router and this both outlive insert_next_trees,
-        // this usage is safe.
-        insert_next_trees(*router, *this, avail_gates, next_trees);
-
-        // Calcuate each tree's costs and find the best one (smallest cost).
-        vector<size_t> costs;
-
-        if (look_ahead == 1) {
-            transform(next_trees.begin(), next_trees.end(),
-                      back_inserter(costs),
-                      [this](POINTER_TYPE(TreeNode) & root) {
-                          return POINTER_CALL(root, best_cost_1)();
-                      });
-        } else {
-            transform(next_trees.begin(), next_trees.end(),
-                      back_inserter(costs),
-                      [this](POINTER_TYPE(TreeNode) & root) {
-                          return POINTER_CALL(root, best_cost)(look_ahead);
-                      });
-        }
-
-#ifdef DEBUG
-        cout << "1\n";
-        cout << "costs sizes and tree sizes: " << costs.size() << " "
-             << next_trees.size() << "\n";
-#endif
-
-        assert(costs.size() == next_trees.size());
-        auto min = min_element(costs.begin(), costs.end());
-        size_t argmin = min - costs.begin();
-        assert(costs.size() != 0);
-
-#ifdef DEBUG
-        cout << "2\n";
-        cout << "Argmin: " << argmin << "\n";
-        cout << "Costs: " << costs << "\n";
-#endif
-
         // Update the candidates.
-        auto selected_node{move(next_trees[argmin])};
+        auto selected_node =
+            make_unique<TreeNode>(root->best_child(look_ahead));
 
-        for (size_t gate_idx : POINTER_CALL(selected_node, executed_gates)()) {
+        for (size_t gate_idx : selected_node->executed_gates()) {
             route_one_gate(*router, gate_idx);
             ++bar;
         }
 
-        next_trees = move(POINTER_CALL(selected_node, children)());
-    }
-}
-
-// If a tree is already present, the children of the root nodes must match.
-void Dora::insert_next_trees(const QFTRouter& router,
-                             const Base& scheduler,
-                             const vector<size_t>& next_ids,
-                             vector<POINTER_TYPE(TreeNode)>& next_trees) const {
-    if (next_trees.empty()) {
-        next_trees.reserve(next_ids.size());
-        for (size_t idx : next_ids) {
-            auto ptr = POINTER_MAKE(
-                TreeNode,
-                (never_cache_, idx, router.clone(), scheduler.clone()));
-            next_trees.push_back(move(ptr));
-        }
+        root = move(selected_node);
     }
 }
