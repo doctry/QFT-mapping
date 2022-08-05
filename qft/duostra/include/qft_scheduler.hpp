@@ -140,73 +140,66 @@ class Onion : public Greedy {
                                size_t& total_size);
 };
 
-#ifdef USE_POINTER_AS_CHILD
-#define POINTER_TYPE(TYP) std::unique_ptr<TYP>
-#define POINTER_CALL(OBJ, MEMBER) OBJ->MEMBER
-#define POINTER_DEREF(OBJ) *OBJ
-#define POINTER_MAKE(TYP, ARGS) (std::make_unique<TYP> ARGS)
-#else
-#define POINTER_TYPE(TYP) TYP
-#define POINTER_CALL(OBJ, MEMBER) OBJ.MEMBER
-#define POINTER_DEREF(OBJ) OBJ
-#define POINTER_MAKE(TYP, ARGS) (TYP ARGS)
-#endif
+struct TreeNodeConf {
+    // Never cache any children unless children() is called.
+    bool never_cache;
+    // Execute the single gates when they are available.
+    bool exec_single;
+    // The number of childrens to consider,
+    // selected with some ops_cost heuristic.
+    size_t candidates;
+};
 
 // This is a node of the heuristic search tree.
 class TreeNode {
    public:
-    TreeNode(bool never_cache,
+    TreeNode(TreeNodeConf conf,
              size_t gate_idx,
              unique_ptr<QFTRouter> router,
              unique_ptr<Base> scheduler);
-    TreeNode(bool never_cache,
+    TreeNode(TreeNodeConf conf,
              vector<size_t>&& gate_indices,
              unique_ptr<QFTRouter> router,
              unique_ptr<Base> scheduler);
-    TreeNode(const TreeNode& other) = delete;
+    TreeNode(const TreeNode& other);
     TreeNode(TreeNode&& other);
 
-    TreeNode& operator=(const TreeNode& other) = delete;
+    TreeNode& operator=(const TreeNode& other);
     TreeNode& operator=(TreeNode&& other);
 
-    size_t num_leafs(int depth);
+    TreeNode best_child(int depth);
+
     size_t best_cost(int depth);
-    size_t best_cost_1();
-    vector<reference_wrapper<TreeNode>> leafs(int depth);
+    size_t best_cost() const;
 
     const QFTRouter& router() const { return *router_; }
     const Base& scheduler() const { return *scheduler_; }
 
     const vector<size_t>& executed_gates() const { return gate_indices_; }
 
-    vector<POINTER_TYPE(TreeNode)>& children();
-
+    bool done() const { return scheduler().get_avail_gates().empty(); }
     bool is_leaf() const { return children_.empty(); }
     void grow_if_needed();
 
    private:
-    // Never cache any children unless children() is called.
-    bool never_cache_;
+    TreeNodeConf conf_;
 
     // The head of the node.
     vector<size_t> gate_indices_;
 
     // Using vector to pointer so that frequent cache misses
     // won't be as bad in parallel code.
-    vector<POINTER_TYPE(TreeNode)> children_;
+    vector<TreeNode> children_;
 
     // The state of duostra.
     unique_ptr<QFTRouter> router_;
     unique_ptr<Base> scheduler_;
 
+    vector<TreeNode>&& children();
+
     void grow();
     void route_internal_gates();
     size_t immediate_next() const;
-
-    template <typename T>
-    T recursive(int depth,
-                function<T(TreeNode&)> func,
-                function<T(const vector<T>&)> collect);
 };
 
 class Dora : public Greedy {
@@ -222,13 +215,10 @@ class Dora : public Greedy {
 
    protected:
     bool never_cache_;
+    bool exec_single_;
 
     void assign_gates(unique_ptr<QFTRouter> router) override;
-
-    void insert_next_trees(const QFTRouter& router,
-                           const Base& scheduler,
-                           const vector<size_t>& next_ids,
-                           vector<POINTER_TYPE(TreeNode)>& next_trees) const;
+    void cache_only_when_necessary();
 };
 
 unique_ptr<Base> get(const string& typ, unique_ptr<Topology> topo, json& conf);
