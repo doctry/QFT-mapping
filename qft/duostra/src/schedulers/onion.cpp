@@ -92,6 +92,18 @@ unordered_map<size_t, size_t> Topology::dist_to() const {
     return dist;
 }
 
+unordered_map<size_t, vector<size_t>> Topology::gate_by_dist_to_first() const {
+    auto dist{dist_to_first()};
+    std::cout << "Dist to first done\n";
+    return gate_by_generation(dist);
+}
+
+unordered_map<size_t, vector<size_t>> Topology::gate_by_dist_to_last() const {
+    auto dist{dist_to_last()};
+    std::cout << "Dist to last done\n";
+    return gate_by_generation(dist);
+}
+
 }  // namespace topo
 
 Onion::Onion(unique_ptr<Topology> topo, const json& conf)

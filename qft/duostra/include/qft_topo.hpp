@@ -22,8 +22,9 @@ class QFTTopology : public Topology {
 
     void print_gates() const {
         std::vector<size_t> prevs;
-        for (size_t i = 0; i < gates_.size(); ++i) {
-            const Gate& gate = gates_[i];
+        const auto& gates = dep_graph_->gates();
+        for (size_t i = 0; i < gates.size(); ++i) {
+            const Gate& gate = gates[i];
             const auto& prevs = gate.get_prevs();
             const auto& nexts = gate.get_nexts();
             std::cout << "gate[" << i << "]: prev: " << prevs

@@ -8,24 +8,27 @@ using namespace std;
 void Topology::update_avail_gates(size_t executed) {
     assert(find(begin(avail_gates_), end(avail_gates_), executed) !=
            end(avail_gates_));
-    const Gate& g_exec = gates_[executed];
+    const Gate& g_exec = get_gate(executed);
     avail_gates_.erase(remove(begin(avail_gates_), end(avail_gates_), executed),
                        end(avail_gates_));
     assert(g_exec.get_id() == executed);
 
-    const auto& nexts{g_exec.get_nexts()};
-
-    for (size_t i = 0; i < nexts.size(); ++i) {
-        size_t n = nexts[i];
-        gates_[n].mark_finished(executed);
-        if (gates_[n].is_avail()) {
-            avail_gates_.push_back(n);
+    for (size_t next : g_exec.get_nexts()) {
+        executed_gates_.insert(executed);
+        if (get_gate(next).is_avail(executed_gates_)) {
+            avail_gates_.push_back(next);
+        }
+        for (size_t prev: g_exec.get_prevs()) {
+            const auto &prev_gate = get_gate(prev);
+            for (size_t child: prev_gate.get_nexts()) {
+            }
         }
     }
 }
 
 QFTTopology::QFTTopology(size_t num) {
-    num_qubits_ = num;
+    size_t num_qubits = num;
+    vector<Gate> all_gates;
     assert(num > 0);
 
     for (size_t i = 0, count = 0; i < num; ++i) {
@@ -40,10 +43,13 @@ QFTTopology::QFTTopology(size_t num) {
             gate.add_prev(prev_left);
             gate.add_next(next_down);
             gate.add_next(next_right);
-            gates_.push_back(std::move(gate));
+
+            all_gates.push_back(std::move(gate));
         }
     }
     avail_gates_.push_back(0);
+
+    dep_graph_ = make_shared<DependencyGraph>(num_qubits, move(all_gates));
 }
 
 QFTTopology::QFTTopology(const QFTTopology& other) : Topology(other) {}
