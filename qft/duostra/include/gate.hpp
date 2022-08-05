@@ -32,14 +32,16 @@ class Gate {
           qubits_(other.qubits_),
           prevs_(make_shared<vector<size_t>>(*other.prevs_)),
           nexts_(make_shared<vector<size_t>>(*other.nexts_)),
-          prevs_ok_(other.prevs_ok_) {}
+          prevs_ok_(other.prevs_ok_) {
+        assert(sharable_);
+    }
 
     Gate(Gate&& other)
         : id_(other.id_),
           type_(other.type_),
           qubits_(other.qubits_),
-          prevs_(other.prevs_),
-          nexts_(other.nexts_),
+          prevs_(move(other.prevs_)),
+          nexts_(move(other.nexts_)),
           prevs_ok_(move(other.prevs_ok_)) {}
 
     size_t get_id() const { return id_; }
@@ -63,6 +65,8 @@ class Gate {
             nexts_->push_back(n);
         }
     }
+
+    void make_sharable();
 
     void mark_finished(size_t);
     bool is_avail() const {
@@ -94,5 +98,7 @@ class Gate {
     shared_ptr<vector<size_t>> nexts_;
 
     vector<bool> prevs_ok_;
+
+    bool sharable_ = false;
 };
 }  // namespace topo
