@@ -72,7 +72,9 @@ class Topology {
     // data member
     shared_ptr<DependencyGraph> dep_graph_;
     vector<size_t> avail_gates_;
-    unordered_set<size_t> executed_gates_;
+
+    // Executed gates is a countable set.
+    unordered_map<size_t, size_t> executed_gates_;
 
     // private function
     static unordered_map<size_t, vector<size_t>> gate_by_generation(
