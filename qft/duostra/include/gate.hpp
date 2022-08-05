@@ -32,9 +32,7 @@ class Gate {
           qubits_(other.qubits_),
           prevs_(other.prevs_),
           nexts_(other.nexts_),
-          prevs_ok_(other.prevs_ok_) {
-        assert(true);
-    }
+          prevs_ok_(other.prevs_ok_) {}
 
     Gate(Gate&& other)
         : id_(other.id_),
@@ -49,12 +47,6 @@ class Gate {
 
     void set_type(Operator t) { type_ = t; }
 
-    void set_prev(size_t a, size_t b) {
-        add_prev(a);
-        if (b != a) {
-            add_prev(b);
-        }
-    }
     void add_prev(size_t p) {
         if (p != ERROR_CODE) {
             prevs_->push_back(p);
@@ -67,8 +59,6 @@ class Gate {
             nexts_->push_back(n);
         }
     }
-
-    void make_sharable();
 
     void mark_finished(size_t);
     bool is_avail() const {
@@ -100,7 +90,5 @@ class Gate {
     shared_ptr<vector<size_t>> nexts_;
 
     vector<bool> prevs_ok_;
-
-    bool sharable_ = false;
 };
 }  // namespace topo

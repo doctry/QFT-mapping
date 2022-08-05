@@ -13,7 +13,7 @@ void Topology::update_avail_gates(size_t executed) {
                        end(avail_gates_));
     assert(g_exec.get_id() == executed);
 
-    const auto &nexts{g_exec.get_nexts()};
+    const auto& nexts{g_exec.get_nexts()};
 
     for (size_t i = 0; i < nexts.size(); ++i) {
         size_t n = nexts[i];
@@ -36,7 +36,8 @@ QFTTopology::QFTTopology(size_t num) {
             size_t next_right = (j == i - 1) ? ERROR_CODE : count + 1;
 
             Gate gate{count, Operator::CX, std::make_tuple(j, i)};
-            gate.set_prev(prev_up, prev_left);
+            gate.add_prev(prev_up);
+            gate.add_prev(prev_left);
             gate.add_next(next_down);
             gate.add_next(next_right);
             gates_.push_back(std::move(gate));

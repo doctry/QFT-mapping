@@ -152,11 +152,11 @@ size_t TreeNode::best_cost(int depth) {
                    : children_.end();
 
 // Calcualtes the best cost for each children.
-#pragma omp parallel for
+// #pragma omp parallel for
     for (auto child = children_.begin(); child < end; ++child) {
         size_t cost = child->best_cost(depth - 1);
 
-#pragma omp critical
+// #pragma omp critical
         if (cost < best) {
             best = cost;
         }
@@ -213,14 +213,14 @@ TreeNode TreeNode::best_child(int depth) {
     auto next_nodes = children();
     size_t best_idx = 0, best = (size_t)-1;
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (size_t idx = 0; idx < next_nodes.size(); ++idx) {
         auto& node = next_nodes[idx];
 
         assert(depth >= 1);
         size_t cost = node.best_cost(depth);
 
-#pragma omp critical
+// #pragma omp critical
         if (cost < best) {
             best_idx = idx;
             best = cost;

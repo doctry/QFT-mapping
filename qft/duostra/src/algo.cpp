@@ -80,7 +80,7 @@ void AlgoTopology::parse(fstream& qasm_file, bool IBM_gate) {
 
                 tuple<size_t, size_t> temp{q, ERROR_CODE};
                 Gate temp_gate{gate_id, Operator::Single, temp};
-                temp_gate.set_prev(last_gate_[q], last_gate_[q]);
+                temp_gate.add_prev(last_gate_[q]);
 
                 if (last_gate_[q] != ERROR_CODE) {
                     gates_[last_gate_[q]].add_next(gate_id);
@@ -97,7 +97,6 @@ void AlgoTopology::parse(fstream& qasm_file, bool IBM_gate) {
                     } else {
                         cerr << "Unseen Gate " << type << endl;
                     }
-                    assert(true);
                     exit(0);
                 } else {
                     qasm_file >> str;
@@ -106,7 +105,6 @@ void AlgoTopology::parse(fstream& qasm_file, bool IBM_gate) {
         } else {
             if ((IBM_gate) && (is_CRZ == "crz")) {
                 cerr << "IBM machine does not support crz" << endl;
-                assert(true);
                 exit(0);
             }
             qasm_file >> str;
@@ -121,7 +119,8 @@ void AlgoTopology::parse(fstream& qasm_file, bool IBM_gate) {
 
             tuple<size_t, size_t> temp{q1, q2};
             Gate temp_gate{gate_id, Operator::CX, temp};
-            temp_gate.set_prev(last_gate_[q1], last_gate_[q2]);
+            temp_gate.add_prev(last_gate_[q1]);
+            temp_gate.add_prev(last_gate_[q2]);
 
             if (last_gate_[q1] != ERROR_CODE) {
                 gates_[last_gate_[q1]].add_next(gate_id);
