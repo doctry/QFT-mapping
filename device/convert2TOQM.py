@@ -9,13 +9,13 @@ def main(args):
         line = f.readline()
         qubit_num = int(line)
         line = f.readline()
-        while line != "" :
+        while line != "":
             info = line.split()
             qubit = int(info[0])
             connect = [int(c) for c in info[2:]]
             for qc in connect:
                 if qc > qubit:
-                    storage.append('{a} {b}\n'.format(a=qubit, b=qc))
+                    storage.append("{a} {b}\n".format(a=qubit, b=qc))
             line = f.readline()
 
     with open(
@@ -25,11 +25,10 @@ def main(args):
         for i in storage:
             f.write(i)
 
+
 def parse_args() -> Namespace:
     parser = ArgumentParser()
-    parser.add_argument(
-        "--device", type=str, help="device", required=True
-    )
+    parser.add_argument("--device", type=str, help="device", required=True)
     parser.add_argument(
         "--output_root", type=Path, help="Output file directory", default="./"
     )
