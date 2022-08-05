@@ -126,7 +126,9 @@ size_t TreeNode::best_cost(int depth) {
     if (is_leaf()) {
         if (depth > 1) {
             grow();
-        } else {
+        }
+
+        if (depth == 0) {
             return scheduler().ops_cost();
         }
     }
