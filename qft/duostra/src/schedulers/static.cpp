@@ -22,8 +22,6 @@ void Static::assign_gates(unique_ptr<QFTRouter> router) {
         }
 
         route_one_gate(*router, gate_idx);
-        auto& temp_gate_prevs = topo_->get_gate(gate_idx).get_prevs();
-        auto& temp_gate_nexts = topo_->get_gate(gate_idx).get_nexts();
 
         ++count;
     }
