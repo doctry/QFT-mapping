@@ -14,10 +14,7 @@ TreeNode::TreeNode(TreeNodeConf conf,
                    size_t gate_idx,
                    unique_ptr<QFTRouter> router,
                    unique_ptr<Base> scheduler)
-    : TreeNode(conf,
-               move(vector<size_t>({gate_idx})),
-               move(router),
-               move(scheduler)) {}
+    : TreeNode(conf, vector<size_t>{gate_idx}, move(router), move(scheduler)) {}
 
 TreeNode::TreeNode(TreeNodeConf conf,
                    vector<size_t>&& gate_indices,
@@ -63,9 +60,9 @@ TreeNode& TreeNode::operator=(TreeNode&& other) {
     return *this;
 }
 
-vector<TreeNode>& TreeNode::children() {
+vector<TreeNode>&& TreeNode::children() {
     grow_if_needed();
-    return children_;
+    return move(children_);
 }
 
 size_t TreeNode::immediate_next() const {
@@ -126,12 +123,12 @@ inline void std::swap<TreeNode>(TreeNode& a, TreeNode& b) {
 size_t TreeNode::best_cost(int depth) {
     // Grow if remaining depth >= 2.
     // Terminates on leaf nodes.
-    if (depth > 0) {
-        grow_if_needed();
-    }
-
-    if (depth <= 0 || is_leaf()) {
-        return scheduler().ops_cost();
+    if (is_leaf()) {
+        if (depth > 1) {
+            grow();
+        } else {
+            return scheduler().ops_cost();
+        }
     }
 
     // Calls the more efficient best_cost() when depth is only 1.
@@ -211,7 +208,7 @@ inline void TreeNode::grow_if_needed() {
 }
 
 TreeNode TreeNode::best_child(int depth) {
-    auto& next_nodes = children();
+    auto next_nodes = children();
     size_t best_idx = 0, best = (size_t)-1;
 
 #pragma omp parallel for
@@ -267,7 +264,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 
     auto root = make_unique<TreeNode>(
         TreeNodeConf{never_cache_, exec_single_, conf_.candidates},
-        move(vector<size_t>()), router->clone(), clone());
+        vector<size_t>{}, router->clone(), clone());
 
     // For each step. (all nodes + 1 dummy)
     TqdmWrapper bar{total_gates + 1};

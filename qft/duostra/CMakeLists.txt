@@ -33,8 +33,7 @@ endif()
 
 # set(CMAKE_CXX_CLANG_TIDY
 #   clang-tidy;
-#   -checks=*;
-#   -warnings-as-errors=*;)
+#   -checks=bugprone-use-after-move;)
 
 include(CTest)
 enable_testing()
@@ -66,6 +65,9 @@ target_link_libraries(Duostra OpenMP::OpenMP_CXX)
 # GSL
 find_package(GSL REQUIRED)
 target_link_libraries(Duostra GSL::gsl GSL::gslcblas)
+
+# find_package(mimalloc 1.4 REQUIRED)
+# target_link_libraries(Duostra mimalloc)
 
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED OFF)  

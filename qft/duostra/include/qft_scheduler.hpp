@@ -195,7 +195,7 @@ class TreeNode {
     unique_ptr<QFTRouter> router_;
     unique_ptr<Base> scheduler_;
 
-    vector<TreeNode>& children();
+    vector<TreeNode>&& children();
 
     void grow();
     void route_internal_gates();
