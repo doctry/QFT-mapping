@@ -30,10 +30,10 @@ class Gate {
         : id_(other.id_),
           type_(other.type_),
           qubits_(other.qubits_),
-          prevs_(make_shared<vector<size_t>>(*other.prevs_)),
-          nexts_(make_shared<vector<size_t>>(*other.nexts_)),
+          prevs_(other.prevs_),
+          nexts_(other.nexts_),
           prevs_ok_(other.prevs_ok_) {
-        assert(sharable_);
+        assert(true);
     }
 
     Gate(Gate&& other)
@@ -51,7 +51,9 @@ class Gate {
 
     void set_prev(size_t a, size_t b) {
         add_prev(a);
-        add_prev(b);
+        if (b != a) {
+            add_prev(b);
+        }
     }
     void add_prev(size_t p) {
         if (p != ERROR_CODE) {

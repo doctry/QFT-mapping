@@ -13,7 +13,7 @@ void Topology::update_avail_gates(size_t executed) {
                        end(avail_gates_));
     assert(g_exec.get_id() == executed);
 
-    vector<size_t> nexts{g_exec.get_nexts()};
+    const auto &nexts{g_exec.get_nexts()};
 
     for (size_t i = 0; i < nexts.size(); ++i) {
         size_t n = nexts[i];
