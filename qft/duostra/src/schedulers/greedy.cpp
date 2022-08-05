@@ -89,7 +89,7 @@ size_t Greedy::greedy_fallback(const QFTRouter& router,
     vector<size_t> cost_list(wait_list.size(), 0);
 
     for (size_t i = 0; i < wait_list.size(); ++i) {
-        topo::Gate& gate = topo_->get_gate(wait_list[i]);
+        const auto& gate = topo_->get_gate(wait_list[i]);
         cost_list[i] =
             router.get_gate_cost(gate, conf_.avail_typ, conf_.apsp_coef);
     }

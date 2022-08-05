@@ -3,8 +3,28 @@
 #include "util.hpp"
 
 using namespace topo;
+using namespace std;
 
-QFTTopology::QFTTopology(size_t num) noexcept {
+void Topology::update_avail_gates(size_t executed) {
+    assert(find(begin(avail_gates_), end(avail_gates_), executed) !=
+           end(avail_gates_));
+    const Gate& g_exec = gates_[executed];
+    avail_gates_.erase(remove(begin(avail_gates_), end(avail_gates_), executed),
+                       end(avail_gates_));
+    assert(g_exec.get_id() == executed);
+
+    vector<size_t> nexts{g_exec.get_nexts()};
+
+    for (size_t i = 0; i < nexts.size(); ++i) {
+        size_t n = nexts[i];
+        gates_[n].mark_finished(executed);
+        if (gates_[n].is_avail()) {
+            avail_gates_.push_back(n);
+        }
+    }
+}
+
+QFTTopology::QFTTopology(size_t num) {
     num_qubits_ = num;
     assert(num > 0);
 
@@ -25,27 +45,5 @@ QFTTopology::QFTTopology(size_t num) noexcept {
     avail_gates_.push_back(0);
 }
 
-QFTTopology::QFTTopology(const QFTTopology& other) noexcept : Topology(other) {}
-QFTTopology::QFTTopology(QFTTopology&& other) noexcept
-    : Topology(std::move(other)) {}
-
-void QFTTopology::update_avail_gates(size_t executed) {
-    assert(std::find(avail_gates_.begin(), avail_gates_.end(), executed) !=
-           avail_gates_.end());
-    Gate& g_exec = gates_[executed];
-    avail_gates_.erase(
-        std::remove(avail_gates_.begin(), avail_gates_.end(), executed),
-        avail_gates_.end());
-    assert(g_exec.get_id() == executed);
-
-    std::vector<size_t> nexts = g_exec.get_nexts();
-
-    for (size_t i = 0; i < nexts.size(); ++i) {
-        size_t n = nexts[i];
-        Gate& gate = gates_[n];
-        gate.finished(executed);
-        if (gates_[n].is_avail()) {
-            avail_gates_.push_back(n);
-        }
-    }
-}
+QFTTopology::QFTTopology(const QFTTopology& other) : Topology(other) {}
+QFTTopology::QFTTopology(QFTTopology&& other) : Topology(std::move(other)) {}

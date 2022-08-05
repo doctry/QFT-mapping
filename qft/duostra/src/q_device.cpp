@@ -557,9 +557,7 @@ void Device::apply_gate(const Operation& op) {
             break;
         }
 
-        default: {
-            assert(false);
-        }
+        default: { assert(false); }
     }
 }
 

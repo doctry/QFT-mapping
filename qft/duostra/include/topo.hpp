@@ -33,15 +33,13 @@ class Topology {
 
     virtual ~Topology() {}
 
-    virtual size_t get_num_qubits() const = 0;
-    virtual size_t get_num_gates() const = 0;
-    virtual Gate& get_gate(size_t i) = 0;
-    const Gate& get_gate(size_t i) const {
-        return const_cast<topo::Topology*>(this)->get_gate(i);
-    }
-    virtual const vector<size_t>& get_avail_gates() const = 0;
-    virtual void update_avail_gates(size_t executed) = 0;
     virtual unique_ptr<Topology> clone() const = 0;
+
+    void update_avail_gates(size_t executed);
+    size_t get_num_qubits() const { return num_qubits_; }
+    size_t get_num_gates() const { return gates_.size(); }
+    const Gate& get_gate(size_t i) const { return gates_[i]; }
+    const std::vector<size_t>& get_avail_gates() const { return avail_gates_; }
 
     template <bool first>
     vector<size_t> get_gates() const;
@@ -78,5 +76,3 @@ class Topology {
         const unordered_map<size_t, size_t>& map);
 };
 };  // namespace topo
-
-#include "topo.tpp"

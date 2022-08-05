@@ -63,7 +63,7 @@ QFTRouter::QFTRouter(QFTRouter&& other) noexcept
       device_(move(other.device_)),
       topo_to_dev_(move(other.topo_to_dev_)) {}
 
-size_t QFTRouter::get_gate_cost(topo::Gate& gate,
+size_t QFTRouter::get_gate_cost(const topo::Gate& gate,
                                 bool min_max,
                                 size_t apsp_coef) const {
     tuple<size_t, size_t> device_qubits_idx = get_device_qubits_idx(gate);
@@ -123,7 +123,7 @@ vector<device::Operation> QFTRouter::assign_gate(const topo::Gate& gate) {
     return op_list;
 }
 
-bool QFTRouter::is_executable(topo::Gate& gate) const {
+bool QFTRouter::is_executable(const topo::Gate& gate) const {
     if (gate.get_type() == Operator::Single) {
         assert(get<1>(gate.get_qubits()) == ERROR_CODE);
         return true;
