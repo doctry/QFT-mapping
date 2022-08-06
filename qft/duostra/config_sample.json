@@ -19,8 +19,9 @@
             "avail": "max",
             "cost": "min",
             "layer_from_first": true,
-            "depth": 5,
-            "never_cache": true
+            "depth": 1,
+            "never_cache": true,
+            "exec_single": false
         }
     },
     "IBM_Gate": false,

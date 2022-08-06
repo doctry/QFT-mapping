@@ -17,7 +17,7 @@ git submodule update --init --recursive
 mkdir QFT-mapping/qft/duostra/build
 cd QFT-mapping/qft/duostra/build
 cmake -DCMAKE_PREFIX_PATH=<Path to libtorch> -DCMAKE_BUILD_TYPE=<Release|Debug> ..
-cmake --build .
+make -j
 
 # Run
 ./Duostra ../config.json
@@ -29,72 +29,29 @@ valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=
 ## Settings
 The following settings needs to be given in qft/duostra/config.json
 Please construct the config.json by the provided config_sample.json
-### Scheduler
-* Static:  The first item in the wait list (longest time in wait list).
-* Random:  Random from wait list.
-* Greedy:  Find minimum cost (APSP+max(sup(Gate)))
-### Placer
-* Static: Match ID with the IDs in IBM topology.
-* DFS: Match ID with the DFS topological order.
-* Random: Just Random place.
-### Router
-* Orientation: Small topology first.
-* Naive: Without considering any orientation.
+### Mapper
+#### Scheduler
+* static:  The first item in the wait list (longest time in wait list).
+* random:  Random from wait list.
+* greedy:  Find minimum cost (APSP+max(sup(Gate)))
+* dora (alias cks): Search based scheduler
+##### Greedy Conf (change name to scheduler conf ?)
+* candidates: ``positive int or -1, default -1``. Keep top k results, -1 denotes all.
+* apsp_coef: ``positive int, default 1``. $\alpha$ in $C_{greedy}=\max(v_0.occu, v_1.occu)+\dfrac{APSP(v_0,v_1)}{\alpha}$
+* cost: ``min/max, default min``. Schedule based on min/max cost
+* depth: ``positive int, default 1`` Search depth.
+* exec_single: ``bool, default false``. true for directly execute single=qubit gates when available; false for schedule with double-qubits gates
+* never_cache: ``bool, default true``,
+#### Placer
+* static: Match ID with the IDs in IBM topology.
+* dfs: Match ID with the DFS topological order.
+* random: Just Random place.
+#### Router
+* Duostra:
 ### Algo
 * Directly give a number, e.g. 127 would provide a 127 qubit QFT.
 * Give the path of logical circuit.
-* The provided benchmark of logical circuit is given in  ``` benchmark/ ```
+    * The provided benchmark of logical circuit is given in  ``` benchmark/ ```
 ### Device
 * The device are provided in  ``` device/ ```, please give the path of txt file.
-## Result
 
-### Experiment 1: Without Synthesis
-* Placer: DFS
-* Scheduler: Static/Greedy
-* Router: Orientation
-* Upperbound: $O(n^{3})$
-* Realistic: $\approx n^{1.5}$
-
-|  Machine   | #Qubit | Static | Greedy |
-| ---------- | ------ | ------ | ------ |
-| IBM-????   |  11969 | 2514327 | 5713536 |
-| IBM-????   |   5105 |  878169 | 1659527 |
-| IBM-????   |   3457 |  541048 |  869439 |
-| IBM-????   |   2129 |  304439 |  422602 |
-| IBM-2023   |   1121 | 139918 | 178256 |
-| IBM-2022   |    433 |  41326 |  43592 |
-| Washington |    127 |   8369 |   8020 |
-| Brooklyn   |     65 |   3436 |   2834 |
-| Kolkata    |     27 |    904 |    759 |
-| Guadalupe  |     16 |    366 |    334 |
-| Perth      |      7 |     99 |     82 |
-| Quito      |      5 |     39 |     44 |
-
-### Experiment 2: With Synthesis
-* Initial: IBM Synthesis
-* Placer: DFS
-* Scheduler: Static/Greedy
-* Router: Orientation
-
-|  Machine   | #Qubit | Static | Greedy |
-| ---------- | ------ | ------ | ------ |
-| Washington |    127 |   3877 |   3046 |
-| Brooklyn   |     65 |   1969 |   1687 |
-| Kolkata    |     27 |    777 |    745 |
-| Guadalupe  |     16 |    370 |    366 |
-| Perth      |      7 |     85 |     82 |
-
-## IBM Result
-### Synthesis and Mapping
-
-* #CNOT: Numbers of CNOT after synthesis
-* Cost: Cost after mapping
-
-| Machine    | #Qubit | #CNOT | Cost |
-| --------   | ------ | ----- | ---- | 
-| Washington |    127 |  4012 | 9022 | 
-| Brooklyn   |     65 |  1904 | 3584 |
-| Kolkata    |     27 |   612 | 1001 |
-| Guadalupe  |     16 |   240 |  358 |
-| Perth      |      7 |    42 |  103 |
-| Quito      |      5 |    20 |   32 |
