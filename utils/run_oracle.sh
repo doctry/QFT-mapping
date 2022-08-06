@@ -9,13 +9,16 @@ depth=1
 candidates=-1
 exec_single=false
 
-echo "Results to benchmarks" > result.log
-echo "Running times to benchmarks" > time.log
+result_f=result_oracle.log
+time_f=time_oracle.log
+
+echo "Results to benchmarks" > $result_f
+echo "Running times to benchmarks" > $time_f
 for name in q17_xmg q432_xmg q499_xmg q880_xmg q1355_xmg q1908_xmg q2670_xmg q3540_xmg q5315_xmg q6288_xmg q7552_xmg; do
     python3 modify.py --direc_root $repo_root --data_root $data_root --filename $name --oracle 't' --depth $depth --candidates $candidates --exec_single $exec_single
-    echo $name >> result.log
-    echo $name >> time.log
-    { time ./Duostra ../config.json >> result.log; } 2>> time.log
-    echo "" >> result.log
-    echo "" >> time.log
+    echo $name >> $result_f
+    echo $name >> $time_f
+    { time ./Duostra ../config.json >> $result_f; } 2>> $time_f
+    echo "" >> $result_f
+    echo "" >> $time_f
 done    
