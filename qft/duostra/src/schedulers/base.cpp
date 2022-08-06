@@ -99,9 +99,18 @@ size_t Base::get_executable(QFTRouter& router) const {
     return ERROR_CODE;
 }
 
-void Base::route_one_gate(QFTRouter& router, size_t gate_idx) {
+size_t Base::route_one_gate(QFTRouter& router, size_t gate_idx, bool forget) {
     const auto& gate = topo_->get_gate(gate_idx);
     auto ops{router.assign_gate(gate)};
-    ops_.insert(ops_.end(), ops.begin(), ops.end());
+    size_t max_cost = 0;
+    for (const auto& op : ops) {
+        if (op.get_cost() > max_cost) {
+            max_cost = op.get_cost();
+        }
+    }
+    if (!forget) {
+        ops_.insert(ops_.end(), ops.begin(), ops.end());
+    }
     topo_->update_avail_gates(gate_idx);
+    return max_cost;
 }

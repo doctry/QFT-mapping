@@ -13,25 +13,25 @@ void Topology::update_avail_gates(size_t executed) {
                        end(avail_gates_));
     assert(g_exec.get_id() == executed);
 
+    executed_gates_[executed] = 0;
     for (size_t next : g_exec.get_nexts()) {
-        ++executed_gates_[executed];
         if (get_gate(next).is_avail(executed_gates_)) {
             avail_gates_.push_back(next);
         }
+    }
 
-        vector<size_t> gates_to_trim;
-        for (size_t prev_id : g_exec.get_prevs()) {
-            const auto& prev_gate = get_gate(prev_id);
-            ++executed_gates_[prev_id];
+    vector<size_t> gates_to_trim;
+    for (size_t prev_id : g_exec.get_prevs()) {
+        const auto& prev_gate = get_gate(prev_id);
+        ++executed_gates_[prev_id];
 
-            if (executed_gates_[prev_id] >= prev_gate.get_nexts().size()) {
-                gates_to_trim.push_back(prev_id);
-            }
+        if (executed_gates_[prev_id] >= prev_gate.get_nexts().size()) {
+            gates_to_trim.push_back(prev_id);
         }
+    }
 
-        for (size_t gate_id : gates_to_trim) {
-            executed_gates_.erase(gate_id);
-        }
+    for (size_t gate_id : gates_to_trim) {
+        executed_gates_.erase(gate_id);
     }
 }
 

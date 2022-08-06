@@ -44,7 +44,9 @@ class Base {
     const vector<device::Operation>& get_operations() const { return ops_; }
     size_t ops_cost() const;
 
-    void route_one_gate(QFTRouter& router, size_t gate_idx);
+    size_t route_one_gate(QFTRouter& router,
+                          size_t gate_idx,
+                          bool forget = false);
 
     size_t get_executable(QFTRouter& router) const;
 
@@ -156,11 +158,13 @@ class TreeNode {
     TreeNode(TreeNodeConf conf,
              size_t gate_idx,
              unique_ptr<QFTRouter> router,
-             unique_ptr<Base> scheduler);
+             unique_ptr<Base> scheduler,
+             size_t max_cost);
     TreeNode(TreeNodeConf conf,
              vector<size_t>&& gate_indices,
              unique_ptr<QFTRouter> router,
-             unique_ptr<Base> scheduler);
+             unique_ptr<Base> scheduler,
+             size_t max_cost);
     TreeNode(const TreeNode& other);
     TreeNode(TreeNode&& other);
 
@@ -192,6 +196,7 @@ class TreeNode {
     vector<TreeNode> children_;
 
     // The state of duostra.
+    size_t max_cost_;
     unique_ptr<QFTRouter> router_;
     unique_ptr<Base> scheduler_;
 

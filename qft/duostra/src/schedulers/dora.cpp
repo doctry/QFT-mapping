@@ -13,16 +13,19 @@ using namespace scheduler;
 TreeNode::TreeNode(TreeNodeConf conf,
                    size_t gate_idx,
                    unique_ptr<QFTRouter> router,
-                   unique_ptr<Base> scheduler)
-    : TreeNode(conf, vector<size_t>{gate_idx}, move(router), move(scheduler)) {}
+                   unique_ptr<Base> scheduler,
+                   size_t max_cost)
+    : TreeNode(conf, vector<size_t>{gate_idx}, move(router), move(scheduler), max_cost) {}
 
 TreeNode::TreeNode(TreeNodeConf conf,
                    vector<size_t>&& gate_indices,
                    unique_ptr<QFTRouter> router,
-                   unique_ptr<Base> scheduler)
+                   unique_ptr<Base> scheduler,
+                   size_t max_cost)
     : conf_(conf),
       gate_indices_(move(gate_indices)),
       children_({}),
+      max_cost_(max_cost),
       router_(move(router)),
       scheduler_(move(scheduler)) {
     route_internal_gates();
@@ -32,6 +35,7 @@ TreeNode::TreeNode(const TreeNode& other)
     : conf_(other.conf_),
       gate_indices_(other.gate_indices_),
       children_(other.children_),
+      max_cost_(other.max_cost_),
       router_(other.router_->clone()),
       scheduler_(other.scheduler_->clone()) {}
 
@@ -39,6 +43,7 @@ TreeNode::TreeNode(TreeNode&& other)
     : conf_(other.conf_),
       gate_indices_(move(other.gate_indices_)),
       children_(move(other.children_)),
+      max_cost_(other.max_cost_),
       router_(move(other.router_)),
       scheduler_(move(other.scheduler_)) {}
 
@@ -46,6 +51,7 @@ TreeNode& TreeNode::operator=(const TreeNode& other) {
     conf_ = other.conf_;
     gate_indices_ = other.gate_indices_;
     children_ = other.children_;
+    max_cost_ = other.max_cost_;
     router_ = other.router_->clone();
     scheduler_ = other.scheduler_->clone();
     return *this;
@@ -55,6 +61,7 @@ TreeNode& TreeNode::operator=(TreeNode&& other) {
     conf_ = other.conf_;
     gate_indices_ = move(other.gate_indices_);
     children_ = move(other.children_);
+    max_cost_ = other.max_cost_;
     router_ = move(other.router_);
     scheduler_ = move(other.scheduler_);
     return *this;
@@ -91,7 +98,8 @@ void TreeNode::route_internal_gates() {
         assert(std::find(avail_gates.begin(), avail_gates.end(), gate_idx) !=
                avail_gates.end());
 
-        scheduler_->route_one_gate(*router_, gate_idx);
+        max_cost_ = max(max_cost_,
+                        scheduler_->route_one_gate(*router_, gate_idx, true));
 
         assert(std::find(avail_gates.begin(), avail_gates.end(), gate_idx) ==
                avail_gates.end());
@@ -104,7 +112,8 @@ void TreeNode::route_internal_gates() {
 
     size_t gate_idx;
     while ((gate_idx = immediate_next()) != ERROR_CODE) {
-        scheduler_->route_one_gate(*router_, gate_idx);
+        max_cost_ = max(max_cost_,
+                        scheduler_->route_one_gate(*router_, gate_idx, true));
         gate_indices_.push_back(gate_idx);
     }
 
@@ -129,7 +138,7 @@ size_t TreeNode::best_cost(int depth) {
         }
 
         if (depth == 0) {
-            return scheduler().ops_cost();
+            return max_cost_;
         }
     }
 
@@ -142,21 +151,19 @@ size_t TreeNode::best_cost(int depth) {
 
     size_t best = (size_t)-1;
 
-    sort(children_.begin(), children_.end(),
-         [](const TreeNode& a, const TreeNode& b) {
-             return a.scheduler().ops_cost() < b.scheduler().ops_cost();
-         });
+    auto end = children_.end();
+    if (conf_.candidates < children_.size()) {
+        sort(children_.begin(), children_.end(),
+             [](const TreeNode& a, const TreeNode& b) {
+                 return a.max_cost_ < b.max_cost_;
+             });
+        end = children_.begin() + conf_.candidates;
+    }
 
-    auto end = conf_.candidates < children_.size()
-                   ? children_.begin() + conf_.candidates
-                   : children_.end();
-
-// Calcualtes the best cost for each children.
-// #pragma omp parallel for
+    // Calcualtes the best cost for each children.
     for (auto child = children_.begin(); child < end; ++child) {
         size_t cost = child->best_cost(depth - 1);
 
-// #pragma omp critical
         if (cost < best) {
             best = cost;
         }
@@ -178,8 +185,8 @@ size_t TreeNode::best_cost() const {
 #pragma omp parallel for
     for (size_t idx = 0; idx < avail_gates.size(); ++idx) {
         TreeNode child_node{conf_, avail_gates[idx], router().clone(),
-                            scheduler().clone()};
-        size_t cost = child_node.scheduler().ops_cost();
+                            scheduler().clone(), max_cost_};
+        size_t cost = child_node.max_cost_;
 
 #pragma omp critical
         if (cost < best) {
@@ -199,7 +206,7 @@ void TreeNode::grow() {
 
     for (size_t gate_idx : avail_gates) {
         children_.emplace_back(conf_, gate_idx, router().clone(),
-                               scheduler().clone());
+                               scheduler().clone(), max_cost_);
     }
 }
 
@@ -213,14 +220,12 @@ TreeNode TreeNode::best_child(int depth) {
     auto next_nodes = children();
     size_t best_idx = 0, best = (size_t)-1;
 
-// #pragma omp parallel for
     for (size_t idx = 0; idx < next_nodes.size(); ++idx) {
         auto& node = next_nodes[idx];
 
         assert(depth >= 1);
         size_t cost = node.best_cost(depth);
 
-// #pragma omp critical
         if (cost < best) {
             best_idx = idx;
             best = cost;
@@ -266,7 +271,7 @@ void Dora::assign_gates(unique_ptr<QFTRouter> router) {
 
     auto root = make_unique<TreeNode>(
         TreeNodeConf{never_cache_, exec_single_, conf_.candidates},
-        vector<size_t>{}, router->clone(), clone());
+        vector<size_t>{}, router->clone(), clone(), 0);
 
     // For each step. (all nodes + 1 dummy)
     TqdmWrapper bar{total_gates + 1};

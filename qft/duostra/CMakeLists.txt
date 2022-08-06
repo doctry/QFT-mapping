@@ -22,8 +22,7 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE 
     "${CMAKE_CXX_FLAGS_RELEASE} \
     -Wall -Wextra \
-    -Weffc++ \
-    -fstack-protector-all -fsanitize=undefined"
+    -Weffc++ "
 )
 if(CMAKE_BUILD_TYPE MATCHES "Release")
 cmake_print_variables(CMAKE_CXX_FLAGS_RELEASE)

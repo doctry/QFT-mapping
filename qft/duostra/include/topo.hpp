@@ -70,7 +70,7 @@ class Topology {
 
    protected:
     // data member
-    shared_ptr<DependencyGraph> dep_graph_;
+    shared_ptr<const DependencyGraph> dep_graph_;
     vector<size_t> avail_gates_;
 
     // Executed gates is a countable set.
