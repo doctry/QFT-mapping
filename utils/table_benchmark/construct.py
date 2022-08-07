@@ -27,7 +27,7 @@ benchmark2qubit = {
     "qft_10": 10,
     "sqn_258": 10,
     "urf2_277": 8,
-    "z4_268": 11
+    "z4_268": 11,
 }
 table = dict()
 
