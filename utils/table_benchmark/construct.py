@@ -27,7 +27,8 @@ benchmark2qubit = {
     "hwb8_113":9,
     "qft_10":10,
     "sqn_258":10,
-    "urf2_277":8
+    "urf2_277":8,
+    "z4_268":11
 }
 table = dict()
 def checkfiles():
@@ -112,6 +113,8 @@ def main(args):
                 for _ in range(3):
                     f.readline()
                 benchmark = f.readline()[:-1]
+
+    table.pop('qft_10', None)            
     tables = {k: v for k, v in sorted(table.items(), key=lambda item: item[1]['gate'])}
     tabless = {k: v for k, v in sorted(tables.items(), key=lambda item: item[1]['qubit'])}
     with open('table.txt','w') as w:

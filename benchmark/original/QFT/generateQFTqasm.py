@@ -3,9 +3,9 @@ from pathlib import Path
 
 
 def decomposeH(w, ID):
-    w.write("x q[{}];\n".format(ID))
-    w.write("rz(pi) q[{}];\n".format(ID))
-    w.write("x q[{}];\n".format(ID))
+    w.write("rz(pi/2) q[{}];\n".format(ID))
+    w.write("sx q[{}];\n".format(ID))
+    w.write("rz(pi/2) q[{}];\n".format(ID))
 
 
 def decomposeCRZ(w, ang, ctrl, targ):
