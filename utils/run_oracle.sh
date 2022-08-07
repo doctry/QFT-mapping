@@ -8,6 +8,8 @@ data_root='/home/chinyi0523/QFT-mapping/benchmark/original/EDA_traditional/'
 depth=1
 candidates=-1
 exec_single=false
+result_f=result_oracle_${depth}_${exec_single}
+time_f=time_oracle_${depth}_${exec_single}
 
 echo "Results to benchmarks" > $result_f
 echo "Running times to benchmarks" > $time_f
