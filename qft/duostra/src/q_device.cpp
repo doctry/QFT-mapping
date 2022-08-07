@@ -132,6 +132,7 @@ void Qubit::reset() {
 }
 
 void Qubit::take_route(size_t cost, size_t swap_time) {
+    // mark the qubit as visited and update cost
     cost_ = cost;
     swap_time_ = swap_time;
     taken_ = true;
@@ -212,6 +213,7 @@ size_t Device::get_num_qubits() const {
 
 void Device::init_apsp() {
     cout << "calculating apsp..." << endl;
+    // init adj matrix
     torch::Tensor adj_mat =
         torch::zeros({int(qubits_.size()), int(qubits_.size())});
     for (size_t i = 0; i < qubits_.size(); ++i) {
@@ -221,8 +223,10 @@ void Device::init_apsp() {
         }
     }
 
+    // Floyd-Warshall
     ShortestPath shortest_path_torch = apsp(adj_mat);
 
+    // transfer apsp from torch tensor to 2d-vector
     shortest_cost_.reserve(qubits_.size());
     for (size_t i = 0; i < qubits_.size(); ++i) {
         vector<size_t> arr(qubits_.size(), 0);
@@ -284,11 +288,13 @@ vector<device::Operation> Device::duostra_routing(Operator op,
     size_t q0_idx = get<0>(qs);  // source 0
     size_t q1_idx = get<1>(qs);  // source 1
 
+    // If two sources compete for the same qubit, the one with smaller occu goes first
     if (get_qubit(q0_idx).get_avail_time() >
         get_qubit(q1_idx).get_avail_time()) {
         swap(q0_idx, q1_idx);
     } else if (get_qubit(q0_idx).get_avail_time() ==
                get_qubit(q1_idx).get_avail_time()) {
+        // orientation means qubit with smaller logical idx has a little priority
         if (orient && get_qubit(q0_idx).get_topo_qubit() >
                           get_qubit(q1_idx).get_topo_qubit()) {
             swap(q0_idx, q1_idx);
@@ -298,11 +304,12 @@ vector<device::Operation> Device::duostra_routing(Operator op,
     Qubit& t0 = get_qubit(q0_idx);  // target 0
     Qubit& t1 = get_qubit(q1_idx);  // target 1
 
-    // priority queue
+    // priority queue: pop out the node with the smallest cost from both the sources
     priority_queue<device::AStarNode, vector<device::AStarNode>,
                    device::AStarComp>
         pq;
 
+    // init conditions for the sources
     t0.mark(false, t0.get_id());
     t0.take_route(t0.get_cost(), 0);
     t1.mark(true, t1.get_id());
@@ -316,14 +323,17 @@ vector<device::Operation> Device::duostra_routing(Operator op,
     touch_adj(t1, pq, true);
 #endif
 
-    while (!is_adj)  // set not adjacent
+    // the two paths from the two sources propagate until the two paths meet each other
+    while (!is_adj)
     {
+        // each iteration gets an element from the priority queue
         device::AStarNode next(pq.top());
         pq.pop();
         size_t q_next_idx = next.get_id();
         Qubit& q_next = get_qubit(q_next_idx);
         assert(q_next.get_swtch() == next.get_swtch());
 
+        // mark the element as visited and check its neighbors
         size_t cost = next.get_cost();
         assert(cost >= SWAP_CYCLE);
         size_t op_time = cost - SWAP_CYCLE;
@@ -372,13 +382,18 @@ tuple<bool, size_t> Device::touch_adj(Qubit& qubit,
                                                      vector<device::AStarNode>,
                                                      device::AStarComp>& pq,
                                       bool swtch) {
+    // mark all the adjacent qubits as seen and push them into the priority queue
     const vector<size_t>& adj_list = qubit.get_adj_list();
     for (size_t i = 0; i < adj_list.size(); ++i) {
         Qubit& adj = qubits_[adj_list[i]];
-        if (adj.is_marked())  // already in the queue
+        // see if already in the queue
+        if (adj.is_marked())
         {
+            // see if the taken one is from different path from the original qubit
+            // if yes, means the two paths meet each other
             if (adj.is_taken()) {
-                if (adj.get_swtch() != swtch)  // touch target
+                // touch target
+                if (adj.get_swtch() != swtch) 
                 {
                     assert(adj.get_id() == adj_list[i]);
                     return make_tuple(true, adj.get_id());
@@ -387,6 +402,7 @@ tuple<bool, size_t> Device::touch_adj(Qubit& qubit,
             continue;
         }
 
+        // push the node into the priority queue
         size_t cost = max(qubit.get_cost(), adj.get_avail_time()) + SWAP_CYCLE;
         size_t estimated_cost = 0;
         size_t heuristic_cost = cost + estimated_cost;
@@ -417,7 +433,10 @@ vector<device::Operation> Device::traceback([[maybe_unused]] Operator op,
 
     size_t trace_0 = q0.get_id();
     size_t trace_1 = q1.get_id();
-    while (trace_0 != t0.get_id())  // trace 0
+
+    // traceback by tracing the parent iteratively
+    // trace 0
+    while (trace_0 != t0.get_id())
     {
         Qubit& q_trace_0 = get_qubit(trace_0);
         size_t trace_pred_0 = q_trace_0.get_pred();
