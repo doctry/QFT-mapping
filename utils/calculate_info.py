@@ -10,16 +10,7 @@ single_gate_time = 1
 double_gate_time = 2
 
 with open(output, "w") as w:
-    w.write(
-        "oracle"
-        + " & "
-        + "#Q"
-        + " & "
-        + "Ideal"
-        + " & "
-        + "#Gate"
-        + "\n"
-    )
+    w.write("oracle" + " & " + "#Q" + " & " + "Ideal" + " & " + "#Gate" + "\n")
 
 for file in os.listdir(folder):
     if file.split(".")[-1] != "qasm":
@@ -61,7 +52,7 @@ for file in os.listdir(folder):
         )
         with open(output, "a") as w:
             w.write(
-                file.split('.')[0]
+                file.split(".")[0]
                 + " & "
                 + str(qubit_number)
                 + " & "

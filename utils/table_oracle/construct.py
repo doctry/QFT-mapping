@@ -5,12 +5,29 @@ table = dict()
 
 
 def checkfiles(single, depth):
-    if not (exists("info.txt") & exists("result_oracle_greedy.log") & exists("time_oracle_greedy.log")):
+    if not (
+        exists("info.txt")
+        & exists("result_oracle_greedy.log")
+        & exists("time_oracle_greedy.log")
+    ):
         print("info.txt / Greedy result and/or time not exist")
         exit()
     for i in range(depth):
-        if not (exists("result_oracle_{dep}_{sin}.log".format(dep=i+1,sin='true' if single else 'false')) & exists("time_oracle_{dep}_{sin}.log".format(dep=i+1,sin='true' if single else 'false'))):
-            print("Search-based with depth {} result and/or time not exist".format(i+1))
+        if not (
+            exists(
+                "result_oracle_{dep}_{sin}.log".format(
+                    dep=i + 1, sin="true" if single else "false"
+                )
+            )
+            & exists(
+                "time_oracle_{dep}_{sin}.log".format(
+                    dep=i + 1, sin="true" if single else "false"
+                )
+            )
+        ):
+            print(
+                "Search-based with depth {} result and/or time not exist".format(i + 1)
+            )
             exit()
 
 
@@ -39,19 +56,26 @@ def main(args):
                 break
             else:
                 benchmark, qubit, ideal, gate = line.split(" & ")
-            
-                table[benchmark] = {
-                        "qubit": int(qubit),
-                        "gate": int(gate[:-1]),
-                        "ideal": int(ideal)
-                }
 
+                table[benchmark] = {
+                    "qubit": int(qubit),
+                    "gate": int(gate[:-1]),
+                    "ideal": int(ideal),
+                }
 
     for scheduler in ["greedy", "search"]:
         depth = 1 if scheduler == "greedy" else args.max_depth
-        
+
         for i in range(depth):
-            with open("result_oracle_{}.log".format("greedy" if scheduler == "greedy" else "{dep}_{sin}".format(dep=i+1, sin='true' if args.exec_single else 'false'))) as f:
+            with open(
+                "result_oracle_{}.log".format(
+                    "greedy"
+                    if scheduler == "greedy"
+                    else "{dep}_{sin}".format(
+                        dep=i + 1, sin="true" if args.exec_single else "false"
+                    )
+                )
+            ) as f:
                 f.readline()
                 f.readline()
                 benchmark = f.readline()[:-1]
@@ -65,12 +89,20 @@ def main(args):
                     if scheduler == "greedy":
                         table[benchmark]["cost_{}".format(scheduler)] = cost
                     else:
-                        table[benchmark]["cost_{sch}_{dep}".format(sch=scheduler,dep=i+1)] = cost
+                        table[benchmark][
+                            "cost_{sch}_{dep}".format(sch=scheduler, dep=i + 1)
+                        ] = cost
                     for _ in range(3):
                         f.readline()
                     benchmark = f.readline()[:-1]
 
-            with open("time_oracle_{}.log".format("greedy" if scheduler == "greedy" else "1_{}".format('true' if args.exec_single else 'false'))) as f:
+            with open(
+                "time_oracle_{}.log".format(
+                    "greedy"
+                    if scheduler == "greedy"
+                    else "1_{}".format("true" if args.exec_single else "false")
+                )
+            ) as f:
                 f.readline()
                 f.readline()
                 benchmark = f.readline()[:-1]
@@ -81,22 +113,48 @@ def main(args):
                     if scheduler == "greedy":
                         table[benchmark]["time_{}".format(scheduler)] = sec
                     else:
-                        table[benchmark]["time_{sch}_{dep}".format(sch=scheduler,dep=i+1)] = sec
+                        table[benchmark][
+                            "time_{sch}_{dep}".format(sch=scheduler, dep=i + 1)
+                        ] = sec
                     for _ in range(3):
                         f.readline()
                     benchmark = f.readline()[:-1]
-    
+
     tables = {k: v for k, v in sorted(table.items(), key=lambda item: item[1]["gate"])}
     tabless = {
         k: v for k, v in sorted(tables.items(), key=lambda item: item[1]["qubit"])
     }
-    
-    print("% oracle".ljust(10, " ")+" & "+"cost_GR".center(7, " ")+" & "+"cost_SE_D1".center(11, " ")+" & "+"CIR_SE_D1".center(9, " "))
+
+    print(
+        "% oracle".ljust(10, " ")
+        + " & "
+        + "cost_GR".center(7, " ")
+        + " & "
+        + "cost_SE_D1".center(11, " ")
+        + " & "
+        + "CIR_SE_D1".center(9, " ")
+    )
     for benchmark in tabless.keys():
-        print(str(benchmark).rjust(10, " "),end=" & ")
-        print(str("{:,}".format(table[benchmark]['cost_greedy'])).rjust(7, " "),end=" & ")
-        print(str("{:,}".format(table[benchmark]['cost_search_1'])).rjust(11, " "),end=" & ")
-        print(str("{:,.2f}".format((table[benchmark]['cost_greedy']-table[benchmark]['cost_search_1'])*100/table[benchmark]['cost_greedy'])).rjust(9, " "))
+        print(str(benchmark).rjust(10, " "), end=" & ")
+        print(
+            str("{:,}".format(table[benchmark]["cost_greedy"])).rjust(7, " "), end=" & "
+        )
+        print(
+            str("{:,}".format(table[benchmark]["cost_search_1"])).rjust(11, " "),
+            end=" & ",
+        )
+        print(
+            str(
+                "{:,.2f}".format(
+                    (
+                        table[benchmark]["cost_greedy"]
+                        - table[benchmark]["cost_search_1"]
+                    )
+                    * 100
+                    / table[benchmark]["cost_greedy"]
+                )
+            ).rjust(9, " ")
+        )
     # tables = {k: v for k, v in sorted(table.items(), key=lambda item: item[1]["gate"])}
     # tabless = {
     #     k: v for k, v in sorted(tables.items(), key=lambda item: item[1]["qubit"])
