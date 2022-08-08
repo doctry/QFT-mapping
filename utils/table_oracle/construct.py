@@ -43,7 +43,7 @@ def time2sec(time):
 def satisfyOverleaf(name):
     name = name.split("_")
     name = "\\_".join(name)
-    return "\\quad "+name
+    return "\\quad " + name
 
 
 def main(args):
@@ -158,10 +158,7 @@ def main(args):
                         8, " "
                     ),
                     ratio_greedy="{:,.2f}".format(
-                        (
-                            table[benchmark]["cost_greedy"]
-                            / table[benchmark]["ideal"]
-                        )
+                        (table[benchmark]["cost_greedy"] / table[benchmark]["ideal"])
                     ).rjust(10, " "),
                     cost_d1="{:,}".format(table[benchmark]["cost_search_1"]).rjust(
                         8, " "
@@ -170,10 +167,7 @@ def main(args):
                         8, " "
                     ),
                     ratio_d1="{:,.2f}".format(
-                        (
-                            table[benchmark]["cost_search_1"]
-                            / table[benchmark]["ideal"]
-                        )
+                        (table[benchmark]["cost_search_1"] / table[benchmark]["ideal"])
                     ).rjust(10, " "),
                     C_d1="{:,.2f}".format(
                         (
