@@ -26,7 +26,7 @@ def time2sec(time):
 def satisfyOverleaf(name):
     name = name.split("_")
     name = "\\_".join(name)
-    return name
+    return "\\quad "+name
 
 
 def main(args):
@@ -90,97 +90,73 @@ def main(args):
     tabless = {
         k: v for k, v in sorted(tables.items(), key=lambda item: item[1]["qubit"])
     }
-    
-    print("% oracle".ljust(10, " ")+" & "+"cost_GR".center(7, " ")+" & "+"cost_SE_D1".center(11, " ")+" & "+"CIR_SE_D1".center(9, " "))
-    for benchmark in tabless.keys():
-        print(str(benchmark).rjust(10, " "),end=" & ")
-        print(str("{:,}".format(table[benchmark]['cost_greedy'])).rjust(7, " "),end=" & ")
-        print(str("{:,}".format(table[benchmark]['cost_search_1'])).rjust(11, " "),end=" & ")
-        print(str("{:,.2f}".format((table[benchmark]['cost_greedy']-table[benchmark]['cost_search_1'])*100/table[benchmark]['cost_greedy'])).rjust(9, " "))
-    # tables = {k: v for k, v in sorted(table.items(), key=lambda item: item[1]["gate"])}
-    # tabless = {
-    #     k: v for k, v in sorted(tables.items(), key=lambda item: item[1]["qubit"])
-    # }
-    # with open("table.txt", "w") as w:
-    #     w.write(
-    #         "{bench}  &  {qubit}  &  {gate}  &  {ideal}  &  {cost_TOQM}  &  {time_TOQM}  &  {cost_greedy}  &  {time_greedy}  &  {C_greedy}  &  {T_greedy}  &  {cost_search}  &  {time_search}  &  {C_search}  &  {T_search}  \\\\\n".format(
-    #             bench="% benchmark".ljust(16, " "),
-    #             qubit="#Q".rjust(2, " "),
-    #             gate="#Gate".center(7, " "),
-    #             ideal="Ideal".center(7, " "),
-    #             cost_TOQM="cost_TO".center(7, " "),
-    #             time_TOQM="time_TO".center(7, " "),
-    #             cost_greedy="cost_GR".center(7, " "),
-    #             time_greedy="time_GR".center(7, " "),
-    #             C_greedy="CIR_GR".center(7, " "),
-    #             T_greedy="TIx_GR".center(7, " "),
-    #             cost_search="cost_SE".center(7, " "),
-    #             time_search="time_SE".center(7, " "),
-    #             C_search="CIR_SE".center(7, " "),
-    #             T_search="TIx_SE".center(7, " "),
-    #         )
-    #     )
-    #     count = 0
-    #     for benchmark in tabless.keys():
-    #         count += 1
-    #         if args.shading:
-    #             if count % 2 == 0:
-    #                 w.write("\\rowcolor{Gray}\n")
 
-    #         w.write(
-    #             "{bench}  &  {qubit}  &  {gate}  &  {ideal}  &  {cost_TOQM}  &  {time_TOQM}  &  {cost_greedy}  &  {time_greedy}  &  {C_greedy}  &  {T_greedy}  &  {cost_search}  &  {time_search}  &  {C_search}  &  {T_search}  \\\\\n".format(
-    #                 bench=satisfyOverleaf(benchmark).ljust(16, " "),
-    #                 qubit=str(table[benchmark]["qubit"]).rjust(2, " "),
-    #                 gate="{:,}".format(table[benchmark]["gate"]).rjust(7, " "),
-    #                 ideal="{:,}".format(table[benchmark]["ideal"]).rjust(7, " "),
-    #                 cost_TOQM="{:,}".format(table[benchmark]["cost_TOQM"]).rjust(
-    #                     7, " "
-    #                 ),
-    #                 time_TOQM="{:,.2f}".format(table[benchmark]["time_TOQM"]).rjust(
-    #                     7, " "
-    #                 ),
-    #                 cost_greedy="{:,}".format(table[benchmark]["cost_greedy"]).rjust(
-    #                     7, " "
-    #                 ),
-    #                 time_greedy="{:,.2f}".format(table[benchmark]["time_greedy"]).rjust(
-    #                     7, " "
-    #                 ),
-    #                 C_greedy="{:,.2f}".format(
-    #                     (
-    #                         table[benchmark]["cost_TOQM"]
-    #                         - table[benchmark]["cost_greedy"]
-    #                     )
-    #                     * 100
-    #                     / table[benchmark]["cost_greedy"]
-    #                 ).rjust(7, " "),
-    #                 T_greedy="{:,.1f}".format(
-    #                     (
-    #                         table[benchmark]["time_TOQM"]
-    #                         / table[benchmark]["time_greedy"]
-    #                     )
-    #                 ).rjust(7, " "),
-    #                 cost_search="{:,}".format(table[benchmark]["cost_search"]).rjust(
-    #                     7, " "
-    #                 ),
-    #                 time_search="{:,.2f}".format(table[benchmark]["time_search"]).rjust(
-    #                     7, " "
-    #                 ),
-    #                 C_search="{:,.2f}".format(
-    #                     (
-    #                         table[benchmark]["cost_TOQM"]
-    #                         - table[benchmark]["cost_search"]
-    #                     )
-    #                     * 100
-    #                     / table[benchmark]["cost_search"]
-    #                 ).rjust(7, " "),
-    #                 T_search="{:,.1f}".format(
-    #                     (
-    #                         table[benchmark]["time_TOQM"]
-    #                         / table[benchmark]["time_search"]
-    #                     )
-    #                 ).rjust(7, " "),
-    #             )
-    #         )
+    with open("table.txt", "w") as w:
+        w.write(
+            "{bench}  &  {qubit}  &  {gate}  &  {ideal}  &  {cost_greedy}  &  {ratio_greedy}  &  {time_greedy}  &  {cost_d1}  &  {ratio_d1}  &  {time_d1}  &  {C_d1}  &  {T_d1}  \\\\\n".format(
+                bench="% oracle".ljust(16, " "),
+                qubit="#Q".rjust(6, " "),
+                gate="#Gate".center(7, " "),
+                ideal="Ideal".center(7, " "),
+                cost_greedy="cost_GR".center(8, " "),
+                time_greedy="time_GR".center(8, " "),
+                ratio_greedy="ratio_GR".center(10, " "),
+                C_greedy="CIR_GR".center(8, " "),
+                T_greedy="TIx_GR".center(8, " "),
+                cost_d1="cost_SE1".center(8, " "),
+                time_d1="time_SE1".center(8, " "),
+                ratio_d1="ratio_SE1".center(10, " "),
+                C_d1="CIR_SE1".center(8, " "),
+                T_d1="TIx_SE1".center(8, " "),
+            )
+        )
+        for benchmark in tabless.keys():
+            w.write(
+                "{bench}  &  {qubit}  &  {gate}  &  {ideal}  &  {cost_greedy}  &  {ratio_greedy}  &  {time_greedy}  &  {cost_d1}  &  {ratio_d1}  &  {time_d1}  &  {C_d1}  &  {T_d1}  \\\\\n".format(
+                    bench=satisfyOverleaf(benchmark).ljust(16, " "),
+                    qubit="{:,}".format(table[benchmark]["qubit"]).rjust(6, " "),
+                    gate="{:,}".format(table[benchmark]["gate"]).rjust(7, " "),
+                    ideal="{:,}".format(table[benchmark]["ideal"]).rjust(7, " "),
+                    cost_greedy="{:,}".format(table[benchmark]["cost_greedy"]).rjust(
+                        8, " "
+                    ),
+                    time_greedy="{:,.2f}".format(table[benchmark]["time_greedy"]).rjust(
+                        8, " "
+                    ),
+                    ratio_greedy="{:,.2f}".format(
+                        (
+                            table[benchmark]["cost_greedy"]
+                            / table[benchmark]["ideal"]
+                        )
+                    ).rjust(10, " "),
+                    cost_d1="{:,}".format(table[benchmark]["cost_search_1"]).rjust(
+                        8, " "
+                    ),
+                    time_d1="{:,.2f}".format(table[benchmark]["time_search_1"]).rjust(
+                        8, " "
+                    ),
+                    ratio_d1="{:,.2f}".format(
+                        (
+                            table[benchmark]["cost_search_1"]
+                            / table[benchmark]["ideal"]
+                        )
+                    ).rjust(10, " "),
+                    C_d1="{:,.2f}".format(
+                        (
+                            table[benchmark]["cost_greedy"]
+                            - table[benchmark]["cost_search_1"]
+                        )
+                        * 100
+                        / table[benchmark]["cost_greedy"]
+                    ).rjust(8, " "),
+                    T_d1="{:,.1f}".format(
+                        (
+                            table[benchmark]["time_search_1"]
+                            / table[benchmark]["time_greedy"]
+                        )
+                    ).rjust(8, " "),
+                )
+            )
 
 
 def parse_args() -> Namespace:

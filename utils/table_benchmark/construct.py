@@ -120,6 +120,8 @@ def main(args):
                 for _ in range(3):
                     f.readline()
                 benchmark = f.readline()[:-1]
+                
+    table.pop('qft_10', None)   
     tables = {k: v for k, v in sorted(table.items(), key=lambda item: item[1]["gate"])}
     tabless = {
         k: v for k, v in sorted(tables.items(), key=lambda item: item[1]["qubit"])
@@ -174,7 +176,7 @@ def main(args):
                             - table[benchmark]["cost_greedy"]
                         )
                         * 100
-                        / table[benchmark]["cost_greedy"]
+                        / table[benchmark]["cost_TOQM"]
                     ).rjust(7, " "),
                     T_greedy="{:,.1f}".format(
                         (
@@ -194,7 +196,7 @@ def main(args):
                             - table[benchmark]["cost_search"]
                         )
                         * 100
-                        / table[benchmark]["cost_search"]
+                        / table[benchmark]["cost_TOQM"]
                     ).rjust(7, " "),
                     T_search="{:,.1f}".format(
                         (
