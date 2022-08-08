@@ -39,6 +39,9 @@ def checkfiles():
     if not (exists("result_search.log") & exists("time_search.log")):
         print("Search-based result and/or time not exist")
         exit()
+    if not (exists("result_greedy.log") & exists("time_greedy.log")):
+        print("Search-based result and/or time not exist")
+        exit()
 
 
 def time2sec(time):
