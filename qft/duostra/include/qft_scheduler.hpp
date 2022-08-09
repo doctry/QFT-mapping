@@ -49,6 +49,8 @@ class Base {
                           bool forget = false);
 
     size_t get_executable(QFTRouter& router) const;
+    size_t get_executable(QFTRouter& router,
+                          const vector<size_t>& wait_list) const;
 
    protected:
     unique_ptr<topo::Topology> topo_;
@@ -184,6 +186,8 @@ class TreeNode {
     bool done() const { return scheduler().get_avail_gates().empty(); }
     bool is_leaf() const { return children_.empty(); }
     void grow_if_needed();
+
+    bool can_grow() const;
 
    private:
     TreeNodeConf conf_;

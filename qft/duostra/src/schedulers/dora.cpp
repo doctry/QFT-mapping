@@ -137,12 +137,12 @@ size_t TreeNode::best_cost(int depth) {
     // Grow if remaining depth >= 2.
     // Terminates on leaf nodes.
     if (is_leaf()) {
-        if (depth > 1) {
-            grow();
+        if (depth <= 0 || !can_grow()) {
+            return max_cost_;
         }
 
-        if (depth == 0) {
-            return max_cost_;
+        if (depth > 1) {
+            grow();
         }
     }
 
@@ -151,9 +151,8 @@ size_t TreeNode::best_cost(int depth) {
         return best_cost();
     }
 
+    assert(depth > 1);
     assert(children_.size() != 0);
-
-    size_t best = (size_t)-1;
 
     auto end = children_.end();
     if (conf_.candidates < children_.size()) {
@@ -165,6 +164,7 @@ size_t TreeNode::best_cost(int depth) {
     }
 
     // Calcualtes the best cost for each children.
+    size_t best = (size_t)-1;
     for (auto child = children_.begin(); child < end; ++child) {
         size_t cost = child->best_cost(depth - 1);
 
@@ -199,6 +199,10 @@ size_t TreeNode::best_cost() const {
     }
 
     return best;
+}
+
+inline bool TreeNode::can_grow() const {
+    return !scheduler().get_avail_gates().empty();
 }
 
 // Grow by adding availalble gates to children.

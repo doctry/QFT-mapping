@@ -146,6 +146,13 @@ void Onion::assign_gates(unique_ptr<QFTRouter> router) {
     std::cout << avail_gates.size() << "\n";
 }
 
+size_t Onion::executable_with_fallback(
+    QFTRouter& router,
+    const std::vector<size_t>& wait_list) const {
+    size_t gate_idx = get_executable(router, wait_list);
+    return greedy_fallback(router, wait_list, gate_idx);
+}
+
 void Onion::assign_generation(
     QFTRouter& router,
     std::unordered_map<size_t, std::vector<size_t>>& gen_to_gates,
@@ -177,7 +184,7 @@ void Onion::assign_generation(
 void Onion::assign_from_wait_list(QFTRouter& router,
                                   vector<size_t>& wait_list,
                                   size_t& total_size) {
-    size_t gate_idx = get_executable(router);
+    size_t gate_idx = get_executable(router, wait_list);
     gate_idx = greedy_fallback(router, wait_list, gate_idx);
 
     auto erase_idx = std::find(wait_list.begin(), wait_list.end(), gate_idx);

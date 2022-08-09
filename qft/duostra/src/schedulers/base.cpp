@@ -91,7 +91,19 @@ size_t Base::ops_cost() const {
 }
 
 size_t Base::get_executable(QFTRouter& router) const {
-    for (size_t gate_idx : topo_->get_avail_gates()) {
+    const auto& avail_gates = topo_->get_avail_gates();
+    return get_executable(router, avail_gates);
+}
+
+size_t Base::get_executable(QFTRouter& router,
+                            const vector<size_t>& wait_list) const {
+    const auto& avail_gates = topo_->get_avail_gates();
+    for (size_t gate_idx : wait_list) {
+        assert(find(avail_gates.cbegin(), avail_gates.cend(), gate_idx) !=
+               avail_gates.end());
+    }
+
+    for (size_t gate_idx : wait_list) {
         if (router.is_executable(topo_->get_gate(gate_idx))) {
             return gate_idx;
         }
