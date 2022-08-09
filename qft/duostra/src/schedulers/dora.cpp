@@ -15,7 +15,11 @@ TreeNode::TreeNode(TreeNodeConf conf,
                    unique_ptr<QFTRouter> router,
                    unique_ptr<Base> scheduler,
                    size_t max_cost)
-    : TreeNode(conf, vector<size_t>{gate_idx}, move(router), move(scheduler), max_cost) {}
+    : TreeNode(conf,
+               vector<size_t>{gate_idx},
+               move(router),
+               move(scheduler),
+               max_cost) {}
 
 TreeNode::TreeNode(TreeNodeConf conf,
                    vector<size_t>&& gate_indices,
@@ -153,11 +157,11 @@ size_t TreeNode::best_cost(int depth) {
 
     auto end = children_.end();
     if (conf_.candidates < children_.size()) {
-        sort(children_.begin(), children_.end(),
-             [](const TreeNode& a, const TreeNode& b) {
-                 return a.max_cost_ < b.max_cost_;
-             });
         end = children_.begin() + conf_.candidates;
+        nth_element(children_.begin(), end, children_.end(),
+                    [](const TreeNode& a, const TreeNode& b) {
+                        return a.max_cost_ < b.max_cost_;
+                    });
     }
 
     // Calcualtes the best cost for each children.
