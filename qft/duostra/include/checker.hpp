@@ -25,8 +25,7 @@ class Checker {
         }
     }
 
-    void apply_gate(device::Operation& op,
-                    device::Qubit& q0) {
+    void apply_gate(device::Operation& op, device::Qubit& q0) {
         size_t start = std::get<0>(op.get_duration());
         size_t end = std::get<1>(op.get_duration());
 
@@ -65,7 +64,7 @@ class Checker {
         q1.set_occupied_time(end);
     }
 
-    void apply_Swap(self, device::Operation& op) {
+    void apply_Swap(device::Operation& op) {
         if (op.get_operator() != Operator::Swap) {
             std::cerr << op.get_operator_name << " in apply_Swap" << std::endl;
             abort();
@@ -81,7 +80,7 @@ class Checker {
     }
 
     bool apply_CX(device::Operation& op, topo::Gate& gate) {
-        if(!(op.get_operator() == Operator::CX)){
+        if (!(op.get_operator() == Operator::CX)) {
             std::cerr << op.get_operator_name() << " in apply_CX" << std::endl;
             abort();
         }
@@ -91,23 +90,24 @@ class Checker {
         auto& q1 = device_.get_qubit(q1_idx);
 
         size_t topo_0 = device2topo_[q0_idx];
-        if(topo_0 == ERROR_CODE) {
+        if (topo_0 == ERROR_CODE) {
             std::cerr << "topo_0 is ERROR CODE" << std::endl;
             abort();
         }
         size_t topo_1 = device2topo_[q1_idx];
-        if(topo_1 == ERROR_CODE) {
+        if (topo_1 == ERROR_CODE) {
             std::cerr << "topo_1 is ERRORCODE" << std::endl;
             abort();
         }
 
         if (topo_0 > topo_1) {
             swap(topo_0, topo_1);
-        } else if(topo_0 == topo_1) {
+        } else if (topo_0 == topo_1) {
             std::cerr "topo_0 == topo_1: " << topo_0 << std::endl;
             abort();
         }
-        if(topo_0 != std::get<0>(gate.get_qubits()) || topo_1 != std::get<1>(gate.get_qubits())){
+        if (topo_0 != std::get<0>(gate.get_qubits()) ||
+            topo_1 != std::get<1>(gate.get_qubits())) {
             return false;
         }
 
@@ -116,24 +116,26 @@ class Checker {
     }
 
     bool apply_Single(device::Operation& op, topo::Gate& gate) {
-        if(!(op.get_operator() == Operator::Single)){
-            std::cerr << op.get_operator_name() << " in apply_Single" << std::endl;
+        if (!(op.get_operator() == Operator::Single)) {
+            std::cerr << op.get_operator_name() << " in apply_Single"
+                      << std::endl;
             abort();
         }
         size_t q0_idx = std::get<0>(op.get_qubits());
-        if(std::get<1>(op.get_qubits()) != ERROR_CODE){
-            std::cerr << "Single gate " << gate.get_id() << " has no null second qubit" << std::endl;
+        if (std::get<1>(op.get_qubits()) != ERROR_CODE) {
+            std::cerr << "Single gate " << gate.get_id()
+                      << " has no null second qubit" << std::endl;
             abort();
         }
         auto& q0 = device_.get_qubit(q0_idx);
 
         size_t topo_0 = device2topo_[q0_idx];
-        if(topo_0 == ERROR_CODE) {
+        if (topo_0 == ERROR_CODE) {
             std::cerr << "topo_0 is ERROR CODE" << std::endl;
             abort();
         }
 
-        if(topo_0 != std::get<0>(gate.get_qubits())){
+        if (topo_0 != std::get<0>(gate.get_qubits())) {
             return false;
         }
 
@@ -141,42 +143,57 @@ class Checker {
         return true;
     }
 
-    size_t test_operations(self) {
+    void test_operations() {
         std::vector<size_t> finished_gates;
-        for (auto& op: ops_) {
-            
-        }
-        for op in self.operations:
-            if op.operator == "Swap":
-                self.apply_Swap(op)
-            elif op.operator == "CX":
-                avail_gates = self.topo.avail_gates
-                pass_condition = False
-                for g in avail_gates:
-                    if self.apply(op, self.topo.gates[g]):
-                        pass_condition = True
-                        topo.update_avail_gates(g)
-                        finished_gates.append(g)
-                        break
-                if pass_condition == False:
-                    print("Executed gates:")
-                    for g in finished_gates:
-                        print(self.topo.gates[g])
-                    print("Available gates:")
-                    for g in avail_gates:
-                        print(self.topo.gates[g])
-                    print("Device status:")
-                    print(self.device)
-                    print("Failed Operation", op)
-                    raise RuntimeError("Operation cannot match device.")
+        for (auto& op : ops_) {
+            if (op.get_operator() == Operator::Swap) {
+                apply_Swap(op);
+            } else {
+                auto& avail_gates = topo_.get_avail_gates();
+                bool pass_condition = false;
+                if (op.get_operator() == Operator::CX) {
+                    for (auto gate : avail_gates) {
+                        if (apply_CX(op, topo_.get_gate(gate))) {
+                            pass_condition = true;
+                            topo_.update_avail_gates(gate);
+                            finished_gates.push_back(g);
+                        }
+                    }
+                } else if (op.get_operator() == Operator::Single) {
+                    for (auto gate : avail_gates) {
+                        if (apply_Single(op, topo_.get_gate(gate))) {
+                            pass_condition = true;
+                            topo_.update_avail_gates(gate);
+                            finished_gates.push_back(g);
+                        }
+                    }
+                } else {
+                    std::cerr << "Error gate type " << op.get_operator_name() << std::endl;
+                    abort();
+                }
+                if (!pass_condition) {
+                    std::cerr << "Executed gates:\n";
+                    for (auto gate : finished_gates) {
+                        std::cerr << gate << "\n";
+                    }
+                    std::cerr << "Available gates:\n";
+                    for (auto gate : avail_gates) {
+                        std::cerr << gate << "\n";
+                    }
+                    std::cerr << "Device status:\n";
+                    device_.print_device_state();
+                    std::cerr << "Failed Operation " << op;
+                    abort();
+                }
+            }
 
-        print("num gates:", len(finished_gates))
-        print("num operations:", len(self.operations))
-        assert len(finished_gates) == len(self.topo.gates), [
-            len(finished_gates),
-            len(self.topo.gates),
-        ]
-        return self.operations[-1].duration[1]
+            std::cout << "num gates: " << finished_gates.size() << "\n"
+            << "num operations:" << ops_.size() << "\n";
+            if(finished_gates.size() != topo_.get_num_gates()) {
+                std::cerr << "Number of finished gates " << finished_gates.size() << " different from number of gates" << topo_.get_num_gates() << std::endl;
+                abort();
+            }
+        }
     }
 
    private:
