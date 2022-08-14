@@ -16,9 +16,10 @@ class Base {
     Base(Base&& other) = delete;
     virtual ~Base() {}
 
-    void place_and_assign(Device& device) {
+    std::vector<size_t> place_and_assign(Device& device) {
         auto assign = place(device);
         device.place(assign);
+        return assign;
     }
 
    protected:

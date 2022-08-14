@@ -8,8 +8,11 @@ class Checker {
    public:
     Checker(topo::Topology& topo,
             device::Device& device,
-            std::vector<device::Operation>& ops)
-        : topo_(topo), device_(device), ops_(ops) {}
+            const std::vector<device::Operation>& ops,
+            const std::vector<size_t>& assign)
+        : topo_(topo), device_(device), ops_(ops) {
+            device_.place(assign);
+        }
 
     size_t get_cycle(device::Operator& op_type) {
         switch (op_type) {
@@ -76,7 +79,9 @@ class Checker {
         apply_gate(op, q0, q1);
 
         // swap
-        swap(device2topo_[q0_idx], device2topo_[q1_idx]);
+        size_t temp = q0.get_topo_qubit();
+        q0.set_topo_qubit(q1.get_topo_qubit());
+        q1.set_topo_qubit(temp);
     }
 
     bool apply_CX(device::Operation& op, topo::Gate& gate) {
@@ -89,12 +94,12 @@ class Checker {
         auto& q0 = device_.get_qubit(q0_idx);
         auto& q1 = device_.get_qubit(q1_idx);
 
-        size_t topo_0 = device2topo_[q0_idx];
+        size_t topo_0 = q0.get_topo_qubit();
         if (topo_0 == ERROR_CODE) {
             std::cerr << "topo_0 is ERROR CODE" << std::endl;
             abort();
         }
-        size_t topo_1 = device2topo_[q1_idx];
+        size_t topo_1 = q1.get_topo_qubit();
         if (topo_1 == ERROR_CODE) {
             std::cerr << "topo_1 is ERRORCODE" << std::endl;
             abort();
@@ -129,7 +134,7 @@ class Checker {
         }
         auto& q0 = device_.get_qubit(q0_idx);
 
-        size_t topo_0 = device2topo_[q0_idx];
+        size_t topo_0 = q0.get_topo_qubit();
         if (topo_0 == ERROR_CODE) {
             std::cerr << "topo_0 is ERROR CODE" << std::endl;
             abort();
@@ -199,6 +204,5 @@ class Checker {
    private:
     topo::Topology& topo_;
     device::Device& device_;
-    std::vector<device::Operation>& ops_;
-    std::vector<size_t> device2topo_;
+    const std::vector<device::Operation>& ops_;
 };

@@ -2,6 +2,8 @@
 
 #include "qft_mapper.hpp"
 
+#include "checker.hpp"
+
 using namespace std;
 
 size_t flow(json& conf, vector<size_t> assign, bool io) {
@@ -58,7 +60,7 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
     if (assign.empty()) {
         string placer_typ = json_get<string>(conf_mapper, "placer");
         auto plc = placer::get(placer_typ);
-        plc->place_and_assign(device);
+        assign = plc->place_and_assign(device);
     } else {
         device.place(assign);
     }
@@ -82,6 +84,35 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
     // routing
     cout << "routing..." << endl;
     sched->assign_gates_and_sort(move(router));
+
+    // checker
+    if (json_get<bool>(conf, "check")) {
+        // device
+        device::Device check_device{device_file, SINGLE_CYCLE, SWAP_CYCLE,
+                                    CX_CYCLE};
+
+        // topo
+        unique_ptr<topo::Topology> check_topo;
+        if (conf["algo"].type() == json::value_t::number_unsigned) {
+            size_t num_qubit = json_get<size_t>(conf, "algo");
+            check_topo = make_unique<topo::QFTTopology>(num_qubit);
+        } else {
+            fstream algo_file;
+            auto algo_filename = json_get<string>(conf, "algo");
+            cout << algo_filename << endl;
+            algo_file.open(algo_filename, fstream::in);
+            if (!algo_file.is_open()) {
+                cerr << "There is no file" << algo_filename << endl;
+                abort();
+            }
+            bool onlyIBM = json_get<size_t>(conf, "IBM_Gate");
+            check_topo = make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
+        }
+
+        Checker checker(*check_topo, check_device, sched->get_operations(), assign);
+
+        checker.test_operations();
+    }
 
     // dump
     bool dump = json_get<bool>(conf, "dump");
