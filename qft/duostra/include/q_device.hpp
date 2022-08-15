@@ -170,7 +170,7 @@ class Device {
                                         bool orient);
 
     void print_device_state(std::ostream& out);
-    void place(std::vector<size_t>& assign);  // topo2device
+    void place(const std::vector<size_t>& assign);  // topo2device
     std::vector<Operation>& get_operations();
     void init_apsp();
     void reset();

@@ -1,4 +1,5 @@
 #pragma once
+#include <bits/stdc++.h>
 
 #include "algo.hpp"
 #include "q_device.hpp"
@@ -11,10 +12,10 @@ class Checker {
             const std::vector<device::Operation>& ops,
             const std::vector<size_t>& assign)
         : topo_(topo), device_(device), ops_(ops) {
-            device_.place(assign);
-        }
+        device_.place(assign);
+    }
 
-    size_t get_cycle(device::Operator& op_type) {
+    size_t get_cycle(Operator op_type) {
         switch (op_type) {
             case Operator::Swap:
                 return device_.SWAP_CYCLE;
@@ -28,7 +29,7 @@ class Checker {
         }
     }
 
-    void apply_gate(device::Operation& op, device::Qubit& q0) {
+    void apply_gate(const device::Operation& op, device::Qubit& q0) {
         size_t start = std::get<0>(op.get_duration());
         size_t end = std::get<1>(op.get_duration());
 
@@ -45,7 +46,7 @@ class Checker {
         q0.set_occupied_time(end);
     }
 
-    void apply_gate(device::Operation& op,
+    void apply_gate(const device::Operation& op,
                     device::Qubit& q0,
                     device::Qubit& q1) {
         size_t start = std::get<0>(op.get_duration());
@@ -67,9 +68,10 @@ class Checker {
         q1.set_occupied_time(end);
     }
 
-    void apply_Swap(device::Operation& op) {
+    void apply_Swap(const device::Operation& op) {
         if (op.get_operator() != Operator::Swap) {
-            std::cerr << op.get_operator_name << " in apply_Swap" << std::endl;
+            std::cerr << op.get_operator_name() << " in apply_Swap"
+                      << std::endl;
             abort();
         }
         size_t q0_idx = std::get<0>(op.get_qubits());
@@ -84,7 +86,7 @@ class Checker {
         q1.set_topo_qubit(temp);
     }
 
-    bool apply_CX(device::Operation& op, topo::Gate& gate) {
+    bool apply_CX(const device::Operation& op, const topo::Gate& gate) {
         if (!(op.get_operator() == Operator::CX)) {
             std::cerr << op.get_operator_name() << " in apply_CX" << std::endl;
             abort();
@@ -106,9 +108,9 @@ class Checker {
         }
 
         if (topo_0 > topo_1) {
-            swap(topo_0, topo_1);
+            std::swap(topo_0, topo_1);
         } else if (topo_0 == topo_1) {
-            std::cerr "topo_0 == topo_1: " << topo_0 << std::endl;
+            std::cerr << "topo_0 == topo_1: " << topo_0 << std::endl;
             abort();
         }
         if (topo_0 != std::get<0>(gate.get_qubits()) ||
@@ -120,7 +122,7 @@ class Checker {
         return true;
     }
 
-    bool apply_Single(device::Operation& op, topo::Gate& gate) {
+    bool apply_Single(const device::Operation& op, const topo::Gate& gate) {
         if (!(op.get_operator() == Operator::Single)) {
             std::cerr << op.get_operator_name() << " in apply_Single"
                       << std::endl;
@@ -150,7 +152,10 @@ class Checker {
 
     void test_operations() {
         std::vector<size_t> finished_gates;
-        for (auto& op : ops_) {
+
+        std::cout << "Checking..." << std::endl;
+        TqdmWrapper bar{ops_.size()};
+        for (const auto& op : ops_) {
             if (op.get_operator() == Operator::Swap) {
                 apply_Swap(op);
             } else {
@@ -161,7 +166,8 @@ class Checker {
                         if (apply_CX(op, topo_.get_gate(gate))) {
                             pass_condition = true;
                             topo_.update_avail_gates(gate);
-                            finished_gates.push_back(g);
+                            finished_gates.push_back(gate);
+                            break;
                         }
                     }
                 } else if (op.get_operator() == Operator::Single) {
@@ -169,11 +175,13 @@ class Checker {
                         if (apply_Single(op, topo_.get_gate(gate))) {
                             pass_condition = true;
                             topo_.update_avail_gates(gate);
-                            finished_gates.push_back(g);
+                            finished_gates.push_back(gate);
+                            break;
                         }
                     }
                 } else {
-                    std::cerr << "Error gate type " << op.get_operator_name() << std::endl;
+                    std::cerr << "Error gate type " << op.get_operator_name()
+                              << std::endl;
                     abort();
                 }
                 if (!pass_condition) {
@@ -186,18 +194,20 @@ class Checker {
                         std::cerr << gate << "\n";
                     }
                     std::cerr << "Device status:\n";
-                    device_.print_device_state();
-                    std::cerr << "Failed Operation " << op;
+                    device_.print_device_state(std::cout);
+                    std::cerr << "Failed Operation: " << op;
                     abort();
                 }
             }
-
-            std::cout << "num gates: " << finished_gates.size() << "\n"
-            << "num operations:" << ops_.size() << "\n";
-            if(finished_gates.size() != topo_.get_num_gates()) {
-                std::cerr << "Number of finished gates " << finished_gates.size() << " different from number of gates" << topo_.get_num_gates() << std::endl;
-                abort();
-            }
+            ++bar;
+        }
+        std::cout << "\nnum gates: " << finished_gates.size() << "\n"
+                  << "num operations:" << ops_.size() << "\n";
+        if (finished_gates.size() != topo_.get_num_gates()) {
+            std::cerr << "Number of finished gates " << finished_gates.size()
+                      << " different from number of gates "
+                      << topo_.get_num_gates() << std::endl;
+            abort();
         }
     }
 

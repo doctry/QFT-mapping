@@ -19,7 +19,12 @@ using namespace std;
 class Gate {
    public:
     Gate(size_t id, Operator type, tuple<size_t, size_t> qs)
-        : id_(id), type_(type), qubits_(qs), prevs_({}), nexts_({}) {}
+        : id_(id), type_(type), qubits_(qs), prevs_({}), nexts_({}) {
+        if (std::get<0>(qubits_) > std::get<1>(qubits_)) {
+            qubits_ =
+                std::make_tuple(std::get<1>(qubits_), std::get<0>(qubits_));
+        }
+    }
 
     Gate(const Gate& other) = delete;
 

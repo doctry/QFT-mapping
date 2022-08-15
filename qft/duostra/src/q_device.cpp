@@ -6,7 +6,7 @@
 using namespace device;
 using namespace std;
 
-ostream& device::operator<<(ostream& os, device::Operation& op) {
+ostream& device::operator<<(ostream& os, const device::Operation& op) {
     os << left;
     size_t from = get<0>(op.duration_);
     size_t to = get<1>(op.duration_);
@@ -527,7 +527,7 @@ tuple<size_t, size_t> Device::next_swap_cost(size_t source, size_t target) {
     return make_tuple(next_idx, cost);
 }
 
-void Device::place(vector<size_t>& assign) {
+void Device::place(const vector<size_t>& assign) {
     for (size_t i = 0; i < assign.size(); ++i) {
         Qubit& q = qubits_[assign[i]];
         assert(q.get_topo_qubit() == ERROR_CODE);

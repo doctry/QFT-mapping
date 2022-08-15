@@ -26,5 +26,6 @@
     },
     "IBM_Gate": false,
     "stdio": false,
-    "dump": false
+    "dump": false,
+    "check": false
 }

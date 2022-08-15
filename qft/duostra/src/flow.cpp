@@ -10,6 +10,7 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
     if (!io) {
         cout.setstate(ios_base::failbit);
     }
+
     // create topology
     cout << "creating topology..." << endl;
     unique_ptr<topo::Topology> topo;
@@ -31,6 +32,7 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
         bool onlyIBM = json_get<bool>(conf, "IBM_Gate");
         topo = make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
     }
+    auto check_topo = topo->clone();
 
     // create device
     cout << "creating device..." << endl;
@@ -46,6 +48,7 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
         abort();
     }
     device::Device device{device_file, SINGLE_CYCLE, SWAP_CYCLE, CX_CYCLE};
+    auto check_device(device);
 
     if (topo->get_num_qubits() > device.get_num_qubits()) {
         cerr << "You cannot assign more QFT qubits than the device." << endl;
@@ -87,31 +90,11 @@ size_t flow(json& conf, vector<size_t> assign, bool io) {
 
     // checker
     if (json_get<bool>(conf, "check")) {
-        // device
-        device::Device check_device{device_file, SINGLE_CYCLE, SWAP_CYCLE,
-                                    CX_CYCLE};
-
-        // topo
-        unique_ptr<topo::Topology> check_topo;
-        if (conf["algo"].type() == json::value_t::number_unsigned) {
-            size_t num_qubit = json_get<size_t>(conf, "algo");
-            check_topo = make_unique<topo::QFTTopology>(num_qubit);
-        } else {
-            fstream algo_file;
-            auto algo_filename = json_get<string>(conf, "algo");
-            cout << algo_filename << endl;
-            algo_file.open(algo_filename, fstream::in);
-            if (!algo_file.is_open()) {
-                cerr << "There is no file" << algo_filename << endl;
-                abort();
-            }
-            bool onlyIBM = json_get<size_t>(conf, "IBM_Gate");
-            check_topo = make_unique<topo::AlgoTopology>(algo_file, onlyIBM);
-        }
-
-        Checker checker(*check_topo, check_device, sched->get_operations(), assign);
+        Checker checker(*check_topo, check_device, sched->get_operations(),
+                        assign);
 
         checker.test_operations();
+        std::cout << "Check passed." << std::endl;
     }
 
     // dump
