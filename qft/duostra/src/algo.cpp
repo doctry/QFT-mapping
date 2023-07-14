@@ -48,7 +48,7 @@ void AlgoTopology::parse(fstream& qasm_file, bool IBM_gate) {
         last_cnot_with.push_back(init);
     }
     size_t gate_id = 0;
-    vector<string> single_list{"x", "sx", "s", "rz", "i"};
+    vector<string> single_list{"x", "sx", "s", "rz", "i", "p"};
     if (!IBM_gate) {
         single_list.push_back("h");
         single_list.push_back("t");
@@ -60,8 +60,9 @@ void AlgoTopology::parse(fstream& qasm_file, bool IBM_gate) {
         type = str.substr(0, str.find("("));
         string is_CX = type.substr(0, 2);
         string is_CRZ = type.substr(0, 3);
+        string is_CP = type.substr(0, 2);
 
-        if (is_CX != "cx" && is_CRZ != "crz") {
+        if (is_CX != "cx" && is_CRZ != "crz" && is_CP != "cp") {
             if (find(begin(single_list), end(single_list), type) !=
                 end(single_list)) {
                 qasm_file >> str;
@@ -94,8 +95,8 @@ void AlgoTopology::parse(fstream& qasm_file, bool IBM_gate) {
                 }
             }
         } else {
-            if ((IBM_gate) && (is_CRZ == "crz")) {
-                cerr << "IBM machine does not support crz" << endl;
+            if ((IBM_gate) && ((is_CRZ == "crz") || (is_CP == "cp"))) {
+                cerr << "IBM machine does not support crz or cp" << endl;
                 exit(0);
             }
             qasm_file >> str;
