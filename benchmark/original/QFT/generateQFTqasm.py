@@ -19,7 +19,10 @@ def decomposeCRZ(w, ang, ctrl, targ):
 def main(args):
     with open(
         "{root}/qft_{num}{dec}{pyzx}.qasm".format(
-            root=args.output_root, num=args.qnum, dec="dec" if args.decompose else "", pyzx="crz" if args.forpyzx else ""
+            root=args.output_root,
+            num=args.qnum,
+            dec="dec" if args.decompose else "",
+            pyzx="crz" if args.forpyzx else "",
         ),
         "w",
     ) as qasmf:
@@ -47,7 +50,7 @@ def main(args):
                             ang=format(pow(2, j + 2), ".1E")
                             if pow(2, j + 2) < args.max_denominator_value
                             else args.max_denominator_value,
-                            targ=i + j + 1
+                            targ=i + j + 1,
                         )
                     )
                     qasmf.write(
